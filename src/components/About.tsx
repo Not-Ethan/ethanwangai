@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import AnimatedCounter from "./AnimatedCounter";
-import { stats } from "@/lib/data";
+import ProjectMetricsCarousel from "./ProjectMetricsCarousel";
+import { projectMetrics } from "@/lib/data";
 
 export default function About() {
   return (
@@ -37,11 +37,7 @@ export default function About() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 gap-8">
-            {stats.map((stat, i) => (
-              <AnimatedCounter key={i} value={stat.value} label={stat.label} />
-            ))}
-          </div>
+          <ProjectMetricsCarousel projects={projectMetrics} />
         </div>
       </div>
     </section>

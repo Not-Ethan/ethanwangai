@@ -6,9 +6,10 @@ import { motion, useInView } from "framer-motion";
 interface AnimatedCounterProps {
   value: string;
   label: string;
+  colorClass?: string;
 }
 
-export default function AnimatedCounter({ value, label }: AnimatedCounterProps) {
+export default function AnimatedCounter({ value, label, colorClass = "text-accent" }: AnimatedCounterProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [displayValue, setDisplayValue] = useState("0");
@@ -65,7 +66,7 @@ export default function AnimatedCounter({ value, label }: AnimatedCounterProps) 
       transition={{ duration: 0.5 }}
       className="text-center"
     >
-      <div className="text-3xl md:text-4xl font-mono font-bold text-accent">
+      <div className={`text-3xl md:text-4xl font-mono font-bold ${colorClass}`}>
         {displayValue}
       </div>
       <div className="mt-1 text-sm text-muted font-mono">{label}</div>

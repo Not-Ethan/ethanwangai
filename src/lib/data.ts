@@ -6,11 +6,25 @@ export const siteConfig = {
   linkedin: "https://linkedin.com/in/edw173",
 };
 
-export const stats = [
-  { value: "20M+", label: "Monthly Impressions" },
-  { value: "500K", label: "Contracts Traded" },
-  { value: "3,500+", label: "Trades / Month" },
-  { value: "Top 100", label: "Kalshi Leaderboard" },
+export const projectMetrics = [
+  {
+    name: "Darch AI",
+    accent: "accent",
+    metrics: [
+      { value: "20M+", label: "Monthly Impressions" },
+      { value: "3,000+", label: "Monthly Video Jobs" },
+      { value: "85%+", label: "Profit Margins" },
+    ],
+  },
+  {
+    name: "Kalshi Trading",
+    accent: "gold",
+    metrics: [
+      { value: "500K", label: "Contracts Traded" },
+      { value: "3,500+", label: "Trades / Month" },
+      { value: "Top 100", label: "Kalshi Leaderboard" },
+    ],
+  },
 ];
 
 export const experience = [
