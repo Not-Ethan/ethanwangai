@@ -6,14 +6,15 @@
 @import "@fontsource/jetbrains-mono/400.css";
 
 @theme {
-  --color-bg: #0a0a0f;
-  --color-bg-card: #12121a;
-  --color-bg-card-hover: #1a1a2e;
-  --color-accent: #3b82f6;
-  --color-accent-glow: #3b82f680;
-  --color-gold: #f59e0b;
-  --color-muted: #71717a;
-  --color-light: #e4e4e7;
+  --color-bg: #0b1a0f;
+  --color-bg-card: #111f14;
+  --color-bg-card-hover: #1a2e1d;
+  --color-accent: #4ade80;
+  --color-accent-glow: #4ade8060;
+  --color-gold: #d4a574;
+  --color-trunk: #8b6f47;
+  --color-muted: #6b7f6b;
+  --color-light: #e2e8df;
 
   --font-heading: "Space Grotesk", sans-serif;
   --font-body: "Inter", sans-serif;
@@ -28,8 +29,8 @@
     50% { transform: translateY(-10px); }
   }
   @keyframes glow-pulse {
-    0% { box-shadow: 0 0 5px #3b82f640; }
-    100% { box-shadow: 0 0 20px #3b82f680; }
+    0% { box-shadow: 0 0 5px #4ade8030; }
+    100% { box-shadow: 0 0 20px #4ade8060; }
   }
   @keyframes blink {
     0%, 100% { opacity: 1; }
