@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { motion, useMotionValue, animate, AnimatePresence } from "framer-motion";
 import ForestScene from "./ForestScene";
 import DotNav from "./DotNav";
+import Navbar from "./Navbar";
 import { ZoomContext } from "./ZoomContext";
 
 const TOTAL_PAGES = 5;
@@ -139,6 +140,7 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
     <ZoomContext.Provider value={{ currentPage, goToPage }}>
       <div className="h-screen overflow-hidden">
         <ForestScene page={currentPage} zoomPhase={zoomPhase} />
+        <Navbar />
 
         {/* Section content overlay */}
         <AnimatePresence mode="wait">
