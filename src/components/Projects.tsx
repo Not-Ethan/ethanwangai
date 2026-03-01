@@ -10,7 +10,7 @@ function ProjectCard({ project, index }: { project: typeof projects[0]; index: n
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5, delay: index * 0.15 }}
-      className={`group relative rounded-xl border border-white/5 bg-bg-card p-6 transition-all duration-500 hover:border-accent/30 hover:bg-bg-card-hover hover:shadow-[0_0_30px_rgba(59,130,246,0.1)] ${
+      className={`group relative rounded-xl border border-white/5 bg-bg-card p-6 transition-all duration-500 hover:border-accent/30 hover:bg-bg-card-hover hover:shadow-[0_0_30px_rgba(74,222,128,0.1)] ${
         project.featured ? "md:col-span-2" : ""
       }`}
     >

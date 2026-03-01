@@ -17,7 +17,7 @@ export default function Experience() {
         </motion.h2>
 
         <div className="relative">
-          <div className="absolute left-4 top-0 bottom-0 w-px bg-gradient-to-b from-accent/50 via-accent/20 to-transparent" />
+          <div className="absolute left-4 top-0 bottom-0 w-px bg-gradient-to-b from-trunk/60 via-trunk/30 to-transparent" />
 
           {experience.map((exp, i) => (
             <motion.div
@@ -28,7 +28,7 @@ export default function Experience() {
               transition={{ duration: 0.5, delay: i * 0.15 }}
               className="relative pl-12 pb-16 last:pb-0 group"
             >
-              <div className="absolute left-[9px] top-1.5 w-3 h-3 rounded-full border-2 border-accent bg-bg group-hover:bg-accent transition-colors duration-300" />
+              <div className="absolute left-[9px] top-1.5 w-3 h-3 rounded-full border-2 border-trunk bg-bg group-hover:bg-accent transition-colors duration-300" />
 
               <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
                 <div>

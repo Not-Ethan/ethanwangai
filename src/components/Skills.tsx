@@ -38,7 +38,7 @@ export default function Skills() {
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: catIndex * 0.1 + i * 0.05 }}
-                    whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(59,130,246,0.3)" }}
+                    whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(74,222,128,0.3)" }}
                     className="px-4 py-2 text-sm font-mono text-light/80 bg-bg-card rounded-lg border border-white/5 hover:border-accent/40 hover:text-accent transition-all cursor-default"
                   >
                     {skill}
