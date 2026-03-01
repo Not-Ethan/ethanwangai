@@ -1,19 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
 import { siteConfig } from "@/lib/data";
-
-const ParticleNetwork = dynamic(() => import("./ParticleNetwork"), {
-  ssr: false,
-});
+import ForestScene from "./ForestScene";
 
 export default function Hero() {
   return (
     <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <ParticleNetwork />
-      </div>
+      <ForestScene />
 
       <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/30 via-transparent to-bg" />
 
@@ -23,7 +17,7 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-6xl md:text-8xl font-heading font-bold text-light"
-          style={{ textShadow: "0 0 40px rgba(59, 130, 246, 0.3)" }}
+          style={{ textShadow: "0 0 40px rgba(74, 222, 128, 0.3)" }}
         >
           {siteConfig.name}
         </motion.h1>
