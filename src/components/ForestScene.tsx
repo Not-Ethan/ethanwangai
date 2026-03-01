@@ -15,7 +15,8 @@ export default function ForestScene() {
   const y3 = useTransform(scrollYProgress, [0, 1], [0, 250]);
 
   return (
-    <div ref={ref} className="absolute inset-0 overflow-hidden">
+    <div ref={ref} className="absolute inset-0 overflow-hidden" aria-hidden="true">
+      {/* Hardcoded greens below must stay in sync with --color-bg (#0b1a0f) */}
       {/* Sky gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0b1a0f] via-[#0f2614] to-[#132e18]" />
 
