@@ -11,6 +11,7 @@ interface Metric {
 
 interface Project {
   name: string;
+  link?: string;
   accent: string;
   metrics: Metric[];
 }
@@ -123,7 +124,11 @@ export default function ProjectMetricsCarousel({
     >
       {/* Project name */}
       <h3 className={`font-mono text-sm tracking-wider uppercase ${colors.text}`}>
-        {project.name}
+        {project.link ? (
+          <a href={project.link} target="_blank" rel="noopener noreferrer" className="hover:underline">
+            {project.name} ↗
+          </a>
+        ) : project.name}
       </h3>
 
       {/* Metrics slide area */}

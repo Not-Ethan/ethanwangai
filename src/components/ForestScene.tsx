@@ -1,113 +1,88 @@
 "use client";
 
-import { motion, useTransform, type MotionValue } from "framer-motion";
+import React from "react";
+import { motion, useTransform, useMotionTemplate, type MotionValue } from "framer-motion";
 
-/* ── TimeTheme interface ──────────────────────────────────────── */
+/* ── Theme color arrays (one value per page, interpolated smoothly) ── */
 
-interface TimeTheme {
-  skyTop: string;
-  skyMid: string;
-  skyBottom: string;
-  atmosphereGlow: string;
-  celestialColor: string;
-  celestialGlow: string;
-  celestialSize: number;
-  celestialBottom: string;
-  isMoon: boolean;
-  canopyLight: string;
-  canopyMid: string;
-  canopyDark: string;
-  mountainColor: string;
-  groundColorMg: string;
-  groundColorFg: string;
-  trunkColor: string;
-  fireflyOpacity: number;
-  showLeaves: boolean;
+const P = [0, 1, 2, 3, 4];
+
+const SKY_TOP =        ["#1a0a2e", "#0a4a30", "#2e1a3d", "#1a0a1e", "#050a0f"];
+const SKY_MID =        ["#3d1f5c", "#1a6b4a", "#8b4a6b", "#6b2a3d", "#0a1a12"];
+const SKY_BOTTOM =     ["#e8734a", "#2d8a5e", "#d4764a", "#e85a3a", "#0b1a0f"];
+const ATMO_GLOW =      ["rgba(232,115,74,0.30)", "rgba(74,222,128,0.12)", "rgba(212,118,74,0.25)", "rgba(232,90,58,0.35)", "rgba(200,216,232,0.05)"];
+const CELESTIAL =      ["#f5c542", "#f5e870", "#e8734a", "#d44a2e", "#c8d8e8"];
+const CELESTIAL_GLOW = ["rgba(245,197,66,0.5)", "rgba(245,232,112,0.35)", "rgba(232,115,74,0.4)", "rgba(212,74,46,0.5)", "rgba(200,216,232,0.15)"];
+const CANOPY_LIGHT =   ["#1a4a20", "#2a6a30", "#1e4420", "#142218", "#0a1a0c"];
+const CANOPY_MID =     ["#143d1a", "#1e5a24", "#163318", "#0f1a10", "#060f08"];
+const CANOPY_DARK =    ["#0f2a12", "#164218", "#0f2510", "#0a120a", "#040a05"];
+const MOUNTAIN =       ["#0f2a12", "#1a4a20", "#12301a", "#0d1a0f", "#060f08"];
+const GROUND_MG =      ["#112e14", "#163a1a", "#0f2510", "#0a140c", "#050c07"];
+const GROUND_FG =      ["#0b1a0f", "#0e2a12", "#0a1a0d", "#070f08", "#040a06"];
+const TRUNK =          ["#5a3a1e", "#6b4f2e", "#4a2e14", "#3a2010", "#1a1208"];
+
+const CELESTIAL_SIZE =   [96, 64, 88, 104, 48];
+const CELESTIAL_BOTTOM = [35, 68, 30, 15, 65];
+const FIREFLY_OPACITY =  [0.3, 0.08, 0.6, 0.8, 1];
+
+/* ── Tree path helpers ───────────────────────────────────────────── */
+
+function makeCanopy(cx: number, top: number, base: number, spread: number, weight = 0.5): string {
+  const h = base - top;
+  const sy = top + h * weight;
+  return `M${cx} ${top} C${cx} ${top + h * 0.1} ${cx - spread * 0.4} ${sy} ${cx - spread} ${base} L${cx + spread} ${base} C${cx + spread * 0.4} ${sy} ${cx} ${top + h * 0.1} ${cx} ${top} Z`;
 }
 
-/* ── 5 theme definitions ──────────────────────────────────────── */
+function makeTrunk(cx: number, cBase: number, bottom: number, tw: number, bw: number): string {
+  return `M${cx - tw} ${cBase} L${cx - bw} ${bottom} L${cx + bw} ${bottom} L${cx + tw} ${cBase} Z`;
+}
 
-const themes: TimeTheme[] = [
-  // Dawn (0)
-  {
-    skyTop: "#1a0a2e", skyMid: "#3d1f5c", skyBottom: "#e8734a",
-    atmosphereGlow: "rgba(232,115,74,0.3)",
-    celestialColor: "#f5c542", celestialGlow: "rgba(245,197,66,0.5)",
-    celestialSize: 96, celestialBottom: "35%", isMoon: false,
-    canopyLight: "#1a4a20", canopyMid: "#143d1a", canopyDark: "#0f2a12",
-    mountainColor: "#0f2a12", groundColorMg: "#112e14", groundColorFg: "#0b1a0f",
-    trunkColor: "#5a3a1e", fireflyOpacity: 0.3, showLeaves: true,
-  },
-  // Noon (1)
-  {
-    skyTop: "#0a4a30", skyMid: "#1a6b4a", skyBottom: "#2d8a5e",
-    atmosphereGlow: "rgba(74,222,128,0.12)",
-    celestialColor: "#f5e870", celestialGlow: "rgba(245,232,112,0.35)",
-    celestialSize: 64, celestialBottom: "68%", isMoon: false,
-    canopyLight: "#2a6a30", canopyMid: "#1e5a24", canopyDark: "#164218",
-    mountainColor: "#1a4a20", groundColorMg: "#163a1a", groundColorFg: "#0e2a12",
-    trunkColor: "#6b4f2e", fireflyOpacity: 0.08, showLeaves: false,
-  },
-  // Dusk (2)
-  {
-    skyTop: "#2e1a3d", skyMid: "#8b4a6b", skyBottom: "#d4764a",
-    atmosphereGlow: "rgba(212,118,74,0.25)",
-    celestialColor: "#e8734a", celestialGlow: "rgba(232,115,74,0.4)",
-    celestialSize: 88, celestialBottom: "30%", isMoon: false,
-    canopyLight: "#1e4420", canopyMid: "#163318", canopyDark: "#0f2510",
-    mountainColor: "#12301a", groundColorMg: "#0f2510", groundColorFg: "#0a1a0d",
-    trunkColor: "#4a2e14", fireflyOpacity: 0.6, showLeaves: false,
-  },
-  // Sunset (3)
-  {
-    skyTop: "#1a0a1e", skyMid: "#6b2a3d", skyBottom: "#e85a3a",
-    atmosphereGlow: "rgba(232,90,58,0.35)",
-    celestialColor: "#d44a2e", celestialGlow: "rgba(212,74,46,0.5)",
-    celestialSize: 104, celestialBottom: "15%", isMoon: false,
-    canopyLight: "#142218", canopyMid: "#0f1a10", canopyDark: "#0a120a",
-    mountainColor: "#0d1a0f", groundColorMg: "#0a140c", groundColorFg: "#070f08",
-    trunkColor: "#3a2010", fireflyOpacity: 0.8, showLeaves: false,
-  },
-  // Night (4)
-  {
-    skyTop: "#050a0f", skyMid: "#0a1a12", skyBottom: "#0b1a0f",
-    atmosphereGlow: "rgba(200,216,232,0.05)",
-    celestialColor: "#c8d8e8", celestialGlow: "rgba(200,216,232,0.15)",
-    celestialSize: 48, celestialBottom: "65%", isMoon: true,
-    canopyLight: "#0a1a0c", canopyMid: "#060f08", canopyDark: "#040a05",
-    mountainColor: "#060f08", groundColorMg: "#050c07", groundColorFg: "#040a06",
-    trunkColor: "#1a1208", fireflyOpacity: 1, showLeaves: false,
-  },
-];
+/* ── Pre-computed tree data ──────────────────────────────────────── */
 
-/* ── Tree data ────────────────────────────────────────────────── */
-
-interface TreeData {
-  canopy: string;
-  trunkX: number;
-  trunkY: number;
-  trunkW: number;
-  trunkH: number;
+interface TreeCfg {
+  cx: number; top: number; base: number; spread: number; weight: number;
+  trunkH: number; tw: number; bw: number;
   shade: "light" | "mid" | "dark";
 }
 
-const midGroundTrees: TreeData[] = [
-  { canopy: "M60 320 L100 240 L80 240 L110 180 L90 180 L120 120 L150 180 L130 180 L160 240 L140 240 L180 320 Z", trunkX: 100, trunkY: 320, trunkW: 40, trunkH: 180, shade: "mid" },
-  { canopy: "M180 350 L220 280 L200 280 L230 220 L210 220 L240 160 L270 220 L250 220 L280 280 L260 280 L300 350 Z", trunkX: 220, trunkY: 350, trunkW: 40, trunkH: 150, shade: "light" },
-  { canopy: "M375 300 L420 220 L395 220 L440 150 L415 150 L450 90 L485 150 L460 150 L505 220 L480 220 L525 300 Z", trunkX: 430, trunkY: 300, trunkW: 40, trunkH: 200, shade: "mid" },
-  { canopy: "M500 340 L540 270 L520 270 L555 210 L535 210 L565 150 L595 210 L575 210 L610 270 L590 270 L630 340 Z", trunkX: 545, trunkY: 340, trunkW: 40, trunkH: 160, shade: "light" },
-  { canopy: "M660 310 L700 240 L680 240 L720 170 L700 170 L730 100 L760 170 L740 170 L780 240 L760 240 L800 310 Z", trunkX: 710, trunkY: 310, trunkW: 40, trunkH: 190, shade: "dark" },
-  { canopy: "M860 330 L900 260 L880 260 L920 190 L900 190 L935 120 L970 190 L950 190 L990 260 L970 260 L1010 330 Z", trunkX: 915, trunkY: 330, trunkW: 40, trunkH: 170, shade: "mid" },
-  { canopy: "M1000 350 L1040 280 L1020 280 L1060 210 L1040 210 L1075 140 L1110 210 L1090 210 L1130 280 L1110 280 L1150 350 Z", trunkX: 1055, trunkY: 350, trunkW: 40, trunkH: 150, shade: "light" },
-  { canopy: "M1230 310 L1270 230 L1250 230 L1290 160 L1270 160 L1305 100 L1340 160 L1320 160 L1360 230 L1340 230 L1380 310 Z", trunkX: 1285, trunkY: 310, trunkW: 40, trunkH: 190, shade: "dark" },
+const mgTreeCfg: TreeCfg[] = [
+  { cx: 70,   top: 140, base: 340, spread: 48, weight: 0.45, trunkH: 160, tw: 10, bw: 14, shade: "mid" },
+  { cx: 200,  top: 160, base: 360, spread: 52, weight: 0.55, trunkH: 140, tw: 11, bw: 15, shade: "light" },
+  { cx: 340,  top: 120, base: 330, spread: 44, weight: 0.40, trunkH: 170, tw: 9,  bw: 13, shade: "dark" },
+  { cx: 480,  top: 170, base: 350, spread: 62, weight: 0.60, trunkH: 150, tw: 12, bw: 16, shade: "mid" },
+  { cx: 620,  top: 100, base: 320, spread: 50, weight: 0.45, trunkH: 180, tw: 11, bw: 15, shade: "light" },
+  { cx: 760,  top: 155, base: 345, spread: 38, weight: 0.35, trunkH: 155, tw: 8,  bw: 12, shade: "dark" },
+  { cx: 900,  top: 125, base: 335, spread: 56, weight: 0.50, trunkH: 165, tw: 12, bw: 16, shade: "mid" },
+  { cx: 1040, top: 145, base: 355, spread: 42, weight: 0.42, trunkH: 145, tw: 9,  bw: 13, shade: "light" },
+  { cx: 1180, top: 110, base: 325, spread: 58, weight: 0.55, trunkH: 175, tw: 12, bw: 16, shade: "dark" },
+  { cx: 1320, top: 165, base: 350, spread: 46, weight: 0.48, trunkH: 150, tw: 10, bw: 14, shade: "mid" },
 ];
 
-const foregroundTrees: TreeData[] = [
-  { canopy: "M-50 350 L10 260 L-20 260 L30 180 L0 180 L50 100 L100 180 L70 180 L120 260 L90 260 L150 350 Z", trunkX: 30, trunkY: 350, trunkW: 44, trunkH: 250, shade: "dark" },
-  { canopy: "M1290 340 L1340 250 L1310 250 L1360 170 L1330 170 L1380 90 L1430 170 L1400 170 L1450 250 L1420 250 L1470 340 Z", trunkX: 1360, trunkY: 340, trunkW: 44, trunkH: 260, shade: "dark" },
+const fgTreeCfg: TreeCfg[] = [
+  { cx: 40,   top: 80,  base: 380, spread: 75, weight: 0.50, trunkH: 220, tw: 14, bw: 20, shade: "dark" },
+  { cx: 1410, top: 60,  base: 370, spread: 80, weight: 0.45, trunkH: 230, tw: 15, bw: 22, shade: "dark" },
 ];
 
-/* ── Firefly configs (20) ─────────────────────────────────────── */
+interface ComputedTree {
+  outer: string;
+  inner: string;
+  trunk: string;
+  shade: "light" | "mid" | "dark";
+}
+
+function precompute(cfgs: TreeCfg[]): ComputedTree[] {
+  return cfgs.map((t) => ({
+    outer: makeCanopy(t.cx, t.top, t.base, t.spread, t.weight),
+    inner: makeCanopy(t.cx, t.top + 20, t.base - 15, t.spread * 0.5, t.weight * 0.9),
+    trunk: makeTrunk(t.cx, t.base, t.base + t.trunkH, t.tw, t.bw),
+    shade: t.shade,
+  }));
+}
+
+const mgTrees = precompute(mgTreeCfg);
+const fgTrees = precompute(fgTreeCfg);
+
+/* ── Firefly configs (20) ────────────────────────────────────────── */
 
 const fireflyConfigs = [
   { x: "15%", y: "45%", size: 3,   drift: 1 as const, dur: 4.2, glow: 3.1, delay: 0,   color: "#d4e860" },
@@ -132,46 +107,29 @@ const fireflyConfigs = [
   { x: "88%", y: "62%", size: 3,   drift: 2 as const, dur: 4.6, glow: 3.7, delay: 1.9, color: "#b8d44f" },
 ];
 
-/* ── Underbrush leaf config ──────────────────────────────────── */
+/* ── Underbrush leaf config ──────────────────────────────────────── */
 
 interface FrameLeaf {
-  top?: string;
-  bottom?: string;
-  left?: string;
-  right?: string;
-  width: number;
-  rotate: number;
-  color: string;
-  opacity: number;
-  blur?: number;
-  sway: 1 | 2 | 3;
-  swayDuration: number;
-  swayDelay: number;
-  variant: 1 | 2 | 3;
-  flipX?: boolean;
+  top?: string; bottom?: string; left?: string; right?: string;
+  width: number; rotate: number; color: string; opacity: number;
+  blur?: number; sway: 1 | 2 | 3; swayDuration: number; swayDelay: number;
+  variant: 1 | 2 | 3; flipX?: boolean;
 }
 
 const frameLeaves: FrameLeaf[] = [
-  // Top-left cluster
   { top: "-8%", left: "-4%",   width: 320, rotate: 25,   color: "#1a3d1c", opacity: 0.7,  sway: 1, swayDuration: 8,  swayDelay: 0,   variant: 1 },
   { top: "-3%", left: "4%",    width: 240, rotate: 45,   color: "#2a5a2d", opacity: 0.5,  sway: 2, swayDuration: 10, swayDelay: 1.2, variant: 2, blur: 1 },
   { top: "5%",  left: "-6%",   width: 200, rotate: 10,   color: "#1e4d1f", opacity: 0.6,  sway: 3, swayDuration: 9,  swayDelay: 0.5, variant: 3 },
-  // Top-right cluster
   { top: "-6%", right: "-3%",  width: 300, rotate: -30,  color: "#1a3d1c", opacity: 0.65, sway: 2, swayDuration: 9,  swayDelay: 0.8, variant: 2, flipX: true },
   { top: "0%",  right: "5%",   width: 220, rotate: -50,  color: "#2a5a2d", opacity: 0.45, sway: 1, swayDuration: 11, swayDelay: 2,   variant: 1, blur: 1.5, flipX: true },
   { top: "8%",  right: "-5%",  width: 180, rotate: -15,  color: "#1e4d1f", opacity: 0.55, sway: 3, swayDuration: 8,  swayDelay: 1.5, variant: 3, flipX: true },
-  // Left edge
   { top: "35%", left: "-8%",   width: 260, rotate: 5,    color: "#143d18", opacity: 0.5,  sway: 1, swayDuration: 10, swayDelay: 0.3, variant: 3 },
   { top: "55%", left: "-5%",   width: 200, rotate: 20,   color: "#1e4d1f", opacity: 0.4,  sway: 2, swayDuration: 9,  swayDelay: 1.8, variant: 1, blur: 1 },
-  // Right edge
   { top: "40%", right: "-7%",  width: 240, rotate: -10,  color: "#143d18", opacity: 0.5,  sway: 3, swayDuration: 11, swayDelay: 0.6, variant: 2, flipX: true },
   { top: "60%", right: "-4%",  width: 190, rotate: -25,  color: "#1e4d1f", opacity: 0.4,  sway: 1, swayDuration: 8,  swayDelay: 2.2, variant: 3, flipX: true, blur: 1 },
-  // Bottom corners
   { bottom: "-5%", left: "-3%",  width: 280, rotate: 160,  color: "#0d2e10", opacity: 0.6,  sway: 2, swayDuration: 10, swayDelay: 0.4, variant: 1 },
   { bottom: "-8%", right: "-2%", width: 250, rotate: -155, color: "#0d2e10", opacity: 0.55, sway: 3, swayDuration: 9,  swayDelay: 1,   variant: 2, flipX: true },
 ];
-
-/* ── Leaf SVG paths ──────────────────────────────────────────── */
 
 const leafPaths: Record<1 | 2 | 3, { outline: string; vein: string; sideVeins: string[] }> = {
   1: {
@@ -191,97 +149,102 @@ const leafPaths: Record<1 | 2 | 3, { outline: string; vein: string; sideVeins: s
   },
 };
 
-/* ── Helpers ──────────────────────────────────────────────────── */
-
-const transition = "all 900ms cubic-bezier(0.4, 0, 0.2, 1)";
-
-function canopyColor(theme: TimeTheme, shade: "light" | "mid" | "dark"): string {
-  if (shade === "light") return theme.canopyLight;
-  if (shade === "mid") return theme.canopyMid;
-  return theme.canopyDark;
-}
-
-/* ── Props ────────────────────────────────────────────────────── */
+/* ── Main component ──────────────────────────────────────────────── */
 
 interface ForestSceneProps {
-  page: number;
-  zoomPhase: MotionValue<number>;
+  scrollPos: MotionValue<number>;
 }
 
-/* ── Main component ──────────────────────────────────────────── */
+export default function ForestScene({ scrollPos }: ForestSceneProps) {
+  /* ── Continuous zoom (camera pushes into forest) ──────── */
+  const scaleFg = useTransform(scrollPos, [0, 2], [1, 3.5]);
+  const opacityFg = useTransform(scrollPos, [0, 0.8, 1.5], [1, 0.4, 0]);
+  const scaleMg = useTransform(scrollPos, [0, 4], [1, 2.2]);
+  const opacityMg = useTransform(scrollPos, [0, 2, 3.5], [1, 0.6, 0]);
+  const scaleMt = useTransform(scrollPos, [0, 4], [1, 1.5]);
+  const leafScale = useTransform(scrollPos, [0, 1.5], [1, 4]);
+  const leafZoomOp = useTransform(scrollPos, [0, 0.8], [1, 0]);
 
-export default function ForestScene({ page, zoomPhase }: ForestSceneProps) {
-  const theme = themes[Math.max(0, Math.min(themes.length - 1, page))];
+  /* ── Smooth color interpolation from scrollPos ────────── */
+  const skyTop = useTransform(scrollPos, P, SKY_TOP);
+  const skyMid = useTransform(scrollPos, P, SKY_MID);
+  const skyBottom = useTransform(scrollPos, P, SKY_BOTTOM);
+  const atmoGlow = useTransform(scrollPos, P, ATMO_GLOW);
+  const celestialColor = useTransform(scrollPos, P, CELESTIAL);
+  const celestialGlow = useTransform(scrollPos, P, CELESTIAL_GLOW);
+  const cLight = useTransform(scrollPos, P, CANOPY_LIGHT);
+  const cMid = useTransform(scrollPos, P, CANOPY_MID);
+  const cDark = useTransform(scrollPos, P, CANOPY_DARK);
+  const mountainColor = useTransform(scrollPos, P, MOUNTAIN);
+  const groundMg = useTransform(scrollPos, P, GROUND_MG);
+  const groundFg = useTransform(scrollPos, P, GROUND_FG);
+  const trunkColor = useTransform(scrollPos, P, TRUNK);
 
-  /* ── Zoom phase transforms ─────────────────────────────────── */
+  const celestialSize = useTransform(scrollPos, P, CELESTIAL_SIZE);
+  const celestialBottomNum = useTransform(scrollPos, P, CELESTIAL_BOTTOM);
+  const celestialBottom = useMotionTemplate`${celestialBottomNum}%`;
+  const fireflyOp = useTransform(scrollPos, P, FIREFLY_OPACITY);
 
-  // Foreground trees
-  const scaleFg = useTransform(zoomPhase, [0, 1], [1, 2.5]);
-  const opacityFg = useTransform(zoomPhase, [0, 0.4, 1], [1, 0.3, 0]);
+  // Leaves fade away as camera pushes past them
+  const combinedLeafOp = leafZoomOp;
 
-  // Mid-ground trees
-  const scaleMg = useTransform(zoomPhase, [0, 1], [1, 1.6]);
-  const opacityMg = useTransform(zoomPhase, [0, 0.5, 1], [1, 0.5, 0]);
+  /* ── Gradient templates ───────────────────────────────── */
+  const skyGrad = useMotionTemplate`linear-gradient(to bottom, ${skyTop}, ${skyMid}, ${skyBottom})`;
+  const atmoGrad = useMotionTemplate`radial-gradient(ellipse 120% 40% at 50% 75%, ${atmoGlow} 0%, transparent 70%)`;
+  const celestialGlowBg = useMotionTemplate`radial-gradient(circle, ${celestialGlow} 0%, transparent 70%)`;
+  const celestialShadow = useMotionTemplate`0 0 80px ${celestialGlow}, 0 0 160px ${celestialGlow}`;
+  const fogGrad = useMotionTemplate`linear-gradient(to top, ${groundFg}, transparent)`;
 
-  // Mountains
-  const scaleMt = useTransform(zoomPhase, [0, 1], [1, 1.15]);
+  /* ── Canopy color picker ──────────────────────────────── */
+  function fillFor(shade: "light" | "mid" | "dark") {
+    return shade === "light" ? cLight : shade === "mid" ? cMid : cDark;
+  }
+  function innerFillFor(shade: "light" | "mid" | "dark") {
+    return shade === "dark" ? cMid : cLight;
+  }
 
-  // Underbrush leaves
-  const leafScale = useTransform(zoomPhase, [0, 1], [1, 3.5]);
-  const leafOpacity = useTransform(zoomPhase, [0, 0.3], [1, 0]);
+  /* ── Render tree set ──────────────────────────────────── */
+  function renderTrees(trees: ComputedTree[], prefix: string) {
+    return trees.map((t, i) => (
+      <React.Fragment key={`${prefix}-${i}`}>
+        <motion.path d={t.trunk} style={{ fill: trunkColor }} />
+        <motion.path d={t.outer} style={{ fill: fillFor(t.shade) }} />
+        <motion.path d={t.inner} style={{ fill: innerFillFor(t.shade) }} opacity={0.45} />
+      </React.Fragment>
+    ));
+  }
 
   return (
     <div className="fixed inset-0 overflow-hidden" aria-hidden="true">
-      {/* ── Sky gradient ─────────────────────────────────────── */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `linear-gradient(to bottom, ${theme.skyTop}, ${theme.skyMid}, ${theme.skyBottom})`,
-          transition,
-        }}
-      />
+      {/* ── Sky gradient ─────────────────────────────────── */}
+      <motion.div className="absolute inset-0" style={{ background: skyGrad }} />
 
-      {/* ── Atmosphere glow ──────────────────────────────────── */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(ellipse 120% 40% at 50% 75%, ${theme.atmosphereGlow} 0%, transparent 70%)`,
-          transition,
-        }}
-      />
+      {/* ── Atmosphere glow ──────────────────────────────── */}
+      <motion.div className="absolute inset-0" style={{ background: atmoGrad }} />
 
-      {/* ── Celestial body (sun/moon) ────────────────────────── */}
-      <div
+      {/* ── Celestial body (sun/moon) ────────────────────── */}
+      <motion.div
         className="absolute left-1/2 -translate-x-1/2"
-        style={{
-          bottom: theme.celestialBottom,
-          transition,
-        }}
+        style={{ bottom: celestialBottom }}
       >
         <div className="relative">
-          <div
+          <motion.div
             className="absolute -inset-32 rounded-full"
-            style={{
-              background: `radial-gradient(circle, ${theme.celestialGlow} 0%, transparent 70%)`,
-              transition,
-            }}
+            style={{ background: celestialGlowBg }}
           />
-          <div
+          <motion.div
             className="rounded-full"
             style={{
-              width: theme.celestialSize,
-              height: theme.celestialSize,
-              background: theme.isMoon
-                ? `radial-gradient(circle at 60% 40%, ${theme.celestialColor}, ${theme.celestialColor}cc 60%, ${theme.celestialColor}88 100%)`
-                : `radial-gradient(circle at 40% 40%, ${theme.celestialColor}ee, ${theme.celestialColor} 50%, ${theme.celestialColor}cc 100%)`,
-              boxShadow: `0 0 80px ${theme.celestialGlow}, 0 0 160px ${theme.celestialGlow}`,
-              transition,
+              width: celestialSize,
+              height: celestialSize,
+              backgroundColor: celestialColor,
+              boxShadow: celestialShadow,
             }}
           />
         </div>
-      </div>
+      </motion.div>
 
-      {/* ── Mountains ────────────────────────────────────────── */}
+      {/* ── Mountains ────────────────────────────────────── */}
       <motion.div style={{ scale: scaleMt }} className="absolute inset-0 origin-bottom">
         <svg
           viewBox="0 0 1440 400"
@@ -289,15 +252,14 @@ export default function ForestScene({ page, zoomPhase }: ForestSceneProps) {
           preserveAspectRatio="xMidYMax slice"
           fill="none"
         >
-          <path
+          <motion.path
             d="M0 400 L0 280 Q120 200 240 260 Q360 180 480 240 Q600 160 720 220 Q840 140 960 200 Q1080 160 1200 230 Q1320 190 1440 250 L1440 400 Z"
-            fill={theme.mountainColor}
-            style={{ transition }}
+            style={{ fill: mountainColor }}
           />
         </svg>
       </motion.div>
 
-      {/* ── Mid-ground trees ─────────────────────────────────── */}
+      {/* ── Mid-ground trees ─────────────────────────────── */}
       <motion.div style={{ scale: scaleMg, opacity: opacityMg }} className="absolute inset-0 origin-bottom">
         <svg
           viewBox="0 0 1440 500"
@@ -305,40 +267,13 @@ export default function ForestScene({ page, zoomPhase }: ForestSceneProps) {
           preserveAspectRatio="xMidYMax slice"
           fill="none"
         >
-          {/* Trunks (behind canopies) */}
-          {midGroundTrees.map((tree, i) => (
-            <rect
-              key={`mg-trunk-${i}`}
-              x={tree.trunkX}
-              y={tree.trunkY}
-              width={tree.trunkW}
-              height={tree.trunkH}
-              fill={theme.trunkColor}
-              style={{ transition }}
-            />
-          ))}
-          {/* Canopies (on top) */}
-          {midGroundTrees.map((tree, i) => (
-            <path
-              key={`mg-canopy-${i}`}
-              d={tree.canopy}
-              fill={canopyColor(theme, tree.shade)}
-              style={{ transition }}
-            />
-          ))}
-          {/* Mid-ground ground */}
-          <rect x="0" y="420" width="1440" height="80" fill={theme.groundColorMg} style={{ transition }} />
+          {renderTrees(mgTrees, "mg")}
+          <motion.rect x="0" y="420" width="1440" height="80" style={{ fill: groundMg }} />
         </svg>
       </motion.div>
 
-      {/* ── Fireflies ────────────────────────────────────────── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          opacity: theme.fireflyOpacity,
-          transition,
-        }}
-      >
+      {/* ── Fireflies ────────────────────────────────────── */}
+      <motion.div className="absolute inset-0 pointer-events-none" style={{ opacity: fireflyOp }}>
         {fireflyConfigs.map((ff, i) => (
           <div
             key={i}
@@ -354,9 +289,9 @@ export default function ForestScene({ page, zoomPhase }: ForestSceneProps) {
             }}
           />
         ))}
-      </div>
+      </motion.div>
 
-      {/* ── Foreground trees ─────────────────────────────────── */}
+      {/* ── Foreground trees ─────────────────────────────── */}
       <motion.div style={{ scale: scaleFg, opacity: opacityFg }} className="absolute inset-0 origin-bottom">
         <svg
           viewBox="0 0 1440 600"
@@ -364,94 +299,61 @@ export default function ForestScene({ page, zoomPhase }: ForestSceneProps) {
           preserveAspectRatio="xMidYMax slice"
           fill="none"
         >
-          {/* Trunks (behind canopies) */}
-          {foregroundTrees.map((tree, i) => (
-            <rect
-              key={`fg-trunk-${i}`}
-              x={tree.trunkX}
-              y={tree.trunkY}
-              width={tree.trunkW}
-              height={tree.trunkH}
-              fill={theme.trunkColor}
-              style={{ transition }}
-            />
-          ))}
-          {/* Canopies (on top) */}
-          {foregroundTrees.map((tree, i) => (
-            <path
-              key={`fg-canopy-${i}`}
-              d={tree.canopy}
-              fill={canopyColor(theme, tree.shade)}
-              style={{ transition }}
-            />
-          ))}
-          {/* Foreground ground */}
-          <rect x="0" y="520" width="1440" height="80" fill={theme.groundColorFg} style={{ transition }} />
+          {renderTrees(fgTrees, "fg")}
+          <motion.rect x="0" y="520" width="1440" height="80" style={{ fill: groundFg }} />
         </svg>
       </motion.div>
 
-      {/* ── Underbrush leaves (Dawn only) ────────────────────── */}
-      {theme.showLeaves && (
-        <motion.div
-          style={{ scale: leafScale, opacity: leafOpacity }}
-          className="absolute inset-0 pointer-events-none origin-bottom"
-        >
-          {frameLeaves.map((leaf, i) => {
-            const shape = leafPaths[leaf.variant];
-            return (
+      {/* ── Underbrush leaves (Dawn, fades with scroll) ──── */}
+      <motion.div
+        style={{ scale: leafScale, opacity: combinedLeafOp }}
+        className="absolute inset-0 pointer-events-none origin-bottom"
+      >
+        {frameLeaves.map((leaf, i) => {
+          const shape = leafPaths[leaf.variant];
+          return (
+            <div
+              key={i}
+              className="absolute"
+              style={{
+                top: leaf.top, bottom: leaf.bottom,
+                left: leaf.left, right: leaf.right,
+                width: leaf.width, height: leaf.width,
+                opacity: leaf.opacity,
+              }}
+            >
               <div
-                key={i}
-                className="absolute"
                 style={{
-                  top: leaf.top,
-                  bottom: leaf.bottom,
-                  left: leaf.left,
-                  right: leaf.right,
-                  width: leaf.width,
-                  height: leaf.width,
-                  opacity: leaf.opacity,
+                  width: "100%", height: "100%",
+                  animation: `leaf-sway-${leaf.sway} ${leaf.swayDuration}s ease-in-out ${leaf.swayDelay}s infinite`,
+                  transformOrigin: "top center",
                 }}
               >
-                {/* Sway animation wrapper */}
                 <div
                   style={{
-                    width: "100%",
-                    height: "100%",
-                    animation: `leaf-sway-${leaf.sway} ${leaf.swayDuration}s ease-in-out ${leaf.swayDelay}s infinite`,
-                    transformOrigin: "top center",
+                    width: "100%", height: "100%",
+                    transform: `rotate(${leaf.rotate}deg)${leaf.flipX ? " scaleX(-1)" : ""}`,
+                    filter: leaf.blur ? `blur(${leaf.blur}px)` : undefined,
                   }}
                 >
-                  {/* Static rotation + flip */}
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      transform: `rotate(${leaf.rotate}deg)${leaf.flipX ? " scaleX(-1)" : ""}`,
-                      filter: leaf.blur ? `blur(${leaf.blur}px)` : undefined,
-                    }}
-                  >
-                    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none">
-                      <path d={shape.outline} fill={leaf.color} />
-                      <path d={shape.vein} stroke={leaf.color} strokeWidth="1" opacity="0.25" />
-                      {shape.sideVeins.map((d, j) => (
-                        <path key={j} d={d} stroke={leaf.color} strokeWidth="0.5" opacity="0.15" />
-                      ))}
-                    </svg>
-                  </div>
+                  <svg viewBox="0 0 100 100" className="w-full h-full" fill="none">
+                    <path d={shape.outline} fill={leaf.color} />
+                    <path d={shape.vein} stroke={leaf.color} strokeWidth="1" opacity="0.25" />
+                    {shape.sideVeins.map((d, j) => (
+                      <path key={j} d={d} stroke={leaf.color} strokeWidth="0.5" opacity="0.15" />
+                    ))}
+                  </svg>
                 </div>
               </div>
-            );
-          })}
-        </motion.div>
-      )}
+            </div>
+          );
+        })}
+      </motion.div>
 
-      {/* ── Ground fog ───────────────────────────────────────── */}
-      <div
+      {/* ── Ground fog ───────────────────────────────────── */}
+      <motion.div
         className="absolute bottom-0 left-0 right-0 h-40"
-        style={{
-          background: `linear-gradient(to top, ${theme.groundColorFg}, ${theme.groundColorFg}cc 40%, transparent)`,
-          transition,
-        }}
+        style={{ background: fogGrad }}
       />
     </div>
   );

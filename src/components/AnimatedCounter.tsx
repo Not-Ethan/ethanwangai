@@ -9,24 +9,38 @@ interface AnimatedCounterProps {
   colorClass?: string;
 }
 
+function parseValue(value: string) {
+  // Find numeric portion (including commas/dots) in the original string
+  const match = value.match(/[\d,.]+/);
+  if (!match) return null;
+  const start = match.index!;
+  const prefix = value.substring(0, start);
+  const suffix = value.substring(start + match[0].length);
+  const target = parseFloat(match[0].replace(/,/g, ""));
+  const hasCommas = match[0].includes(",");
+  const isFloat = match[0].replace(/,/g, "").includes(".");
+  return { prefix, suffix, target, hasCommas, isFloat };
+}
+
 export default function AnimatedCounter({ value, label, colorClass = "text-accent" }: AnimatedCounterProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true });
-  const [displayValue, setDisplayValue] = useState("0");
+  const [displayValue, setDisplayValue] = useState(() => {
+    const parsed = parseValue(value);
+    if (!parsed) return value;
+    return `${parsed.prefix}0${parsed.suffix}`;
+  });
 
   useEffect(() => {
     if (!isInView) return;
 
-    const numericMatch = value.replace(/,/g, "").match(/[\d.]+/);
-    if (!numericMatch) {
+    const parsed = parseValue(value);
+    if (!parsed) {
       setDisplayValue(value);
       return;
     }
 
-    const target = parseFloat(numericMatch[0]);
-    const prefix = value.substring(0, value.indexOf(numericMatch[0]));
-    const suffix = value.substring(value.indexOf(numericMatch[0]) + numericMatch[0].length);
-    const isFloat = numericMatch[0].includes(".");
+    const { prefix, suffix, target, hasCommas, isFloat } = parsed;
     const duration = 2000;
     const startTime = Date.now();
 
@@ -37,10 +51,10 @@ export default function AnimatedCounter({ value, label, colorClass = "text-accen
       const current = target * eased;
 
       let formatted: string;
-      if (target >= 1000) {
-        formatted = Math.round(current).toLocaleString();
-      } else if (isFloat) {
+      if (isFloat) {
         formatted = current.toFixed(1);
+      } else if (hasCommas) {
+        formatted = Math.round(current).toLocaleString();
       } else {
         formatted = Math.round(current).toString();
       }

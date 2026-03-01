@@ -12,7 +12,7 @@ const links = [
 
 export default function Contact() {
   return (
-    <section className="min-h-screen flex items-center justify-center py-24 px-6">
+    <section className="h-screen flex items-center justify-center py-16 px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
