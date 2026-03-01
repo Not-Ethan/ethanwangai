@@ -19,7 +19,6 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
   const isAnimating = useRef(false);
   const zoomPhase = useMotionValue(0);
   const contentRef = useRef<HTMLDivElement>(null);
-  const touchStartY = useRef(0);
 
   const goToPage = useCallback(
     async (targetPage: number) => {
