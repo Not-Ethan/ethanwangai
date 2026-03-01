@@ -1,53 +1,56 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiGithub, FiMenu, FiX } from "react-icons/fi";
 import { siteConfig } from "@/lib/data";
+import { useZoom } from "./ZoomContext";
 
 const navLinks = [
-  { label: "About", href: "#about" },
-  { label: "Experience", href: "#experience" },
-  { label: "Projects", href: "#projects" },
-  { label: "Contact", href: "#contact" },
+  { label: "About", page: 1 },
+  { label: "Experience", page: 2 },
+  { label: "Projects", page: 3 },
+  { label: "Contact", page: 4 },
 ];
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const { currentPage, goToPage } = useZoom();
+  const showBg = currentPage > 0 || mobileOpen;
 
   return (
     <motion.nav
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled || mobileOpen
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        showBg
           ? "bg-bg/80 backdrop-blur-md border-b border-white/5"
           : "bg-transparent"
       }`}
     >
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        <a href="#hero" className="font-heading font-bold text-lg text-light hover:text-accent transition-colors">
+        <button
+          onClick={() => goToPage(0)}
+          className="font-heading font-bold text-lg text-light hover:text-accent transition-colors"
+        >
           EW
-        </a>
+        </button>
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="font-mono text-sm text-muted hover:text-accent transition-colors"
+            <button
+              key={link.page}
+              onClick={() => goToPage(link.page)}
+              className={`font-mono text-sm transition-colors ${
+                currentPage === link.page
+                  ? "text-accent"
+                  : "text-muted hover:text-accent"
+              }`}
             >
               {link.label}
-            </a>
+            </button>
           ))}
           <a
             href={siteConfig.github}
@@ -80,14 +83,20 @@ export default function Navbar() {
           >
             <div className="flex flex-col items-center gap-6 py-6">
               {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="font-mono text-sm text-muted hover:text-accent transition-colors"
+                <button
+                  key={link.page}
+                  onClick={() => {
+                    goToPage(link.page);
+                    setMobileOpen(false);
+                  }}
+                  className={`font-mono text-sm transition-colors ${
+                    currentPage === link.page
+                      ? "text-accent"
+                      : "text-muted hover:text-accent"
+                  }`}
                 >
                   {link.label}
-                </a>
+                </button>
               ))}
               <a
                 href={siteConfig.github}
