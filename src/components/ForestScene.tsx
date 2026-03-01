@@ -211,7 +211,7 @@ interface ForestSceneProps {
 /* ── Main component ──────────────────────────────────────────── */
 
 export default function ForestScene({ page, zoomPhase }: ForestSceneProps) {
-  const theme = themes[Math.max(0, Math.min(4, page))];
+  const theme = themes[Math.max(0, Math.min(themes.length - 1, page))];
 
   /* ── Zoom phase transforms ─────────────────────────────────── */
 
