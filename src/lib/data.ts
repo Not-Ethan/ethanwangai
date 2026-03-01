@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "Ethan Wang",
-  tagline: "AI infrastructure · quantitative trading · startups",
+  tagline: "tl;dr I like to build things",
   email: "ethan.wanq@gmail.com",
   github: "https://github.com/Not-Ethan",
   linkedin: "https://linkedin.com/in/edw173",
