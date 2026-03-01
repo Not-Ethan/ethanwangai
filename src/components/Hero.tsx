@@ -1,13 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useMotionValue } from "framer-motion";
 import { siteConfig } from "@/lib/data";
 import ForestScene from "./ForestScene";
 
 export default function Hero() {
+  const dummyZoom = useMotionValue(0);
+
   return (
     <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">
-      <ForestScene />
+      <ForestScene page={0} zoomPhase={dummyZoom} />
 
       <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/30 via-transparent to-bg" />
 
