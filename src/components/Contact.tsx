@@ -12,56 +12,32 @@ const links = [
 
 export default function Contact() {
   return (
-    <section id="contact" className="py-32 px-6">
-      <div className="max-w-2xl mx-auto text-center">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-sm font-mono text-accent mb-6"
-        >
-          05 / Contact
-        </motion.h2>
+    <section className="min-h-screen flex items-center justify-center py-24 px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-2xl mx-auto w-full text-center rounded-2xl bg-bg-card/80 backdrop-blur-md border border-white/5 p-8 md:p-12"
+      >
+        <h2 className="text-sm font-mono text-accent mb-6">04 / Contact</h2>
 
-        <motion.h3
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.1 }}
-          className="text-4xl md:text-5xl font-heading font-bold text-light"
-        >
+        <h3 className="text-4xl md:text-5xl font-heading font-bold text-light">
           Let&apos;s build something.
-        </motion.h3>
+        </h3>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-          className="mt-4 text-muted"
-        >
+        <p className="mt-4 text-muted">
           Always interested in new opportunities, collaborations, and interesting problems.
-        </motion.p>
+        </p>
 
         <motion.a
           href={`mailto:${siteConfig.email}`}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
           whileHover={{ scale: 1.05 }}
           className="inline-block mt-8 px-8 py-3 font-mono text-sm text-accent border border-accent rounded-lg hover:bg-accent/10 transition-colors"
         >
           {siteConfig.email}<span className="animate-blink ml-0.5">▌</span>
         </motion.a>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-          className="flex justify-center gap-6 mt-10"
-        >
+        <div className="flex justify-center gap-6 mt-10">
           {links.map(({ icon: Icon, href, label }) => (
             <a
               key={label}
@@ -74,14 +50,12 @@ export default function Contact() {
               <Icon size={22} />
             </a>
           ))}
-        </motion.div>
-      </div>
+        </div>
 
-      <div className="mt-32 text-center">
-        <p className="text-xs font-mono text-muted/40">
+        <p className="mt-16 text-xs font-mono text-muted/40">
           Designed &amp; built by Ethan Wang
         </p>
-      </div>
+      </motion.div>
     </section>
   );
 }

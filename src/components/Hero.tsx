@@ -1,17 +1,12 @@
 "use client";
 
-import { motion, useMotionValue } from "framer-motion";
+import { motion } from "framer-motion";
 import { siteConfig } from "@/lib/data";
-import ForestScene from "./ForestScene";
 
 export default function Hero() {
-  const dummyZoom = useMotionValue(0);
-
   return (
-    <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">
-      <ForestScene page={0} zoomPhase={dummyZoom} />
-
-      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/30 via-transparent to-bg" />
+    <section className="relative h-screen flex items-center justify-center">
+      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-transparent via-transparent to-black/30 pointer-events-none" />
 
       <div className="relative z-10 text-center px-6">
         <motion.h1
@@ -40,7 +35,7 @@ export default function Hero() {
         transition={{ delay: 1.5, duration: 1 }}
         className="absolute bottom-8 z-10 flex flex-col items-center gap-2"
       >
-        <span className="text-xs font-mono text-muted">scroll</span>
+        <span className="text-xs font-mono text-muted">zoom</span>
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ repeat: Infinity, duration: 1.5 }}

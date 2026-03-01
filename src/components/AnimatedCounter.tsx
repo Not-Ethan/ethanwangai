@@ -11,7 +11,7 @@ interface AnimatedCounterProps {
 
 export default function AnimatedCounter({ value, label, colorClass = "text-accent" }: AnimatedCounterProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true });
   const [displayValue, setDisplayValue] = useState("0");
 
   useEffect(() => {
@@ -61,8 +61,7 @@ export default function AnimatedCounter({ value, label, colorClass = "text-accen
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className="text-center"
     >
