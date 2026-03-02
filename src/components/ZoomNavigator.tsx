@@ -18,7 +18,6 @@ const WHEEL_RUBBER_FACTOR = 0.0006;
 const TOUCH_RUBBER_FACTOR = 0.0024;
 const MAX_PULL_OFFSET = 0.36;
 const PAGE_ADVANCE_THRESHOLD = 0.2;
-const RELEASE_DELAY_MS = 90;
 const SWIPE_THRESHOLD = 20;
 
 interface ZoomNavigatorProps {
@@ -31,7 +30,6 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [visiblePage, setVisiblePage] = useState(0);
   const snapAnim = useRef<ReturnType<typeof animate>>(undefined);
-  const releaseTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isTransitioning = useRef(false);
   const basePage = useRef(0);
   const pullOffset = useRef(0);
@@ -63,14 +61,9 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
 
   /* ── Page transition driver (one gesture -> one page) ─── */
 
-  const clearReleaseTimer = useCallback(() => {
-    clearTimeout(releaseTimer.current);
-  }, []);
-
   const animateToPage = useCallback(
     (target: number) => {
       if (target < 0 || target >= TOTAL_PAGES) return;
-      clearReleaseTimer();
       snapAnim.current?.stop();
       isTransitioning.current = true;
       pullOffset.current = 0;
@@ -87,7 +80,7 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
         },
       });
     },
-    [scrollPos, clearReleaseTimer]
+    [scrollPos]
   );
 
   const applyPull = useCallback(
@@ -132,18 +125,12 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
       e.preventDefault();
       if (isTransitioning.current || Math.abs(e.deltaY) < 8) return;
       applyPull(pullOffset.current + e.deltaY * WHEEL_RUBBER_FACTOR);
-      clearReleaseTimer();
-      releaseTimer.current = setTimeout(() => {
-        settlePull();
-      }, RELEASE_DELAY_MS);
+      settlePull();
     };
 
     window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => {
-      window.removeEventListener("wheel", handleWheel);
-      clearReleaseTimer();
-    };
-  }, [applyPull, clearReleaseTimer, settlePull]);
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [applyPull, settlePull]);
 
   /* ── Touch handler ─────────────────────────────────────── */
 
@@ -153,7 +140,6 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
 
     const handleTouchStart = (e: TouchEvent) => {
       if (isTransitioning.current) return;
-      clearReleaseTimer();
       snapAnim.current?.stop();
       touchStartY = e.touches[0].clientY;
       touchLastY = touchStartY;
@@ -186,7 +172,7 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [applyPull, settlePull, clearReleaseTimer, animateToPage]);
+  }, [applyPull, settlePull, animateToPage]);
 
   /* ── Keyboard handler ──────────────────────────────────── */
 
@@ -218,10 +204,6 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [goToPage]);
-
-  useEffect(() => {
-    return () => clearReleaseTimer();
-  }, [clearReleaseTimer]);
 
   /* ── Render ────────────────────────────────────────────── */
 

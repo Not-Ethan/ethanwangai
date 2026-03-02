@@ -30,15 +30,6 @@ export default function Hero() {
           {siteConfig.name}
         </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="mt-6 text-lg md:text-xl text-light/85 font-mono tracking-wide"
-          style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}
-        >
-          {siteConfig.tagline}
-        </motion.p>
       </div>
 
       <motion.div
