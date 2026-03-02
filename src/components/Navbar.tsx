@@ -25,14 +25,14 @@ export default function Navbar() {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         showBg
-          ? "bg-bg/80 backdrop-blur-md border-b border-white/5"
+          ? "bg-gradient-to-b from-bg/95 to-bg/70 backdrop-blur-xl border-b border-cyan/15 shadow-[0_8px_30px_rgba(0,0,0,0.35)]"
           : "bg-transparent"
       }`}
     >
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <button
           onClick={() => goToPage(0)}
-          className="font-heading font-bold text-lg text-light hover:text-accent transition-colors"
+          className="font-heading font-bold text-lg text-light hover:text-accent transition-colors px-2.5 py-1 rounded-full border border-transparent hover:border-cyan/35 hover:bg-cyan/10"
         >
           EW
         </button>
@@ -43,11 +43,12 @@ export default function Navbar() {
             <button
               key={link.page}
               onClick={() => goToPage(link.page)}
+              data-active={currentPage === link.page}
               className={`font-mono text-sm transition-colors ${
                 currentPage === link.page
                   ? "text-accent"
                   : "text-muted hover:text-accent"
-              }`}
+              } nav-link`}
             >
               {link.label}
             </button>
@@ -56,7 +57,7 @@ export default function Navbar() {
             href={siteConfig.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted hover:text-accent transition-colors"
+            className="text-muted hover:text-accent transition-colors rounded-full border border-transparent hover:border-cyan/35 p-2 hover:bg-cyan/10"
           >
             <FiGithub size={18} />
           </a>
@@ -64,7 +65,7 @@ export default function Navbar() {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden text-muted hover:text-accent transition-colors"
+          className="md:hidden text-muted hover:text-accent transition-colors rounded-full border border-transparent hover:border-cyan/35 p-2 hover:bg-cyan/10"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
         >
@@ -79,7 +80,7 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden overflow-hidden bg-bg/95 backdrop-blur-md border-b border-white/5"
+            className="md:hidden overflow-hidden bg-bg/95 backdrop-blur-xl border-b border-cyan/15"
           >
             <div className="flex flex-col items-center gap-6 py-6">
               {navLinks.map((link) => (
@@ -89,11 +90,12 @@ export default function Navbar() {
                     goToPage(link.page);
                     setMobileOpen(false);
                   }}
-                  className={`font-mono text-sm transition-colors ${
+                  className={`font-mono text-sm transition-colors nav-link ${
                     currentPage === link.page
                       ? "text-accent"
                       : "text-muted hover:text-accent"
                   }`}
+                  data-active={currentPage === link.page}
                 >
                   {link.label}
                 </button>
@@ -102,7 +104,7 @@ export default function Navbar() {
                 href={siteConfig.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted hover:text-accent transition-colors"
+                className="text-muted hover:text-accent transition-colors rounded-full border border-transparent hover:border-cyan/35 p-2 hover:bg-cyan/10"
               >
                 <FiGithub size={18} />
               </a>

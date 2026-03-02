@@ -17,9 +17,9 @@ export default function Contact() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto w-full text-center rounded-2xl bg-bg-card/80 backdrop-blur-md border border-white/5 p-8 md:p-12"
+        className="max-w-2xl mx-auto w-full text-center rounded-2xl glass-panel panel-ring p-8 md:p-12"
       >
-        <h2 className="text-sm font-mono text-accent mb-6">04 / Contact</h2>
+        <h2 className="text-sm font-mono section-title mb-6">04 / Contact</h2>
 
         <h3 className="text-4xl md:text-5xl font-heading font-bold text-light">
           Let&apos;s build something.
@@ -32,7 +32,7 @@ export default function Contact() {
         <motion.a
           href={`mailto:${siteConfig.email}`}
           whileHover={{ scale: 1.05 }}
-          className="inline-block mt-8 px-8 py-3 font-mono text-sm text-accent border border-accent rounded-lg hover:bg-accent/10 transition-colors"
+          className="inline-block mt-8 px-8 py-3 font-mono text-sm text-accent border border-cyan/40 rounded-lg bg-cyan/10 hover:bg-cyan/20 shadow-[0_0_26px_rgba(98,242,162,0.25)] transition-colors"
         >
           {siteConfig.email}<span className="animate-blink ml-0.5">▌</span>
         </motion.a>
@@ -44,7 +44,7 @@ export default function Contact() {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted hover:text-accent transition-colors hover:scale-110 transform"
+              className="text-muted hover:text-accent transition-all hover:scale-110 transform rounded-full border border-cyan/20 bg-bg/35 p-2 hover:border-accent/55 hover:bg-cyan/10"
               aria-label={label}
             >
               <Icon size={22} />

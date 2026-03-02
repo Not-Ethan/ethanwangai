@@ -131,6 +131,24 @@ const frameLeaves: FrameLeaf[] = [
   { bottom: "-8%", right: "-2%", width: 250, rotate: -155, color: "#0d2e10", opacity: 0.55, sway: 3, swayDuration: 9,  swayDelay: 1,   variant: 2, flipX: true },
 ];
 
+const journeyLeaves: FrameLeaf[] = [
+  { top: "12%", left: "-8%", width: 300, rotate: 18, color: "#123a17", opacity: 0.45, sway: 1, swayDuration: 9, swayDelay: 0.5, variant: 2 },
+  { top: "26%", left: "-6%", width: 220, rotate: 28, color: "#1a4a20", opacity: 0.35, sway: 3, swayDuration: 11, swayDelay: 1.1, variant: 1, blur: 1 },
+  { top: "14%", right: "-8%", width: 320, rotate: -24, color: "#123a17", opacity: 0.46, sway: 2, swayDuration: 10, swayDelay: 0.6, variant: 2, flipX: true },
+  { top: "34%", right: "-5%", width: 220, rotate: -12, color: "#1a4a20", opacity: 0.34, sway: 1, swayDuration: 12, swayDelay: 1.8, variant: 3, flipX: true },
+  { bottom: "-12%", left: "4%", width: 340, rotate: 168, color: "#0c260f", opacity: 0.52, sway: 2, swayDuration: 10, swayDelay: 0.3, variant: 1 },
+  { bottom: "-15%", right: "2%", width: 360, rotate: -165, color: "#0c260f", opacity: 0.5, sway: 3, swayDuration: 9, swayDelay: 1.2, variant: 1, flipX: true },
+];
+
+const journeyMotes = [
+  { x: "12%", y: "40%", size: 3.5, drift: 1 as const, dur: 12, glow: 5.5, delay: 0.3, color: "#75d8cf" },
+  { x: "28%", y: "64%", size: 2.8, drift: 2 as const, dur: 14, glow: 4.8, delay: 1.2, color: "#a6d481" },
+  { x: "42%", y: "36%", size: 2.5, drift: 3 as const, dur: 10, glow: 5.1, delay: 0.8, color: "#8de9b6" },
+  { x: "58%", y: "58%", size: 3.2, drift: 1 as const, dur: 13, glow: 5.7, delay: 1.7, color: "#75d8cf" },
+  { x: "74%", y: "46%", size: 2.6, drift: 2 as const, dur: 11, glow: 4.3, delay: 0.5, color: "#a6d481" },
+  { x: "86%", y: "67%", size: 3.1, drift: 3 as const, dur: 15, glow: 6, delay: 1.9, color: "#8de9b6" },
+];
+
 const leafPaths: Record<1 | 2 | 3, { outline: string; vein: string; sideVeins: string[] }> = {
   1: {
     outline: "M50 4 C68 16 78 38 68 68 C62 82 56 92 50 96 C44 92 38 82 32 68 C22 38 32 16 50 4 Z",
@@ -156,14 +174,32 @@ interface ForestSceneProps {
 }
 
 export default function ForestScene({ scrollPos }: ForestSceneProps) {
-  /* ── Continuous zoom (camera pushes into forest) ──────── */
-  const scaleFg = useTransform(scrollPos, [0, 2], [1, 3.5]);
-  const opacityFg = useTransform(scrollPos, [0, 0.8, 1.5], [1, 0.4, 0]);
-  const scaleMg = useTransform(scrollPos, [0, 4], [1, 2.2]);
-  const opacityMg = useTransform(scrollPos, [0, 2, 3.5], [1, 0.6, 0]);
-  const scaleMt = useTransform(scrollPos, [0, 4], [1, 1.5]);
-  const leafScale = useTransform(scrollPos, [0, 1.5], [1, 4]);
-  const leafZoomOp = useTransform(scrollPos, [0, 0.8], [1, 0]);
+  /* ── Flipbook-like chapter transitions ────────────────── */
+  const scaleFg = useTransform(scrollPos, [0, 4], [1, 1.4]);
+  const yFg = useTransform(scrollPos, [0, 1, 2, 3, 4], [0, 70, 155, 235, 320]);
+  const opacityFg = useTransform(scrollPos, [0, 0.6, 1, 1.2, 4], [1, 0.38, 0.05, 0, 0]);
+  const scaleMg = useTransform(scrollPos, [0, 4], [1, 1.22]);
+  const yMg = useTransform(scrollPos, [0, 1, 2, 3, 4], [0, 50, 100, 150, 210]);
+  const opacityMg = useTransform(scrollPos, [0, 1.8, 3.8], [1, 0.55, 0.08]);
+  const scaleMt = useTransform(scrollPos, [0, 4], [1, 1.1]);
+  const leafScale = useTransform(scrollPos, [0, 1.1], [1, 2.4]);
+  const leafZoomOp = useTransform(scrollPos, [0, 0.65, 0.95], [1, 0.35, 0]);
+  const journeyLeafScale = useTransform(scrollPos, [1, 4], [1, 1.22]);
+  const journeyLeafOp = useTransform(scrollPos, [0.7, 1.1, 4], [0, 0.55, 0.8]);
+  const journeyMoteOp = useTransform(scrollPos, [0.9, 1.4, 4], [0, 0.5, 0.82]);
+  const vignetteOp = useTransform(scrollPos, [0, 4], [0.15, 0.48]);
+  const chapter1Op = useTransform(scrollPos, [0.45, 1, 1.55], [0, 0.95, 0]);
+  const chapter2Op = useTransform(scrollPos, [1.45, 2, 2.55], [0, 0.95, 0]);
+  const chapter3Op = useTransform(scrollPos, [2.45, 3, 3.55], [0, 0.95, 0]);
+  const chapter4Op = useTransform(scrollPos, [3.45, 4, 4.4], [0, 0.95, 0]);
+  const chapter1Y = useTransform(scrollPos, [0.45, 1, 1.55], [120, 0, 110]);
+  const chapter2Y = useTransform(scrollPos, [1.45, 2, 2.55], [120, 0, 110]);
+  const chapter3Y = useTransform(scrollPos, [2.45, 3, 3.55], [120, 0, 110]);
+  const chapter4Y = useTransform(scrollPos, [3.45, 4, 4.4], [120, 0, 100]);
+  const deerFlip = useTransform(scrollPos, [0.65, 1, 1.35], [90, 0, 90]);
+  const foxFlip = useTransform(scrollPos, [1.65, 2, 2.35], [90, 0, 90]);
+  const owlFlip = useTransform(scrollPos, [2.65, 3, 3.35], [90, 0, 90]);
+  const hareFlip = useTransform(scrollPos, [3.65, 4, 4.3], [90, 0, 90]);
 
   /* ── Smooth color interpolation from scrollPos ────────── */
   const skyTop = useTransform(scrollPos, P, SKY_TOP);
@@ -260,7 +296,7 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
       </motion.div>
 
       {/* ── Mid-ground trees ─────────────────────────────── */}
-      <motion.div style={{ scale: scaleMg, opacity: opacityMg }} className="absolute inset-0 origin-bottom">
+      <motion.div style={{ scale: scaleMg, y: yMg, opacity: opacityMg }} className="absolute inset-0 origin-bottom">
         <svg
           viewBox="0 0 1440 500"
           className="absolute bottom-0 w-full h-[70%] min-h-[300px]"
@@ -292,7 +328,7 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
       </motion.div>
 
       {/* ── Foreground trees ─────────────────────────────── */}
-      <motion.div style={{ scale: scaleFg, opacity: opacityFg }} className="absolute inset-0 origin-bottom">
+      <motion.div style={{ scale: scaleFg, y: yFg, opacity: opacityFg }} className="absolute inset-0 origin-bottom">
         <svg
           viewBox="0 0 1440 600"
           className="absolute bottom-0 w-full h-[65%] min-h-[280px]"
@@ -350,10 +386,136 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
         })}
       </motion.div>
 
+      {/* ── Journey leaves (fade in after hero) ───────────── */}
+      <motion.div
+        style={{ scale: journeyLeafScale, opacity: journeyLeafOp }}
+        className="absolute inset-0 pointer-events-none origin-bottom"
+      >
+        {journeyLeaves.map((leaf, i) => {
+          const shape = leafPaths[leaf.variant];
+          return (
+            <div
+              key={`journey-${i}`}
+              className="absolute"
+              style={{
+                top: leaf.top, bottom: leaf.bottom,
+                left: leaf.left, right: leaf.right,
+                width: leaf.width, height: leaf.width,
+                opacity: leaf.opacity,
+              }}
+            >
+              <div
+                style={{
+                  width: "100%", height: "100%",
+                  animation: `leaf-sway-${leaf.sway} ${leaf.swayDuration}s ease-in-out ${leaf.swayDelay}s infinite`,
+                  transformOrigin: "top center",
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%", height: "100%",
+                    transform: `rotate(${leaf.rotate}deg)${leaf.flipX ? " scaleX(-1)" : ""}`,
+                    filter: leaf.blur ? `blur(${leaf.blur}px)` : undefined,
+                  }}
+                >
+                  <svg viewBox="0 0 100 100" className="w-full h-full" fill="none">
+                    <path d={shape.outline} fill={leaf.color} />
+                    <path d={shape.vein} stroke={leaf.color} strokeWidth="1" opacity="0.22" />
+                    {shape.sideVeins.map((d, j) => (
+                      <path key={j} d={d} stroke={leaf.color} strokeWidth="0.5" opacity="0.12" />
+                    ))}
+                  </svg>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </motion.div>
+
+      {/* ── Journey motes ─────────────────────────────────── */}
+      <motion.div className="absolute inset-0 pointer-events-none" style={{ opacity: journeyMoteOp }}>
+        {journeyMotes.map((mote, i) => (
+          <div
+            key={`mote-${i}`}
+            className="absolute rounded-full"
+            style={{
+              left: mote.x,
+              top: mote.y,
+              width: mote.size,
+              height: mote.size,
+              backgroundColor: mote.color,
+              boxShadow: `0 0 ${mote.size * 4}px ${mote.color}90, 0 0 ${mote.size * 8}px ${mote.color}40`,
+              animation: `firefly-drift-${mote.drift} ${mote.dur}s ease-in-out ${mote.delay}s infinite, firefly-glow ${mote.glow}s ease-in-out ${mote.delay}s infinite`,
+            }}
+          />
+        ))}
+      </motion.div>
+
+      {/* ── Chapter tree cutouts (flipbook pages) ────────── */}
+      <motion.div className="absolute inset-0 pointer-events-none origin-bottom" style={{ opacity: chapter1Op, y: chapter1Y }}>
+        <svg viewBox="0 0 1440 420" className="absolute bottom-0 w-full h-[54%] min-h-[220px]" preserveAspectRatio="xMidYMax slice" fill="none">
+          <path d="M0 420 L0 300 Q90 220 180 300 Q260 180 340 290 Q430 170 520 300 Q620 190 710 320 Q790 210 870 300 Q980 180 1080 320 Q1190 200 1280 310 Q1360 230 1440 300 L1440 420 Z" fill="#11381a" />
+        </svg>
+      </motion.div>
+      <motion.div className="absolute inset-0 pointer-events-none origin-bottom" style={{ opacity: chapter2Op, y: chapter2Y }}>
+        <svg viewBox="0 0 1440 420" className="absolute bottom-0 w-full h-[56%] min-h-[220px]" preserveAspectRatio="xMidYMax slice" fill="none">
+          <path d="M0 420 L0 320 Q110 210 220 320 Q300 150 380 300 Q460 190 540 320 Q640 170 720 300 Q820 200 900 330 Q1000 170 1100 300 Q1220 180 1320 320 Q1380 250 1440 310 L1440 420 Z" fill="#0e3116" />
+        </svg>
+      </motion.div>
+      <motion.div className="absolute inset-0 pointer-events-none origin-bottom" style={{ opacity: chapter3Op, y: chapter3Y }}>
+        <svg viewBox="0 0 1440 420" className="absolute bottom-0 w-full h-[58%] min-h-[220px]" preserveAspectRatio="xMidYMax slice" fill="none">
+          <path d="M0 420 L0 315 Q120 240 240 315 Q350 170 460 320 Q560 180 660 300 Q760 160 860 315 Q960 180 1060 300 Q1170 160 1280 320 Q1360 240 1440 310 L1440 420 Z" fill="#0b2712" />
+        </svg>
+      </motion.div>
+      <motion.div className="absolute inset-0 pointer-events-none origin-bottom" style={{ opacity: chapter4Op, y: chapter4Y }}>
+        <svg viewBox="0 0 1440 420" className="absolute bottom-0 w-full h-[60%] min-h-[220px]" preserveAspectRatio="xMidYMax slice" fill="none">
+          <path d="M0 420 L0 325 Q100 250 200 330 Q320 180 440 330 Q560 200 680 320 Q820 150 960 330 Q1060 210 1160 320 Q1280 190 1400 330 Q1420 320 1440 322 L1440 420 Z" fill="#07170c" />
+        </svg>
+      </motion.div>
+
+      {/* ── Animals flipping up/down between pages ───────── */}
+      <div className="absolute inset-0 pointer-events-none" style={{ perspective: 1200 }}>
+        <motion.div className="absolute bottom-[18%] left-[28%] w-16 h-10 origin-bottom" style={{ rotateX: deerFlip, opacity: chapter1Op }}>
+          <svg viewBox="0 0 120 70" className="w-full h-full" fill="none">
+            <path d="M14 56 L34 48 L52 48 L70 38 L90 40 L104 50 L90 54 L84 64 L72 64 L68 54 L48 56 L40 66 L30 66 L30 56 Z" fill="#1a1208" />
+            <path d="M70 30 L76 20 L82 30 L86 20 L92 30" stroke="#1a1208" strokeWidth="4" strokeLinecap="round" />
+          </svg>
+        </motion.div>
+        <motion.div className="absolute bottom-[14%] left-[56%] w-14 h-8 origin-bottom" style={{ rotateX: foxFlip, opacity: chapter2Op }}>
+          <svg viewBox="0 0 120 70" className="w-full h-full" fill="none">
+            <path d="M12 52 L36 44 L56 44 L72 36 L88 40 L106 34 L92 50 L78 58 L58 58 L48 64 L38 64 L32 56 Z" fill="#1f1409" />
+            <path d="M88 40 L102 30 L106 40" fill="#1f1409" />
+          </svg>
+        </motion.div>
+        <motion.div className="absolute bottom-[31%] right-[24%] w-10 h-10 origin-bottom" style={{ rotateX: owlFlip, opacity: chapter3Op }}>
+          <svg viewBox="0 0 80 80" className="w-full h-full" fill="none">
+            <circle cx="40" cy="42" r="20" fill="#151010" />
+            <circle cx="34" cy="38" r="3" fill="#c8d8e8" />
+            <circle cx="46" cy="38" r="3" fill="#c8d8e8" />
+            <path d="M36 46 L44 46 L40 52 Z" fill="#d4a574" />
+          </svg>
+        </motion.div>
+        <motion.div className="absolute bottom-[12%] right-[34%] w-10 h-7 origin-bottom" style={{ rotateX: hareFlip, opacity: chapter4Op }}>
+          <svg viewBox="0 0 100 60" className="w-full h-full" fill="none">
+            <path d="M14 44 L30 34 L48 34 L60 24 L74 22 L86 30 L80 42 L64 46 L48 48 L34 48 L24 52 Z" fill="#18120d" />
+            <path d="M60 24 L56 6 L64 4 L68 24 M70 22 L70 6 L78 6 L78 22" stroke="#18120d" strokeWidth="4" strokeLinecap="round" />
+          </svg>
+        </motion.div>
+      </div>
+
       {/* ── Ground fog ───────────────────────────────────── */}
       <motion.div
         className="absolute bottom-0 left-0 right-0 h-40"
         style={{ background: fogGrad }}
+      />
+
+      {/* ── Vignette for depth at later pages ────────────── */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          opacity: vignetteOp,
+          background: "radial-gradient(ellipse 85% 75% at 50% 35%, transparent 55%, rgba(0, 0, 0, 0.68) 100%)",
+        }}
       />
     </div>
   );

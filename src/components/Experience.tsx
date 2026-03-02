@@ -68,9 +68,9 @@ export default function Experience() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto w-full rounded-2xl bg-bg-card/80 backdrop-blur-md border border-white/5 p-6 md:p-8"
+        className="max-w-4xl mx-auto w-full rounded-2xl glass-panel panel-ring p-6 md:p-8"
       >
-        <h2 className="text-sm font-mono text-accent mb-6">02 / Experience</h2>
+        <h2 className="text-sm font-mono section-title mb-6">02 / Experience</h2>
 
         {/* Slide area */}
         <div className="relative min-h-[320px] overflow-hidden">
@@ -95,7 +95,7 @@ export default function Experience() {
                   </h3>
                   <p className="text-muted text-sm italic">{exp.role}</p>
                 </div>
-                <div className="text-sm font-mono text-muted whitespace-nowrap">{exp.dates}</div>
+                <div className="text-sm font-mono text-cyan/70 whitespace-nowrap">{exp.dates}</div>
               </div>
 
               <p className="text-xs font-mono text-muted/60 mt-1">{exp.location}</p>
@@ -103,17 +103,17 @@ export default function Experience() {
               <ul className="mt-5 space-y-3">
                 {exp.bullets.map((bullet, j) => (
                   <li key={j} className="text-sm text-light/90 leading-relaxed flex gap-2">
-                    <span className="text-accent mt-1 shrink-0">&#9657;</span>
-                    <span>{renderBullet(bullet)}</span>
-                  </li>
-                ))}
-              </ul>
+                  <span className="text-cyan mt-1 shrink-0">&#9657;</span>
+                  <span>{renderBullet(bullet)}</span>
+                </li>
+              ))}
+            </ul>
 
               <div className="flex flex-wrap gap-2 mt-5">
                 {exp.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2 py-0.5 text-xs font-mono text-accent/80 bg-accent/10 rounded border border-accent/20"
+                    className="px-2 py-0.5 text-xs font-mono text-accent/90 bg-accent/10 rounded border border-cyan/25 shadow-[0_0_12px_rgba(86,215,211,0.15)]"
                   >
                     {tag}
                   </span>
@@ -127,7 +127,7 @@ export default function Experience() {
         <div className="flex items-center justify-center gap-4 mt-6">
           <button
             onClick={prev}
-            className={`p-1 transition-colors ${activeIndex === 0 ? "text-muted/20 cursor-default" : "text-muted hover:text-light"}`}
+            className={`p-1 transition-colors ${activeIndex === 0 ? "text-muted/20 cursor-default" : "text-muted hover:text-cyan"}`}
             aria-label="Previous experience"
             disabled={activeIndex === 0}
           >
@@ -142,7 +142,7 @@ export default function Experience() {
                 key={i}
                 onClick={() => navigate(i)}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  i === activeIndex ? "bg-accent" : "bg-muted/40"
+                  i === activeIndex ? "bg-accent shadow-[0_0_12px_rgba(98,242,162,0.8)]" : "bg-muted/40"
                 }`}
                 aria-label={`Go to experience ${i + 1}`}
               />
@@ -151,7 +151,7 @@ export default function Experience() {
 
           <button
             onClick={next}
-            className={`p-1 transition-colors ${activeIndex === experience.length - 1 ? "text-muted/20 cursor-default" : "text-muted hover:text-light"}`}
+            className={`p-1 transition-colors ${activeIndex === experience.length - 1 ? "text-muted/20 cursor-default" : "text-muted hover:text-cyan"}`}
             aria-label="Next experience"
             disabled={activeIndex === experience.length - 1}
           >

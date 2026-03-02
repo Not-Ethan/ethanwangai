@@ -54,9 +54,9 @@ export default function Projects() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto w-full rounded-2xl bg-bg-card/80 backdrop-blur-md border border-white/5 p-6 md:p-8"
+        className="max-w-4xl mx-auto w-full rounded-2xl glass-panel panel-ring p-6 md:p-8"
       >
-        <h2 className="text-sm font-mono text-accent mb-6">03 / Projects</h2>
+        <h2 className="text-sm font-mono section-title mb-6">03 / Projects</h2>
 
         {/* Slide area */}
         <div className="relative min-h-[300px] overflow-hidden">
@@ -85,9 +85,9 @@ export default function Projects() {
                 )}
               </div>
 
-              <p className="text-sm text-muted mt-3 leading-relaxed">{project.description}</p>
+              <p className="text-sm text-light/75 mt-3 leading-relaxed">{project.description}</p>
 
-              <div className={`mt-4 inline-flex items-center gap-2 px-3 py-1 rounded ${project.award ? "bg-gold/10 border border-gold/30" : "bg-accent/10 border border-accent/20"}`}>
+              <div className={`mt-4 inline-flex items-center gap-2 px-3 py-1 rounded ${project.award ? "bg-gold/10 border border-gold/30" : "metric-pill"}`}>
                 {project.award && (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-gold shrink-0">
                     <path d="M12 2L9 8.5H3L7.5 13L5.5 20L12 16L18.5 20L16.5 13L21 8.5H15L12 2Z" fill="currentColor"/>
@@ -98,8 +98,8 @@ export default function Projects() {
 
               <ul className="mt-5 space-y-2.5">
                 {project.bullets.map((bullet, j) => (
-                  <li key={j} className="text-sm text-muted/80 flex gap-2">
-                    <span className="text-accent/60 mt-0.5 shrink-0">▹</span>
+                  <li key={j} className="text-sm text-light/80 flex gap-2">
+                    <span className="text-cyan/70 mt-0.5 shrink-0">▹</span>
                     {bullet}
                   </li>
                 ))}
@@ -109,7 +109,7 @@ export default function Projects() {
                 {project.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2 py-0.5 text-xs font-mono text-accent/80 bg-accent/10 rounded border border-accent/20"
+                    className="px-2 py-0.5 text-xs font-mono text-accent/90 bg-accent/10 rounded border border-cyan/25 shadow-[0_0_12px_rgba(86,215,211,0.15)]"
                   >
                     {tag}
                   </span>
@@ -123,7 +123,7 @@ export default function Projects() {
         <div className="flex items-center justify-center gap-4 mt-6">
           <button
             onClick={prev}
-            className={`p-1 transition-colors ${activeIndex === 0 ? "text-muted/20 cursor-default" : "text-muted hover:text-light"}`}
+            className={`p-1 transition-colors ${activeIndex === 0 ? "text-muted/20 cursor-default" : "text-muted hover:text-cyan"}`}
             aria-label="Previous project"
             disabled={activeIndex === 0}
           >
@@ -138,7 +138,7 @@ export default function Projects() {
                 key={i}
                 onClick={() => navigate(i)}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  i === activeIndex ? "bg-accent" : "bg-muted/40"
+                  i === activeIndex ? "bg-accent shadow-[0_0_12px_rgba(98,242,162,0.8)]" : "bg-muted/40"
                 }`}
                 aria-label={`Go to project ${i + 1}`}
               />
@@ -147,7 +147,7 @@ export default function Projects() {
 
           <button
             onClick={next}
-            className={`p-1 transition-colors ${activeIndex === projects.length - 1 ? "text-muted/20 cursor-default" : "text-muted hover:text-light"}`}
+            className={`p-1 transition-colors ${activeIndex === projects.length - 1 ? "text-muted/20 cursor-default" : "text-muted hover:text-cyan"}`}
             aria-label="Next project"
             disabled={activeIndex === projects.length - 1}
           >

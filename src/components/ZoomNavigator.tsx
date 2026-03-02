@@ -7,7 +7,6 @@ import {
   useTransform,
   animate,
   useMotionValueEvent,
-  type MotionValue,
 } from "framer-motion";
 import ForestScene from "./ForestScene";
 import DotNav from "./DotNav";
@@ -15,8 +14,7 @@ import Navbar from "./Navbar";
 import { ZoomContext } from "./ZoomContext";
 
 const TOTAL_PAGES = 5;
-const SCROLL_SENSITIVITY = 0.002;
-const SNAP_DELAY = 150;
+const SWIPE_THRESHOLD = 35;
 
 interface ZoomNavigatorProps {
   children: React.ReactNode;
@@ -27,8 +25,8 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
   const scrollPos = useMotionValue(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [visiblePage, setVisiblePage] = useState(0);
-  const snapTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const snapAnim = useRef<ReturnType<typeof animate>>(undefined);
+  const isTransitioning = useRef(false);
   const prevNearest = useRef(0);
 
   /* ── Derived MotionValues (GPU-driven, no re-renders) ──── */
@@ -55,41 +53,32 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
     }
   });
 
-  /* ── Snapping ──────────────────────────────────────────── */
+  /* ── Page transition driver (one gesture -> one page) ─── */
 
-  const snapToNearest = useCallback(() => {
-    const pos = scrollPos.get();
-    const target = Math.round(pos);
-    snapAnim.current?.stop();
-    snapAnim.current = animate(scrollPos, target, {
-      type: "spring",
-      stiffness: 200,
-      damping: 25,
-    });
-  }, [scrollPos]);
-
-  const resetSnapTimer = useCallback(() => {
-    clearTimeout(snapTimer.current);
-    snapTimer.current = setTimeout(snapToNearest, SNAP_DELAY);
-  }, [snapToNearest]);
-
-  useEffect(() => {
-    return () => clearTimeout(snapTimer.current);
-  }, []);
+  const animateToPage = useCallback(
+    (target: number) => {
+      if (target < 0 || target >= TOTAL_PAGES) return;
+      snapAnim.current?.stop();
+      isTransitioning.current = true;
+      snapAnim.current = animate(scrollPos, target, {
+        duration: 0.62,
+        ease: [0.22, 1, 0.36, 1],
+        onComplete: () => {
+          isTransitioning.current = false;
+        },
+      });
+    },
+    [scrollPos]
+  );
 
   /* ── goToPage (nav buttons, keyboard) ──────────────────── */
 
   const goToPage = useCallback(
     (page: number) => {
-      if (page < 0 || page >= TOTAL_PAGES) return;
-      clearTimeout(snapTimer.current);
-      snapAnim.current?.stop();
-      snapAnim.current = animate(scrollPos, page, {
-        duration: 0.8,
-        ease: [0.22, 1, 0.36, 1],
-      });
+      if (page < 0 || page >= TOTAL_PAGES || isTransitioning.current) return;
+      animateToPage(page);
     },
-    [scrollPos]
+    [animateToPage]
   );
 
   /* ── Wheel handler ─────────────────────────────────────── */
@@ -97,59 +86,49 @@ export default function ZoomNavigator({ children }: ZoomNavigatorProps) {
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      snapAnim.current?.stop();
-
-      const pos = scrollPos.get();
-      const newPos = Math.max(
-        0,
-        Math.min(TOTAL_PAGES - 1, pos + e.deltaY * SCROLL_SENSITIVITY)
-      );
-      scrollPos.set(newPos);
-      resetSnapTimer();
+      if (isTransitioning.current || Math.abs(e.deltaY) < 8) return;
+      const current = Math.round(scrollPos.get());
+      const dir = e.deltaY > 0 ? 1 : -1;
+      animateToPage(Math.max(0, Math.min(TOTAL_PAGES - 1, current + dir)));
     };
 
     window.addEventListener("wheel", handleWheel, { passive: false });
     return () => window.removeEventListener("wheel", handleWheel);
-  }, [scrollPos, resetSnapTimer]);
+  }, [scrollPos, animateToPage]);
 
   /* ── Touch handler ─────────────────────────────────────── */
 
   useEffect(() => {
-    let lastTouchY = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
 
     const handleTouchStart = (e: TouchEvent) => {
-      lastTouchY = e.touches[0].clientY;
-      snapAnim.current?.stop();
-      clearTimeout(snapTimer.current);
+      touchStartY = e.touches[0].clientY;
+      touchEndY = touchStartY;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      const currentY = e.touches[0].clientY;
-      const delta = lastTouchY - currentY;
-      lastTouchY = currentY;
-
-      const pos = scrollPos.get();
-      const newPos = Math.max(
-        0,
-        Math.min(TOTAL_PAGES - 1, pos + delta * 0.004)
-      );
-      scrollPos.set(newPos);
+      touchEndY = e.touches[0].clientY;
     };
 
     const handleTouchEnd = () => {
-      snapToNearest();
+      if (isTransitioning.current) return;
+      const delta = touchStartY - touchEndY;
+      if (Math.abs(delta) < SWIPE_THRESHOLD) return;
+      const current = Math.round(scrollPos.get());
+      const dir = delta > 0 ? 1 : -1;
+      animateToPage(Math.max(0, Math.min(TOTAL_PAGES - 1, current + dir)));
     };
 
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
     window.addEventListener("touchend", handleTouchEnd, { passive: true });
     return () => {
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [scrollPos, snapToNearest]);
+  }, [scrollPos, animateToPage]);
 
   /* ── Keyboard handler ──────────────────────────────────── */
 

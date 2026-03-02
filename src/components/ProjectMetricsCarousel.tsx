@@ -57,7 +57,11 @@ export default function ProjectMetricsCarousel({
   const [direction, setDirection] = useState(1);
   const [progress, setProgress] = useState(0);
   const pauseUntilRef = useRef(0);
-  const lastTickRef = useRef(Date.now());
+  const lastTickRef = useRef(0);
+
+  useEffect(() => {
+    lastTickRef.current = Date.now();
+  }, []);
 
   const navigate = useCallback(
     (index: number) => {

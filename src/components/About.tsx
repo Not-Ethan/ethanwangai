@@ -14,9 +14,9 @@ export default function About() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="rounded-2xl bg-bg-card/80 backdrop-blur-md border border-white/5 p-6 md:p-8"
+          className="rounded-2xl glass-panel panel-ring p-6 md:p-8"
         >
-          <h2 className="text-sm font-mono text-accent mb-3">01 / About</h2>
+          <h2 className="text-sm font-mono section-title mb-3">01 / About</h2>
 
           <div className="grid md:grid-cols-2 gap-8 items-start">
             <div>
@@ -42,13 +42,13 @@ export default function About() {
             <div className="space-y-2.5">
               {categories.map(([category, items]) => (
                 <div key={category} className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-mono text-muted/60 uppercase tracking-wider w-24 shrink-0">
+                  <span className="text-xs font-mono text-cyan/60 uppercase tracking-wider w-24 shrink-0">
                     {category}
                   </span>
                   {items.map((skill) => (
                     <span
                       key={skill}
-                      className="px-2 py-0.5 text-xs font-mono text-light/80 bg-bg/50 rounded border border-white/5 hover:border-accent/40 hover:text-accent transition-all cursor-default"
+                      className="px-2 py-0.5 text-xs font-mono text-light/85 bg-bg/45 rounded border border-cyan/20 hover:border-accent/45 hover:text-accent hover:-translate-y-0.5 transition-all cursor-default"
                     >
                       {skill}
                     </span>

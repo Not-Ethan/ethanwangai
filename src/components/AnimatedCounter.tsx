@@ -35,14 +35,12 @@ export default function AnimatedCounter({ value, label, colorClass = "text-accen
     if (!isInView) return;
 
     const parsed = parseValue(value);
-    if (!parsed) {
-      setDisplayValue(value);
-      return;
-    }
+    if (!parsed) return;
 
     const { prefix, suffix, target, hasCommas, isFloat } = parsed;
     const duration = 2000;
     const startTime = Date.now();
+    let frameId = 0;
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
@@ -62,13 +60,17 @@ export default function AnimatedCounter({ value, label, colorClass = "text-accen
       setDisplayValue(`${prefix}${formatted}${suffix}`);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        frameId = requestAnimationFrame(animate);
       } else {
         setDisplayValue(value);
       }
     };
 
-    requestAnimationFrame(animate);
+    frameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
   }, [isInView, value]);
 
   return (
@@ -80,7 +82,7 @@ export default function AnimatedCounter({ value, label, colorClass = "text-accen
       className="text-center"
     >
       <div className={`text-3xl md:text-4xl font-mono font-bold ${colorClass}`}>
-        {displayValue}
+        {parseValue(value) ? displayValue : value}
       </div>
       <div className="mt-1 text-sm text-muted font-mono">{label}</div>
     </motion.div>
