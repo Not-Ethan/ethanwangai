@@ -136,7 +136,7 @@ export default function ProjectMetricsCarousel({
       </h3>
 
       {/* Metrics slide area */}
-      <div className="relative w-full min-h-[150px] sm:min-h-[200px] flex items-center justify-center overflow-hidden">
+      <div className="relative w-full min-h-[130px] sm:min-h-[200px] flex items-center justify-center overflow-hidden">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={activeIndex}
@@ -146,15 +146,19 @@ export default function ProjectMetricsCarousel({
             animate="center"
             exit="exit"
             transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="flex flex-col items-center gap-5 sm:gap-8 w-full"
+            className="grid grid-cols-2 md:flex md:flex-col md:items-center gap-3 sm:gap-4 md:gap-8 w-full"
           >
             {project.metrics.map((metric, i) => (
-              <AnimatedCounter
+              <div
                 key={`${activeIndex}-${i}`}
-                value={metric.value}
-                label={metric.label}
-                colorClass={colors.text}
-              />
+                className={project.metrics.length % 2 === 1 && i === project.metrics.length - 1 ? "col-span-2" : undefined}
+              >
+                <AnimatedCounter
+                  value={metric.value}
+                  label={metric.label}
+                  colorClass={colors.text}
+                />
+              </div>
             ))}
           </motion.div>
         </AnimatePresence>

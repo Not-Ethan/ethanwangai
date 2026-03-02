@@ -14,7 +14,7 @@ export default function About() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="rounded-2xl glass-panel panel-ring p-4 sm:p-5 md:p-8 max-h-[calc(100vh-6.5rem)] md:max-h-none overflow-y-auto"
+          className="rounded-2xl glass-panel panel-ring p-4 sm:p-5 md:p-8 max-h-[calc(100vh-7.25rem)] md:max-h-none overflow-y-auto"
         >
           <h2 className="text-sm font-mono section-title mb-3">01 / About</h2>
 

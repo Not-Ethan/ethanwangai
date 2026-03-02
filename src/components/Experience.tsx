@@ -68,12 +68,12 @@ export default function Experience() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto w-full rounded-2xl glass-panel panel-ring p-4 sm:p-5 md:p-8 max-h-[calc(100vh-6.5rem)] md:max-h-none overflow-y-auto"
+        className="max-w-4xl mx-auto w-full rounded-2xl glass-panel panel-ring p-4 sm:p-5 md:p-8 max-h-[calc(100vh-7.25rem)] md:max-h-none overflow-y-auto"
       >
-        <h2 className="text-sm font-mono section-title mb-6">02 / Experience</h2>
+        <h2 className="text-sm font-mono section-title mb-4 md:mb-6">02 / Experience</h2>
 
         {/* Slide area */}
-        <div className="relative min-h-[250px] sm:min-h-[320px] overflow-hidden">
+        <div className="relative min-h-[220px] sm:min-h-[320px] overflow-hidden">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={activeIndex}
@@ -100,7 +100,7 @@ export default function Experience() {
 
               <p className="text-xs font-mono text-muted/60 mt-1">{exp.location}</p>
 
-              <ul className="mt-5 space-y-3">
+              <ul className="mt-4 space-y-2.5">
                 {exp.bullets.map((bullet, j) => (
                   <li key={j} className="text-sm text-light/90 leading-relaxed flex gap-2">
                   <span className="text-cyan mt-1 shrink-0">&#9657;</span>
@@ -109,7 +109,7 @@ export default function Experience() {
               ))}
             </ul>
 
-              <div className="flex flex-wrap gap-2 mt-5">
+              <div className="flex flex-wrap gap-2 mt-4">
                 {exp.tags.map((tag) => (
                   <span
                     key={tag}
@@ -124,7 +124,7 @@ export default function Experience() {
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-center gap-4 mt-6">
+        <div className="flex items-center justify-center gap-4 mt-4 md:mt-6 pb-1">
           <button
             onClick={prev}
             className={`p-1 transition-colors ${activeIndex === 0 ? "text-muted/20 cursor-default" : "text-muted hover:text-cyan"}`}
