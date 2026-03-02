@@ -8,13 +8,13 @@ export default function About() {
   const categories = Object.entries(skills);
 
   return (
-    <section className="h-screen flex items-center justify-center py-16 px-6">
+    <section className="h-screen flex items-start md:items-center justify-center pt-20 pb-5 md:py-16 px-4 md:px-6">
       <div className="max-w-6xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="rounded-2xl glass-panel panel-ring p-6 md:p-8"
+          className="rounded-2xl glass-panel panel-ring p-4 sm:p-5 md:p-8 max-h-[calc(100vh-6.5rem)] md:max-h-none overflow-y-auto"
         >
           <h2 className="text-sm font-mono section-title mb-3">01 / About</h2>
 

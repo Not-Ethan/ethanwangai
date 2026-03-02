@@ -12,16 +12,16 @@ const links = [
 
 export default function Contact() {
   return (
-    <section className="h-screen flex items-center justify-center py-16 px-6">
+    <section className="h-screen flex items-start md:items-center justify-center pt-20 pb-5 md:py-16 px-4 md:px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto w-full text-center rounded-2xl glass-panel panel-ring p-8 md:p-12"
+        className="max-w-2xl mx-auto w-full text-center rounded-2xl glass-panel panel-ring p-5 sm:p-6 md:p-12 max-h-[calc(100vh-6.5rem)] md:max-h-none overflow-y-auto"
       >
         <h2 className="text-sm font-mono section-title mb-6">04 / Contact</h2>
 
-        <h3 className="text-4xl md:text-5xl font-heading font-bold text-light">
+        <h3 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-light">
           Let&apos;s build something.
         </h3>
 
@@ -37,7 +37,7 @@ export default function Contact() {
           {siteConfig.email}<span className="animate-blink ml-0.5">▌</span>
         </motion.a>
 
-        <div className="flex justify-center gap-6 mt-10">
+        <div className="flex justify-center gap-5 mt-8 md:mt-10">
           {links.map(({ icon: Icon, href, label }) => (
             <a
               key={label}
@@ -52,7 +52,7 @@ export default function Contact() {
           ))}
         </div>
 
-        <p className="mt-16 text-xs font-mono text-muted/40">
+        <p className="mt-10 md:mt-16 text-xs font-mono text-muted/40">
           Designed &amp; built by Ethan Wang
         </p>
       </motion.div>

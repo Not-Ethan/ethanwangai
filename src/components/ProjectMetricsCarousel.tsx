@@ -124,7 +124,7 @@ export default function ProjectMetricsCarousel({
       initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6 }}
-      className="flex flex-col items-center gap-6"
+      className="flex flex-col items-center gap-4 sm:gap-6"
     >
       {/* Project name */}
       <h3 className={`font-mono text-sm tracking-wider uppercase ${colors.text}`}>
@@ -136,7 +136,7 @@ export default function ProjectMetricsCarousel({
       </h3>
 
       {/* Metrics slide area */}
-      <div className="relative w-full min-h-[200px] flex items-center justify-center overflow-hidden">
+      <div className="relative w-full min-h-[150px] sm:min-h-[200px] flex items-center justify-center overflow-hidden">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={activeIndex}
@@ -146,7 +146,7 @@ export default function ProjectMetricsCarousel({
             animate="center"
             exit="exit"
             transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="flex flex-col items-center gap-8 w-full"
+            className="flex flex-col items-center gap-5 sm:gap-8 w-full"
           >
             {project.metrics.map((metric, i) => (
               <AnimatedCounter

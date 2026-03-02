@@ -207,6 +207,43 @@ interface ForestSceneProps {
 }
 
 export default function ForestScene({ scrollPos }: ForestSceneProps) {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < 768);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const activeFrameLeaves = React.useMemo(
+    () =>
+      isMobile
+        ? frameLeaves
+            .filter((leaf) => leaf.bottom)
+            .map((leaf) => ({
+              ...leaf,
+              width: Math.round(leaf.width * 0.88),
+              opacity: Math.min(leaf.opacity * 0.82, 0.48),
+            }))
+        : frameLeaves,
+    [isMobile]
+  );
+
+  const activeJourneyLeaves = React.useMemo(
+    () =>
+      isMobile
+        ? journeyLeaves
+            .filter((leaf) => leaf.bottom)
+            .map((leaf) => ({
+              ...leaf,
+              width: Math.round(leaf.width * 0.84),
+              opacity: Math.min(leaf.opacity * 0.8, 0.5),
+            }))
+        : journeyLeaves,
+    [isMobile]
+  );
+
   /* ── Flipbook-like chapter transitions ────────────────── */
   const scaleFg = useTransform(scrollPos, [0, 4], [1, 1.4]);
   const yFg = useTransform(scrollPos, [0, 1, 2, 3, 4], [0, 70, 155, 235, 320]);
@@ -215,10 +252,19 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
   const yMg = useTransform(scrollPos, [0, 1, 2, 3, 4], [0, 50, 100, 150, 210]);
   const opacityMg = useTransform(scrollPos, [0, 1.8, 3.8], [1, 0.55, 0.08]);
   const scaleMt = useTransform(scrollPos, [0, 4], [1, 1.1]);
-  const leafScale = useTransform(scrollPos, [0, 1.1], [1, 2.4]);
-  const leafZoomOp = useTransform(scrollPos, [0, 0.65, 0.95], [1, 0.35, 0]);
-  const journeyLeafScale = useTransform(scrollPos, [1, 4], [1, 1.22]);
-  const journeyLeafOp = useTransform(scrollPos, [0.65, 1, 4], [0, 0.78, 0.9]);
+  const leafScale = useTransform(scrollPos, [0, 1.1], [1, isMobile ? 1.65 : 2.4]);
+  const leafZoomOp = useTransform(
+    scrollPos,
+    isMobile ? [0, 0.4, 0.7] : [0, 0.65, 0.95],
+    isMobile ? [0.9, 0.22, 0] : [1, 0.35, 0]
+  );
+  const journeyLeafScale = useTransform(scrollPos, [1, 4], [1, isMobile ? 1.08 : 1.22]);
+  const journeyLeafOp = useTransform(
+    scrollPos,
+    isMobile ? [0.7, 1, 2.1, 3, 4] : [0.65, 1, 4],
+    isMobile ? [0, 0.48, 0.2, 0.08, 0] : [0, 0.78, 0.9]
+  );
+  const journeyLeafY = useTransform(scrollPos, (value) => (isMobile ? 125 + value * 22 : 0));
   const journeyMoteOp = useTransform(scrollPos, [0.9, 1.4, 4], [0, 0.5, 0.82]);
   const vignetteOp = useTransform(scrollPos, [0, 4], [0.15, 0.48]);
   const chapter1Op = useTransform(scrollPos, [0.45, 1, 1.55], [0, 0.95, 0]);
@@ -426,7 +472,7 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
         style={{ scale: leafScale, opacity: combinedLeafOp }}
         className="absolute inset-0 pointer-events-none origin-bottom"
       >
-        {frameLeaves.map((leaf, i) => {
+        {activeFrameLeaves.map((leaf, i) => {
           const shape = leafPaths[leaf.variant];
           return (
             <div
@@ -469,10 +515,10 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
 
       {/* ── Journey leaves (fade in after hero) ───────────── */}
       <motion.div
-        style={{ scale: journeyLeafScale, opacity: journeyLeafOp }}
+        style={{ scale: journeyLeafScale, y: journeyLeafY, opacity: journeyLeafOp }}
         className="absolute inset-0 pointer-events-none origin-bottom"
       >
-        {journeyLeaves.map((leaf, i) => {
+        {activeJourneyLeaves.map((leaf, i) => {
           const shape = leafPaths[leaf.variant];
           return (
             <div

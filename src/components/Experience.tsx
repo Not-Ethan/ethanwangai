@@ -63,17 +63,17 @@ export default function Experience() {
   const exp = experience[activeIndex];
 
   return (
-    <section className="h-screen flex items-center justify-center py-16 px-6">
+    <section className="h-screen flex items-start md:items-center justify-center pt-20 pb-5 md:py-16 px-4 md:px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto w-full rounded-2xl glass-panel panel-ring p-6 md:p-8"
+        className="max-w-4xl mx-auto w-full rounded-2xl glass-panel panel-ring p-4 sm:p-5 md:p-8 max-h-[calc(100vh-6.5rem)] md:max-h-none overflow-y-auto"
       >
         <h2 className="text-sm font-mono section-title mb-6">02 / Experience</h2>
 
         {/* Slide area */}
-        <div className="relative min-h-[320px] overflow-hidden">
+        <div className="relative min-h-[250px] sm:min-h-[320px] overflow-hidden">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={activeIndex}
