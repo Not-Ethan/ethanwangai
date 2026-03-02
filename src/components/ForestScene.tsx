@@ -7,9 +7,9 @@ import { motion, useTransform, useMotionTemplate, type MotionValue } from "frame
 
 const P = [0, 1, 2, 3, 4];
 
-const SKY_TOP =        ["#1a0a2e", "#0a4a30", "#2e1a3d", "#1a0a1e", "#050a0f"];
-const SKY_MID =        ["#3d1f5c", "#1a6b4a", "#8b4a6b", "#6b2a3d", "#0a1a12"];
-const SKY_BOTTOM =     ["#e8734a", "#2d8a5e", "#d4764a", "#e85a3a", "#0b1a0f"];
+const SKY_TOP =        ["#130718", "#0a1720", "#120a1d", "#09080f", "#030407"];
+const SKY_MID =        ["#281531", "#10202b", "#2b1734", "#16131d", "#07090d"];
+const SKY_BOTTOM =     ["#4b2a38", "#152831", "#45253a", "#1a1620", "#090b10"];
 const ATMO_GLOW =      ["rgba(232,115,74,0.30)", "rgba(74,222,128,0.12)", "rgba(212,118,74,0.25)", "rgba(232,90,58,0.35)", "rgba(200,216,232,0.05)"];
 const CELESTIAL =      ["#f5c542", "#f5e870", "#e8734a", "#d44a2e", "#c8d8e8"];
 const CELESTIAL_GLOW = ["rgba(245,197,66,0.5)", "rgba(245,232,112,0.35)", "rgba(232,115,74,0.4)", "rgba(212,74,46,0.5)", "rgba(200,216,232,0.15)"];
@@ -22,7 +22,7 @@ const GROUND_FG =      ["#0b1a0f", "#0e2a12", "#0a1a0d", "#070f08", "#040a06"];
 const TRUNK =          ["#5a3a1e", "#6b4f2e", "#4a2e14", "#3a2010", "#1a1208"];
 
 const CELESTIAL_SIZE =   [96, 64, 88, 104, 48];
-const CELESTIAL_BOTTOM = [35, 68, 30, 15, 65];
+const CELESTIAL_BOTTOM = [35, 68, 30, 15, 82];
 const FIREFLY_OPACITY =  [0.3, 0.08, 0.6, 0.8, 1];
 
 /* ── Tree path helpers ───────────────────────────────────────────── */
@@ -105,6 +105,12 @@ const fireflyConfigs = [
   { x: "42%", y: "56%", size: 3,   drift: 3 as const, dur: 4.3, glow: 3.0, delay: 2.4, color: "#b8d44f" },
   { x: "58%", y: "74%", size: 2.5, drift: 1 as const, dur: 5.2, glow: 4.4, delay: 0.5, color: "#d4e860" },
   { x: "88%", y: "62%", size: 3,   drift: 2 as const, dur: 4.6, glow: 3.7, delay: 1.9, color: "#b8d44f" },
+  { x: "6%", y: "50%", size: 2.5, drift: 3 as const, dur: 4.7, glow: 3.1, delay: 0.2, color: "#d4e860" },
+  { x: "18%", y: "38%", size: 2, drift: 1 as const, dur: 5.4, glow: 2.9, delay: 1.7, color: "#b8d44f" },
+  { x: "48%", y: "60%", size: 2.5, drift: 2 as const, dur: 4.4, glow: 3.6, delay: 1.1, color: "#d4e860" },
+  { x: "67%", y: "40%", size: 2.2, drift: 3 as const, dur: 5.9, glow: 3.2, delay: 0.6, color: "#b8d44f" },
+  { x: "78%", y: "76%", size: 2.4, drift: 1 as const, dur: 4.9, glow: 3.4, delay: 2.2, color: "#d4e860" },
+  { x: "93%", y: "54%", size: 2, drift: 2 as const, dur: 5.3, glow: 3.8, delay: 0.9, color: "#b8d44f" },
 ];
 
 /* ── Underbrush leaf config ──────────────────────────────────────── */
@@ -132,12 +138,16 @@ const frameLeaves: FrameLeaf[] = [
 ];
 
 const journeyLeaves: FrameLeaf[] = [
-  { top: "12%", left: "-8%", width: 300, rotate: 18, color: "#123a17", opacity: 0.45, sway: 1, swayDuration: 9, swayDelay: 0.5, variant: 2 },
-  { top: "26%", left: "-6%", width: 220, rotate: 28, color: "#1a4a20", opacity: 0.35, sway: 3, swayDuration: 11, swayDelay: 1.1, variant: 1, blur: 1 },
-  { top: "14%", right: "-8%", width: 320, rotate: -24, color: "#123a17", opacity: 0.46, sway: 2, swayDuration: 10, swayDelay: 0.6, variant: 2, flipX: true },
-  { top: "34%", right: "-5%", width: 220, rotate: -12, color: "#1a4a20", opacity: 0.34, sway: 1, swayDuration: 12, swayDelay: 1.8, variant: 3, flipX: true },
-  { bottom: "-12%", left: "4%", width: 340, rotate: 168, color: "#0c260f", opacity: 0.52, sway: 2, swayDuration: 10, swayDelay: 0.3, variant: 1 },
-  { bottom: "-15%", right: "2%", width: 360, rotate: -165, color: "#0c260f", opacity: 0.5, sway: 3, swayDuration: 9, swayDelay: 1.2, variant: 1, flipX: true },
+  { top: "8%", left: "-10%", width: 360, rotate: 16, color: "#153e1b", opacity: 0.58, sway: 1, swayDuration: 9, swayDelay: 0.5, variant: 2 },
+  { top: "22%", left: "-8%", width: 280, rotate: 24, color: "#1d4f24", opacity: 0.46, sway: 3, swayDuration: 11, swayDelay: 1.1, variant: 1, blur: 0.8 },
+  { top: "42%", left: "-6%", width: 220, rotate: 8, color: "#1a4620", opacity: 0.4, sway: 2, swayDuration: 10, swayDelay: 0.7, variant: 3 },
+  { top: "10%", right: "-10%", width: 360, rotate: -22, color: "#153e1b", opacity: 0.6, sway: 2, swayDuration: 10, swayDelay: 0.6, variant: 2, flipX: true },
+  { top: "30%", right: "-8%", width: 280, rotate: -14, color: "#1d4f24", opacity: 0.44, sway: 1, swayDuration: 12, swayDelay: 1.8, variant: 3, flipX: true },
+  { top: "50%", right: "-5%", width: 220, rotate: -8, color: "#1a4620", opacity: 0.36, sway: 3, swayDuration: 11, swayDelay: 1.2, variant: 1, flipX: true },
+  { bottom: "-14%", left: "2%", width: 390, rotate: 168, color: "#0d2811", opacity: 0.62, sway: 2, swayDuration: 10, swayDelay: 0.3, variant: 1 },
+  { bottom: "-16%", left: "24%", width: 280, rotate: 176, color: "#103014", opacity: 0.45, sway: 1, swayDuration: 9, swayDelay: 0.9, variant: 2 },
+  { bottom: "-16%", right: "2%", width: 390, rotate: -165, color: "#0d2811", opacity: 0.6, sway: 3, swayDuration: 9, swayDelay: 1.2, variant: 1, flipX: true },
+  { bottom: "-15%", right: "22%", width: 280, rotate: -173, color: "#103014", opacity: 0.44, sway: 2, swayDuration: 10, swayDelay: 1.5, variant: 2, flipX: true },
 ];
 
 const journeyMotes = [
@@ -147,6 +157,29 @@ const journeyMotes = [
   { x: "58%", y: "58%", size: 3.2, drift: 1 as const, dur: 13, glow: 5.7, delay: 1.7, color: "#75d8cf" },
   { x: "74%", y: "46%", size: 2.6, drift: 2 as const, dur: 11, glow: 4.3, delay: 0.5, color: "#a6d481" },
   { x: "86%", y: "67%", size: 3.1, drift: 3 as const, dur: 15, glow: 6, delay: 1.9, color: "#8de9b6" },
+];
+
+const nightStars = [
+  { x: "6%", y: "10%", size: 1.5, delay: 0.1, duration: 2.8 },
+  { x: "12%", y: "22%", size: 1.8, delay: 1.2, duration: 3.3 },
+  { x: "18%", y: "14%", size: 1.3, delay: 0.8, duration: 2.6 },
+  { x: "26%", y: "8%", size: 1.7, delay: 1.7, duration: 3.1 },
+  { x: "34%", y: "20%", size: 1.6, delay: 0.4, duration: 2.9 },
+  { x: "41%", y: "12%", size: 2, delay: 1.5, duration: 3.5 },
+  { x: "48%", y: "18%", size: 1.4, delay: 1, duration: 2.7 },
+  { x: "56%", y: "9%", size: 1.8, delay: 0.3, duration: 3.2 },
+  { x: "63%", y: "16%", size: 1.5, delay: 1.9, duration: 2.8 },
+  { x: "70%", y: "11%", size: 1.9, delay: 0.7, duration: 3.4 },
+  { x: "78%", y: "22%", size: 1.6, delay: 1.4, duration: 2.6 },
+  { x: "84%", y: "8%", size: 1.7, delay: 0.6, duration: 3.1 },
+  { x: "90%", y: "17%", size: 1.4, delay: 1.8, duration: 2.9 },
+  { x: "95%", y: "12%", size: 1.6, delay: 0.9, duration: 3.2 },
+];
+
+const shootingStars = [
+  { x: "74%", y: "14%", width: 70, travelX: -280, travelY: 180, duration: 2.2, delay: 0.2 },
+  { x: "88%", y: "18%", width: 62, travelX: -250, travelY: 160, duration: 2.5, delay: 0.9 },
+  { x: "80%", y: "10%", width: 54, travelX: -220, travelY: 150, duration: 2.1, delay: 1.5 },
 ];
 
 const leafPaths: Record<1 | 2 | 3, { outline: string; vein: string; sideVeins: string[] }> = {
@@ -185,7 +218,7 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
   const leafScale = useTransform(scrollPos, [0, 1.1], [1, 2.4]);
   const leafZoomOp = useTransform(scrollPos, [0, 0.65, 0.95], [1, 0.35, 0]);
   const journeyLeafScale = useTransform(scrollPos, [1, 4], [1, 1.22]);
-  const journeyLeafOp = useTransform(scrollPos, [0.7, 1.1, 4], [0, 0.55, 0.8]);
+  const journeyLeafOp = useTransform(scrollPos, [0.65, 1, 4], [0, 0.78, 0.9]);
   const journeyMoteOp = useTransform(scrollPos, [0.9, 1.4, 4], [0, 0.5, 0.82]);
   const vignetteOp = useTransform(scrollPos, [0, 4], [0.15, 0.48]);
   const chapter1Op = useTransform(scrollPos, [0.45, 1, 1.55], [0, 0.95, 0]);
@@ -196,10 +229,10 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
   const chapter2Y = useTransform(scrollPos, [1.45, 2, 2.55], [120, 0, 110]);
   const chapter3Y = useTransform(scrollPos, [2.45, 3, 3.55], [120, 0, 110]);
   const chapter4Y = useTransform(scrollPos, [3.45, 4, 4.4], [120, 0, 100]);
-  const deerFlip = useTransform(scrollPos, [0.65, 1, 1.35], [90, 0, 90]);
-  const foxFlip = useTransform(scrollPos, [1.65, 2, 2.35], [90, 0, 90]);
   const owlFlip = useTransform(scrollPos, [2.65, 3, 3.35], [90, 0, 90]);
   const hareFlip = useTransform(scrollPos, [3.65, 4, 4.3], [90, 0, 90]);
+  const nightSkyOp = useTransform(scrollPos, [3.15, 3.75, 4.4], [0, 0.72, 1]);
+  const shootingOp = useTransform(scrollPos, [3.45, 3.95, 4.4], [0, 0.9, 1]);
 
   /* ── Smooth color interpolation from scrollPos ────────── */
   const skyTop = useTransform(scrollPos, P, SKY_TOP);
@@ -257,6 +290,54 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
 
       {/* ── Atmosphere glow ──────────────────────────────── */}
       <motion.div className="absolute inset-0" style={{ background: atmoGrad }} />
+
+      {/* ── Final-page star field and shooting stars ────── */}
+      <motion.div className="absolute inset-0 pointer-events-none" style={{ opacity: nightSkyOp }}>
+        {nightStars.map((star, i) => (
+          <div
+            key={`star-${i}`}
+            className="absolute rounded-full"
+            style={{
+              left: star.x,
+              top: star.y,
+              width: star.size,
+              height: star.size,
+              backgroundColor: "#f2f7ff",
+              boxShadow: "0 0 10px rgba(208, 226, 255, 0.85)",
+              animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite`,
+            }}
+          />
+        ))}
+      </motion.div>
+      <motion.div className="absolute inset-0 pointer-events-none" style={{ opacity: shootingOp }}>
+        {shootingStars.map((star, i) => (
+          <motion.div
+            key={`shooting-star-${i}`}
+            className="absolute h-[1.5px] rounded-full"
+            initial={{ x: 0, y: 0, opacity: 0 }}
+            animate={{
+              x: [0, star.travelX],
+              y: [0, star.travelY],
+              opacity: [0, 0.95, 0],
+            }}
+            transition={{
+              duration: star.duration,
+              ease: "easeInOut",
+              repeat: Infinity,
+              repeatDelay: 1.8,
+              delay: star.delay,
+            }}
+            style={{
+              left: star.x,
+              top: star.y,
+              width: star.width,
+              background: "linear-gradient(90deg, rgba(240,248,255,0), rgba(240,248,255,0.95), rgba(240,248,255,0))",
+              filter: "drop-shadow(0 0 8px rgba(210, 230, 255, 0.95))",
+              rotate: "-22deg",
+            }}
+          />
+        ))}
+      </motion.div>
 
       {/* ── Celestial body (sun/moon) ────────────────────── */}
       <motion.div
@@ -475,18 +556,6 @@ export default function ForestScene({ scrollPos }: ForestSceneProps) {
 
       {/* ── Animals flipping up/down between pages ───────── */}
       <div className="absolute inset-0 pointer-events-none" style={{ perspective: 1200 }}>
-        <motion.div className="absolute bottom-[18%] left-[28%] w-16 h-10 origin-bottom" style={{ rotateX: deerFlip, opacity: chapter1Op }}>
-          <svg viewBox="0 0 120 70" className="w-full h-full" fill="none">
-            <path d="M14 56 L34 48 L52 48 L70 38 L90 40 L104 50 L90 54 L84 64 L72 64 L68 54 L48 56 L40 66 L30 66 L30 56 Z" fill="#1a1208" />
-            <path d="M70 30 L76 20 L82 30 L86 20 L92 30" stroke="#1a1208" strokeWidth="4" strokeLinecap="round" />
-          </svg>
-        </motion.div>
-        <motion.div className="absolute bottom-[14%] left-[56%] w-14 h-8 origin-bottom" style={{ rotateX: foxFlip, opacity: chapter2Op }}>
-          <svg viewBox="0 0 120 70" className="w-full h-full" fill="none">
-            <path d="M12 52 L36 44 L56 44 L72 36 L88 40 L106 34 L92 50 L78 58 L58 58 L48 64 L38 64 L32 56 Z" fill="#1f1409" />
-            <path d="M88 40 L102 30 L106 40" fill="#1f1409" />
-          </svg>
-        </motion.div>
         <motion.div className="absolute bottom-[31%] right-[24%] w-10 h-10 origin-bottom" style={{ rotateX: owlFlip, opacity: chapter3Op }}>
           <svg viewBox="0 0 80 80" className="w-full h-full" fill="none">
             <circle cx="40" cy="42" r="20" fill="#151010" />

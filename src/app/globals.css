@@ -6,9 +6,9 @@
 @import "@fontsource/jetbrains-mono/400.css";
 
 @theme {
-  --color-bg: #06110a;
-  --color-bg-card: #102116;
-  --color-bg-card-hover: #1a3221;
+  --color-bg: #040609;
+  --color-bg-card: #0b1015;
+  --color-bg-card-hover: #131a22;
   --color-accent: #62f2a2;
   --color-accent-glow: #62f2a270;
   --color-cyan: #56d7d3;
@@ -53,6 +53,21 @@
   @keyframes twinkle {
     0%, 100% { opacity: 0.2; }
     50% { opacity: 0.9; }
+  }
+  @keyframes shooting-star-1 {
+    0%, 86% { transform: translate3d(0, 0, 0) rotate(-20deg); opacity: 0; }
+    90% { opacity: 0.95; }
+    100% { transform: translate3d(-280px, 180px, 0) rotate(-20deg); opacity: 0; }
+  }
+  @keyframes shooting-star-2 {
+    0%, 80% { transform: translate3d(0, 0, 0) rotate(-30deg); opacity: 0; }
+    84% { opacity: 0.9; }
+    100% { transform: translate3d(-250px, 160px, 0) rotate(-30deg); opacity: 0; }
+  }
+  @keyframes shooting-star-3 {
+    0%, 88% { transform: translate3d(0, 0, 0) rotate(-25deg); opacity: 0; }
+    92% { opacity: 0.9; }
+    100% { transform: translate3d(-220px, 150px, 0) rotate(-25deg); opacity: 0; }
   }
 }
 
@@ -132,16 +147,19 @@ body::before {
   overflow: hidden;
 }
 
+@property --ring-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 90deg;
+}
+
 .panel-ring::before {
   content: "";
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 240%;
-  height: 240%;
+  inset: 0;
   pointer-events: none;
   background: conic-gradient(
-    from 90deg,
+    from var(--ring-angle) at 50% 50%,
     transparent,
     rgba(86, 215, 211, 0.18),
     transparent,
@@ -149,18 +167,19 @@ body::before {
     transparent
   );
   opacity: 0;
-  transform: translate(-50%, -50%) rotate(0deg);
+  border-radius: inherit;
   transition: opacity 0.35s ease;
+  will-change: --ring-angle;
 }
 
 .panel-ring:hover::before {
-  opacity: 0.8;
-  animation: spin 8s linear infinite;
+  opacity: 0.85;
+  animation: ring-spin 8s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(360deg); }
+@keyframes ring-spin {
+  from { --ring-angle: 90deg; }
+  to { --ring-angle: 450deg; }
 }
 
 .section-title {

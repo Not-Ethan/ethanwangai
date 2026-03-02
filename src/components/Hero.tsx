@@ -17,7 +17,7 @@ export default function Hero() {
           className="inline-flex items-center gap-2 rounded-full border border-cyan/35 bg-bg/40 px-3 py-1 text-[11px] font-mono tracking-[0.16em] text-cyan/90 mb-5 floating-soft"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-accent twinkle" />
-          OPEN TO BUILD
+          CS + MATH @ CWRU
         </motion.div>
 
         <motion.h1
