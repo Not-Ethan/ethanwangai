@@ -11,9 +11,13 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { stats } from "@/lib/data";
-import { treelinePath } from "@/lib/forest";
+import { treelinePath, bushlinePath } from "@/lib/forest";
 
 const DISTANT_RIDGE = treelinePath(31, 1440, 140, 0.25, 0.55);
+const BUSH_TOP_BACK = bushlinePath(61, 1440, 120);
+const BUSH_TOP_FRONT = bushlinePath(62, 1440, 120);
+const BUSH_BOTTOM_BACK = bushlinePath(63, 1440, 120);
+const BUSH_BOTTOM_FRONT = bushlinePath(64, 1440, 120);
 
 // Where along the walk each lantern lights up, plus per-lantern hang/sway
 // variation so the row feels hand-strung rather than manufactured.
@@ -68,7 +72,7 @@ function Lantern({
 }) {
   const t = THRESHOLDS[index % THRESHOLDS.length];
   const lit = useTransform(progress, [t - 0.08, t], [0, 1]);
-  const haloOpacity = useTransform(lit, [0, 1], [0.04, 0.65]);
+  const haloOpacity = useTransform(lit, [0, 1], [0.05, 0.9]);
   const numberColor = useTransform(lit, [0, 1], ["rgba(143,168,152,0.5)", "#3a2206"]);
   const [started, setStarted] = useState(false);
   useMotionValueEvent(progress, "change", (v) => {
@@ -77,7 +81,7 @@ function Lantern({
 
   return (
     <div
-      className="relative flex w-44 shrink-0 flex-col items-center md:w-52"
+      className="relative flex w-48 shrink-0 flex-col items-center md:w-56"
       style={{ paddingTop: HANGS[index % HANGS.length] }}
     >
       <div
@@ -94,11 +98,11 @@ function Lantern({
         />
 
         <div className="relative">
-          {/* Warm halo once lit */}
+          {/* Warm halo once lit (radial gradient, not blur: iOS clips filters) */}
           <motion.div
             aria-hidden
             style={{ opacity: haloOpacity }}
-            className="absolute -inset-10 rounded-full bg-firefly/30 blur-2xl"
+            className="absolute -inset-14 bg-[radial-gradient(circle,rgba(251,191,36,0.35),transparent_66%)]"
           />
 
           <svg viewBox="0 0 140 180" className="relative h-40 w-auto md:h-48" aria-hidden>
@@ -131,9 +135,6 @@ function Lantern({
               <ellipse cx="70" cy="120" rx="9" ry="13" fill="#fb923c" opacity="0.55" />
               <ellipse cx="70" cy="122" rx="5.5" ry="9" fill="#fff7d6" />
             </motion.g>
-            {/* frame bars */}
-            <line x1="48" y1="46" x2="48" y2="138" stroke="#2c3a2e" strokeWidth="2.5" opacity="0.85" />
-            <line x1="92" y1="46" x2="92" y2="138" stroke="#2c3a2e" strokeWidth="2.5" opacity="0.85" />
             {/* base */}
             <path d="M26 138 L114 138 L104 156 L36 156 Z" fill="#324636" />
             <rect x="54" y="156" width="32" height="8" rx="3" fill="#2c3a2e" />
@@ -149,11 +150,20 @@ function Lantern({
             </motion.span>
           </div>
         </div>
-      </div>
 
-      <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-fog">
-        {stat.label}
-      </p>
+        {/* Label tag hanging off the lantern, swaying with it */}
+        <div className="-mt-1.5 flex flex-col items-center" aria-hidden={false}>
+          <div className="flex w-16 justify-between">
+            <span aria-hidden className="h-3.5 w-px rotate-[14deg] bg-mist/25" />
+            <span aria-hidden className="h-3.5 w-px -rotate-[14deg] bg-mist/25" />
+          </div>
+          <div className="rounded-md border border-[#3d2e19] bg-[#150f08] px-3 py-1.5 shadow-[0_3px_12px_rgba(0,0,0,0.45)]">
+            <span className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.18em] text-fog">
+              {stat.label}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -161,7 +171,8 @@ function Lantern({
 /**
  * "Lanterns hung along the path": the section pins while vertical scroll
  * pans the scene sideways, like walking a trail past four hanging lanterns.
- * Each one flickers on as you reach it.
+ * Foliage bars close in from the top and bottom like cinematic letterboxing,
+ * and a guide firefly flies ahead to show the direction of travel.
  */
 export default function LanternPath() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -192,6 +203,21 @@ export default function LanternPath() {
   const xs = useSpring(x, { stiffness: 55, damping: 19, mass: 0.4 });
   const xRidge = useTransform(xs, (v) => v * 0.25);
 
+  // Cinematic foliage bars: in as the walk pins, out as it releases
+  const yTopBar = useSpring(
+    useTransform(scrollYProgress, [0, 0.08, 0.92, 1], ["-103%", "0%", "0%", "-103%"]),
+    { stiffness: 80, damping: 20 }
+  );
+  const yBottomBar = useSpring(
+    useTransform(scrollYProgress, [0, 0.08, 0.92, 1], ["103%", "0%", "0%", "103%"]),
+    { stiffness: 80, damping: 20 }
+  );
+
+  // Guide firefly flying ahead down the trail
+  const guideLeft = useTransform(scrollYProgress, [0.05, 0.95], ["4%", "93%"]);
+  const guideBob = useTransform(scrollYProgress, (v) => Math.sin(v * Math.PI * 6) * 12);
+  const guideOpacity = useTransform(scrollYProgress, [0.02, 0.09, 0.91, 0.98], [0, 1, 1, 0]);
+
   return (
     <section ref={sectionRef} className="relative h-[300vh]">
       <div ref={stageRef} className="sticky top-0 flex h-svh items-center overflow-hidden">
@@ -205,21 +231,22 @@ export default function LanternPath() {
         {/* Low fog over the trail */}
         <div
           aria-hidden
-          className="absolute inset-x-[-20%] bottom-10 h-20 animate-mist rounded-full bg-mist/[0.04] blur-3xl"
+          className="absolute inset-x-[-20%] bottom-10 h-24 animate-mist bg-[radial-gradient(ellipse_at_center,rgba(234,242,236,0.05),transparent_70%)]"
+        />
+
+        {/* The trail underfoot: dashes pan with the walk */}
+        <motion.div
+          aria-hidden
+          style={{ backgroundPositionX: xs }}
+          className="absolute inset-x-0 bottom-[19vh] z-10 h-px bg-[repeating-linear-gradient(90deg,rgba(234,242,236,0.22)_0_14px,transparent_14px_32px)]"
         />
 
         {/* Everything that pans as you walk */}
         <motion.div
           ref={trackRef}
           style={{ x: xs }}
-          className="absolute flex items-center gap-12 pl-[8vw] pr-[12vw] md:gap-20"
+          className="absolute z-10 flex items-center gap-12 pl-[8vw] pr-[12vw] md:gap-20"
         >
-          {/* The trail underfoot */}
-          <div
-            aria-hidden
-            className="absolute bottom-[-26vh] left-0 h-px w-full bg-[repeating-linear-gradient(90deg,rgba(234,242,236,0.2)_0_14px,transparent_14px_32px)]"
-          />
-
           {/* Lead-in */}
           <div className="w-[72vw] shrink-0 sm:w-[26rem]">
             <p className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.3em] text-moss">
@@ -243,6 +270,38 @@ export default function LanternPath() {
             <p className="font-display text-xl italic text-fog/80">the path continues</p>
             <p className="mt-2 animate-bounce font-mono text-xs text-fog/60">↓</p>
           </div>
+        </motion.div>
+
+        {/* Guide firefly */}
+        <motion.div
+          aria-hidden
+          style={{ left: guideLeft, y: guideBob, opacity: guideOpacity }}
+          className="absolute bottom-[22vh] z-30"
+        >
+          <span className="absolute right-1 top-1/2 h-px w-8 -translate-y-1/2 bg-gradient-to-l from-firefly/70 to-transparent" />
+          <span className="block h-2 w-2 rounded-full bg-firefly shadow-[0_0_10px_3px_rgba(251,191,36,0.55)]" />
+        </motion.div>
+
+        {/* Cinematic foliage bars */}
+        <motion.div
+          aria-hidden
+          style={{ y: yTopBar }}
+          className="absolute inset-x-0 top-0 z-20 h-[11vh] md:h-[14vh]"
+        >
+          <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="h-full w-full rotate-180">
+            <path d={BUSH_TOP_BACK} fill="#0a170e" />
+            <path d={BUSH_TOP_FRONT} fill="#030a06" opacity="0.95" />
+          </svg>
+        </motion.div>
+        <motion.div
+          aria-hidden
+          style={{ y: yBottomBar }}
+          className="absolute inset-x-0 bottom-0 z-20 h-[14vh] md:h-[18vh]"
+        >
+          <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="h-full w-full">
+            <path d={BUSH_BOTTOM_BACK} fill="#0a170e" />
+            <path d={BUSH_BOTTOM_FRONT} fill="#030a06" opacity="0.95" />
+          </svg>
         </motion.div>
       </div>
     </section>

@@ -75,7 +75,7 @@ export default function Hero() {
         aria-hidden
         className="absolute right-[10%] top-[12%] md:right-[16%] md:top-[16%]"
       >
-        <div className="absolute -inset-10 rounded-full bg-mist/10 blur-2xl" />
+        <div className="absolute -inset-12 bg-[radial-gradient(circle,rgba(234,242,236,0.14),transparent_68%)]" />
         <svg viewBox="0 0 64 64" className="relative h-16 w-16 md:h-20 md:w-20">
           <circle cx="32" cy="32" r="30" fill="#e8efe6" />
           <circle cx="22" cy="24" r="6" fill="#cfdacd" />
@@ -126,7 +126,7 @@ export default function Hero() {
 
       <div
         aria-hidden
-        className="absolute inset-x-[-20%] bottom-16 h-24 animate-mist rounded-full bg-mist/5 blur-3xl"
+        className="absolute inset-x-[-20%] bottom-16 h-24 animate-mist bg-[radial-gradient(ellipse_at_center,rgba(234,242,236,0.07),transparent_70%)]"
       />
 
       <motion.div style={{ y: yMid }} className="absolute inset-x-0 -bottom-4" aria-hidden>

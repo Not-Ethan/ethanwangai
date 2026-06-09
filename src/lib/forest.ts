@@ -69,6 +69,25 @@ export function terrainSparkline(seed: number, width = 600, height = 120, steps 
   return { line, area, last };
 }
 
+/**
+ * A lumpy bush/shrub silhouette: rolling rounded humps along the bottom of
+ * a `width` x `height` viewBox. Used for the cinematic foliage bars.
+ */
+export function bushlinePath(seed: number, width = 1440, height = 120) {
+  const rnd = mulberry32(seed);
+  let x = 0;
+  let d = `M0 ${height} L0 ${(height * 0.5).toFixed(1)}`;
+  while (x < width) {
+    const r = 60 + rnd() * 110;
+    const peak = height * (0.12 + rnd() * 0.35);
+    const valley = height * (0.45 + rnd() * 0.28);
+    d += ` Q${(x + r / 2).toFixed(1)} ${peak.toFixed(1)} ${(x + r).toFixed(1)} ${valley.toFixed(1)}`;
+    x += r;
+  }
+  d += ` L${width} ${height} Z`;
+  return d;
+}
+
 export type Star = {
   x: number;
   y: number;

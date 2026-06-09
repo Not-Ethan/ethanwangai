@@ -23,8 +23,8 @@ const EMBERS = Array.from({ length: 10 }, () => ({
 function Campfire() {
   return (
     <div className="relative mx-auto h-44 w-56" aria-hidden>
-      {/* Warm halo */}
-      <div className="absolute left-1/2 top-1/2 h-40 w-52 -translate-x-1/2 -translate-y-1/3 animate-halo rounded-full bg-ember/20 blur-3xl" />
+      {/* Warm halo (radial gradient, not blur: iOS clips filters) */}
+      <div className="absolute left-1/2 top-1/2 h-44 w-56 -translate-x-1/2 -translate-y-1/3 animate-halo bg-[radial-gradient(ellipse_at_center,rgba(251,146,60,0.3),transparent_68%)]" />
 
       {/* Rising embers */}
       {EMBERS.map((e, i) => (
