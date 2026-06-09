@@ -3,6 +3,7 @@ import Fireflies from "@/components/Fireflies";
 import TrailProgress from "@/components/TrailProgress";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
+import LanternPath from "@/components/LanternPath";
 import Experience from "@/components/Experience";
 import Projects from "@/components/Projects";
 import Skills from "@/components/Skills";
@@ -24,6 +25,7 @@ export default function Home() {
       <main className="relative z-10">
         <Hero />
         <About />
+        <LanternPath />
         <Experience />
         <Projects />
         <Skills />

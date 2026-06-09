@@ -1,7 +1,6 @@
 export const siteConfig = {
   name: "Ethan Wang",
   tagline: "tl;dr I like to build things",
-  roles: ["software engineer", "quant trader", "founder"],
   email: "ethan.wanq@gmail.com",
   github: "https://github.com/Not-Ethan",
   linkedin: "https://linkedin.com/in/edw173",
@@ -73,7 +72,7 @@ export const projects = [
     title: "Orbit Chrome Extension",
     description:
       "Multimodal semantic search engine for saved text, audio, and video using CLIP/CLAP embeddings.",
-    metric: "Most Innovative Use of Groundbreaking Technology — TartanHacks 2025 @ CMU",
+    metric: "Most Innovative Use of Groundbreaking Technology · TartanHacks 2025 @ CMU",
     award: true,
     tags: ["Flask", "PyTorch", "ChromaDB", "CLIP/CLAP"],
     featured: false,

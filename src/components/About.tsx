@@ -2,9 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import AnimatedCounter from "./AnimatedCounter";
 import SectionHeading from "./SectionHeading";
-import { stats } from "@/lib/data";
 import { treelinePath } from "@/lib/forest";
 
 const CANOPY_OVERHEAD = treelinePath(77, 1440, 160, 0.4, 0.9);
@@ -18,8 +16,8 @@ export default function About() {
   const yCanopy = useTransform(scrollYProgress, [0, 1], [-30, 30]);
 
   return (
-    <section ref={ref} id="about" className="relative scroll-mt-20 overflow-hidden px-6 py-28 md:py-40">
-      {/* Canopy hanging overhead — you've dropped below the treetops */}
+    <section ref={ref} id="about" className="relative scroll-mt-20 overflow-hidden px-6 py-28 md:py-36">
+      {/* Canopy hanging overhead: you've dropped below the treetops */}
       <motion.div style={{ y: yCanopy }} className="absolute inset-x-0 -top-2" aria-hidden>
         <svg
           viewBox="0 0 1440 160"
@@ -40,47 +38,30 @@ export default function About() {
       <div className="relative mx-auto max-w-6xl">
         <SectionHeading num="01" name="The Descent" title="Beneath the treetops." />
 
-        <div className="mt-14 grid items-start gap-14 lg:grid-cols-2 lg:gap-20">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="font-display text-xl leading-relaxed text-mist md:text-2xl">
-              I&apos;m a computer science and mathematics student at{" "}
-              <span className="text-leaf">Case Western Reserve University</span> who
-              builds things at the intersection of quantitative systems, AI
-              infrastructure, and startups.
-            </p>
-            <p className="mt-6 leading-relaxed text-fog">
-              Currently co-founding Darch AI, where I architect high-throughput media
-              pipelines serving 20M+ monthly impressions. Previously built AI tools at
-              NIST. On the side, I run automated trading systems on prediction markets —
-              reaching the top 100 on Kalshi&apos;s all-time crypto leaderboard.
-            </p>
-            <p className="mt-6 font-display italic text-fog/70">
-              The deeper you scroll, the closer you get to the forest floor — keep
-              descending.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-          >
-            <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.3em] text-fog/60">
-              lanterns hung along the path
-            </p>
-            <div className="grid grid-cols-2 gap-4 md:gap-5">
-              {stats.map((stat) => (
-                <AnimatedCounter key={stat.label} value={stat.value} label={stat.label} />
-              ))}
-            </div>
-          </motion.div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7 }}
+          className="mt-12 max-w-3xl"
+        >
+          <p className="font-display text-xl leading-relaxed text-mist md:text-2xl">
+            I&apos;m a computer science and mathematics student at{" "}
+            <span className="text-leaf">Case Western Reserve University</span> who
+            builds things at the intersection of quantitative systems, AI
+            infrastructure, and startups.
+          </p>
+          <p className="mt-6 leading-relaxed text-fog">
+            Currently co-founding Darch AI, where I architect high-throughput media
+            pipelines serving 20M+ monthly impressions. Previously built AI tools at
+            NIST. On the side, I run automated trading systems on prediction markets,
+            reaching the top 100 on Kalshi&apos;s all-time crypto leaderboard.
+          </p>
+          <p className="mt-6 font-display italic text-fog/70">
+            The deeper you scroll, the closer you get to the forest floor. Keep
+            descending.
+          </p>
+        </motion.div>
       </div>
     </section>
   );

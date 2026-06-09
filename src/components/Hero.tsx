@@ -93,7 +93,7 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.15 }}
-          className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.35em] text-moss"
+          className="font-mono text-[9px] md:text-[11px] uppercase tracking-[0.25em] md:tracking-[0.35em] text-moss"
         >
           44m above the forest floor
         </motion.p>
@@ -102,7 +102,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.3 }}
-          className="mt-5 bg-gradient-to-b from-mist via-mist to-moss/60 bg-clip-text font-display text-6xl font-bold text-transparent md:text-8xl"
+          className="mt-5 bg-gradient-to-b from-mist via-mist to-moss/60 bg-clip-text pb-[0.12em] font-display text-6xl font-bold leading-[1.1] text-transparent md:text-8xl"
         >
           {siteConfig.name}
         </motion.h1>
@@ -111,18 +111,9 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.55 }}
-          className="mx-auto mt-6 max-w-md font-display text-lg italic text-fog md:text-xl"
+          className="mx-auto mt-4 max-w-md font-display text-lg italic text-fog md:text-xl"
         >
           {siteConfig.tagline}
-        </motion.p>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.85 }}
-          className="mt-5 font-mono text-xs text-fog/70 md:text-sm"
-        >
-          {siteConfig.roles.join("  ·  ")}
         </motion.p>
       </motion.div>
 

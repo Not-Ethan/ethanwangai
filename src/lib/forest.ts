@@ -43,7 +43,7 @@ export function treelinePath(
 }
 
 /**
- * A gently rising "terrain" line — used as the chart in the Kalshi card.
+ * A gently rising "terrain" line, used as the chart in the Kalshi card.
  * Returns a smooth stroke path, a closed area path, and the final point.
  */
 export function terrainSparkline(seed: number, width = 600, height = 120, steps = 26) {

@@ -83,7 +83,7 @@ export default function Contact() {
           className="mx-auto mt-5 max-w-md leading-relaxed text-fog"
         >
           Always interested in new opportunities, collaborations, and interesting
-          problems. Pull up a log — the fire&apos;s warm.
+          problems. Pull up a log. The fire&apos;s warm.
         </motion.p>
 
         <motion.div
@@ -135,9 +135,6 @@ export default function Contact() {
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="font-mono text-xs text-fog/70">
             © {new Date().getFullYear()} Ethan Wang
-          </p>
-          <p className="font-display text-sm italic text-fog/50">
-            the forest sleeps; the systems trade on.
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

@@ -34,6 +34,7 @@
   --animate-flicker: flicker 0.9s ease-in-out infinite;
   --animate-rise: rise 2.8s ease-out infinite;
   --animate-lantern: lantern 2.6s ease-in-out infinite;
+  --animate-sway: sway 5.5s ease-in-out infinite;
   --animate-halo: halo 3.2s ease-in-out infinite;
   --animate-shoot: shoot 11s ease-in infinite;
 
@@ -64,6 +65,10 @@
   @keyframes lantern {
     0%, 100% { opacity: 0.55; box-shadow: 0 0 6px 1px rgba(251, 191, 36, 0.35); }
     50% { opacity: 1; box-shadow: 0 0 14px 4px rgba(251, 191, 36, 0.55); }
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(2.2deg); }
+    50% { transform: rotate(-2.2deg); }
   }
   @keyframes halo {
     0%, 100% { opacity: 0.5; transform: scale(1); }
