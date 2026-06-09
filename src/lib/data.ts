@@ -1,31 +1,28 @@
 export const siteConfig = {
   name: "Ethan Wang",
   tagline: "tl;dr I like to build things",
+  roles: ["software engineer", "quant trader", "founder"],
   email: "ethan.wanq@gmail.com",
   github: "https://github.com/Not-Ethan",
   linkedin: "https://linkedin.com/in/edw173",
 };
 
-export const projectMetrics = [
-  {
-    name: "Darch AI",
-    link: "https://darchai.com",
-    accent: "accent",
-    metrics: [
-      { value: "20M+", label: "Monthly Impressions" },
-      { value: "3,000+", label: "Monthly Video Jobs" },
-      { value: "85%+", label: "Profit Margins" },
-    ],
-  },
-  {
-    name: "Kalshi Trading",
-    accent: "gold",
-    metrics: [
-      { value: "500K+", label: "Monthly Traded Volume" },
-      { value: "3,500+", label: "Trades / Month" },
-      { value: "Top 100", label: "Kalshi Leaderboard" },
-    ],
-  },
+// The scroll journey: each section is a stop on the descent
+// from the canopy down to the forest floor.
+export const journey = [
+  { id: "top", num: "00", name: "The Canopy", nav: "Top" },
+  { id: "about", num: "01", name: "The Descent", nav: "About" },
+  { id: "experience", num: "02", name: "The Trail", nav: "Experience" },
+  { id: "projects", num: "03", name: "The Clearing", nav: "Projects" },
+  { id: "skills", num: "04", name: "The Undergrowth", nav: "Skills" },
+  { id: "contact", num: "05", name: "The Campfire", nav: "Contact" },
+];
+
+export const stats = [
+  { value: "1.5M+", label: "Contracts Traded" },
+  { value: "13K+", label: "Trades Executed" },
+  { value: "20M+", label: "Monthly Impressions" },
+  { value: "Top 100", label: "Kalshi Leaderboard" },
 ];
 
 export const experience = [
@@ -59,13 +56,14 @@ export const experience = [
 export const projects = [
   {
     title: "Quantitative Trading on Kalshi",
-    description: "Automated trading system executing across prediction markets with market making, momentum, arbitrage, and latency-sensitive strategies.",
+    description:
+      "Automated trading system executing across prediction markets with market making, momentum, arbitrage, and latency-sensitive strategies.",
     metric: "Top 100 all-time on Kalshi crypto leaderboard",
     award: true,
     tags: ["Python", "WebSockets", "MongoDB"],
     featured: true,
     bullets: [
-      "3,500+ monthly trades totaling 500k contracts",
+      "13,000+ trades totaling 1.5M+ contracts",
       "Low-latency infrastructure processing hundreds of GBs of market data",
       "Predictive models using Ornstein-Uhlenbeck SDEs, Hawkes processes, and modified Black-Scholes",
     ],
@@ -73,7 +71,8 @@ export const projects = [
   },
   {
     title: "Orbit Chrome Extension",
-    description: "Multimodal semantic search engine for saved text, audio, and video using CLIP/CLAP embeddings.",
+    description:
+      "Multimodal semantic search engine for saved text, audio, and video using CLIP/CLAP embeddings.",
     metric: "Most Innovative Use of Groundbreaking Technology — TartanHacks 2025 @ CMU",
     award: true,
     tags: ["Flask", "PyTorch", "ChromaDB", "CLIP/CLAP"],

@@ -1,63 +1,86 @@
 "use client";
 
-import { motion } from "framer-motion";
-import ProjectMetricsCarousel from "./ProjectMetricsCarousel";
-import { projectMetrics, skills } from "@/lib/data";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import AnimatedCounter from "./AnimatedCounter";
+import SectionHeading from "./SectionHeading";
+import { stats } from "@/lib/data";
+import { treelinePath } from "@/lib/forest";
+
+const CANOPY_OVERHEAD = treelinePath(77, 1440, 160, 0.4, 0.9);
 
 export default function About() {
-  const categories = Object.entries(skills);
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+  const yCanopy = useTransform(scrollYProgress, [0, 1], [-30, 30]);
 
   return (
-    <section className="h-screen flex items-start md:items-center justify-center pt-20 pb-5 md:py-16 px-4 md:px-6">
-      <div className="max-w-6xl mx-auto w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="rounded-2xl glass-panel panel-ring p-4 sm:p-5 md:p-8 max-h-[calc(100vh-7.25rem)] md:max-h-none overflow-y-auto"
+    <section ref={ref} id="about" className="relative scroll-mt-20 overflow-hidden px-6 py-28 md:py-40">
+      {/* Canopy hanging overhead — you've dropped below the treetops */}
+      <motion.div style={{ y: yCanopy }} className="absolute inset-x-0 -top-2" aria-hidden>
+        <svg
+          viewBox="0 0 1440 160"
+          preserveAspectRatio="none"
+          className="block h-24 w-full rotate-180 md:h-32"
         >
-          <h2 className="text-sm font-mono section-title mb-3">01 / About</h2>
+          <path d={CANOPY_OVERHEAD} fill="#071109" opacity="0.9" />
+        </svg>
+      </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-start">
-            <div>
-              <p className="text-lg md:text-xl font-heading text-light leading-relaxed">
-                I&apos;m a computer science and mathematics student at{" "}
-                <span className="text-accent">Case Western Reserve University</span>{" "}
-                who builds things at the intersection of quantitative systems, AI infrastructure, and startups.
-              </p>
-              <p className="mt-4 text-sm text-muted leading-relaxed">
-                Currently co-founding Darch AI, where I architect high-throughput media pipelines
-                serving 20M+ monthly impressions. Previously built AI tools at NIST. On the side,
-                I run automated trading systems on prediction markets — reaching the top 100 on
-                Kalshi&apos;s all-time crypto leaderboard.
-              </p>
-            </div>
+      {/* Moonlight shafts through the leaves */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 left-[12%] h-[120%] w-24 -skew-x-12 bg-gradient-to-b from-mist/[0.05] to-transparent" />
+        <div className="absolute -top-20 left-[55%] h-[110%] w-40 -skew-x-12 bg-gradient-to-b from-mist/[0.035] to-transparent" />
+        <div className="absolute -top-20 right-[8%] h-[100%] w-16 -skew-x-12 bg-gradient-to-b from-mist/[0.045] to-transparent" />
+      </div>
 
-            <ProjectMetricsCarousel projects={projectMetrics} />
-          </div>
+      <div className="relative mx-auto max-w-6xl">
+        <SectionHeading num="01" name="The Descent" title="Beneath the treetops." />
 
-          {/* Skills */}
-          <div className="mt-5 pt-4 border-t border-white/5">
-            <h3 className="text-sm font-mono text-accent mb-3">Skills</h3>
-            <div className="space-y-2.5">
-              {categories.map(([category, items]) => (
-                <div key={category} className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-mono text-cyan/60 uppercase tracking-wider w-24 shrink-0">
-                    {category}
-                  </span>
-                  {items.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-2 py-0.5 text-xs font-mono text-light/85 bg-bg/45 rounded border border-cyan/20 hover:border-accent/45 hover:text-accent hover:-translate-y-0.5 transition-all cursor-default"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
+        <div className="mt-14 grid items-start gap-14 lg:grid-cols-2 lg:gap-20">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7 }}
+          >
+            <p className="font-display text-xl leading-relaxed text-mist md:text-2xl">
+              I&apos;m a computer science and mathematics student at{" "}
+              <span className="text-leaf">Case Western Reserve University</span> who
+              builds things at the intersection of quantitative systems, AI
+              infrastructure, and startups.
+            </p>
+            <p className="mt-6 leading-relaxed text-fog">
+              Currently co-founding Darch AI, where I architect high-throughput media
+              pipelines serving 20M+ monthly impressions. Previously built AI tools at
+              NIST. On the side, I run automated trading systems on prediction markets —
+              reaching the top 100 on Kalshi&apos;s all-time crypto leaderboard.
+            </p>
+            <p className="mt-6 font-display italic text-fog/70">
+              The deeper you scroll, the closer you get to the forest floor — keep
+              descending.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+          >
+            <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.3em] text-fog/60">
+              lanterns hung along the path
+            </p>
+            <div className="grid grid-cols-2 gap-4 md:gap-5">
+              {stats.map((stat) => (
+                <AnimatedCounter key={stat.label} value={stat.value} label={stat.label} />
               ))}
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );

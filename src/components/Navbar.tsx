@@ -1,114 +1,139 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiGithub, FiMenu, FiX } from "react-icons/fi";
-import { siteConfig } from "@/lib/data";
-import { useZoom } from "./ZoomContext";
+import { siteConfig, journey } from "@/lib/data";
 
-const navLinks = [
-  { label: "About", page: 1 },
-  { label: "Experience", page: 2 },
-  { label: "Projects", page: 3 },
-  { label: "Contact", page: 4 },
-];
+const navItems = journey.slice(1); // skip "top"
+
+function PineMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 text-moss" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 2 7.5 9h2.6L6 15.5h4.5V19h3v-3.5H18L13.9 9h2.6L12 2Z"
+      />
+    </svg>
+  );
+}
 
 export default function Navbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { currentPage, goToPage } = useZoom();
-  const showBg = currentPage > 0 || mobileOpen;
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   return (
     <motion.nav
-      initial={{ y: -100, opacity: 0 }}
+      initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-        showBg
-          ? "bg-gradient-to-b from-bg/95 to-bg/70 backdrop-blur-xl border-b border-cyan/15 shadow-[0_8px_30px_rgba(0,0,0,0.35)]"
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        scrolled && !open
+          ? "bg-night/70 backdrop-blur-md border-b border-moss/10"
           : "bg-transparent"
       }`}
     >
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        <button
-          onClick={() => goToPage(0)}
-          className="font-heading font-bold text-lg text-light hover:text-accent transition-colors px-2.5 py-1 rounded-full border border-transparent hover:border-cyan/35 hover:bg-cyan/10"
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <a
+          href="#top"
+          className="flex items-center gap-2 group"
+          aria-label="Back to top"
         >
-          EW
-        </button>
+          <PineMark />
+          <span className="font-display text-lg font-semibold text-mist transition-colors group-hover:text-leaf">
+            Ethan Wang
+          </span>
+        </a>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <button
-              key={link.page}
-              onClick={() => goToPage(link.page)}
-              data-active={currentPage === link.page}
-              className={`font-mono text-sm transition-colors ${
-                currentPage === link.page
-                  ? "text-accent"
-                  : "text-muted hover:text-accent"
-              } nav-link`}
+        {/* Desktop */}
+        <div className="hidden md:flex items-center gap-7">
+          {navItems.map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className="group relative font-mono text-[13px] text-fog transition-colors hover:text-leaf"
             >
-              {link.label}
-            </button>
+              {item.nav}
+              <span className="absolute -bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 scale-0 rounded-full bg-firefly transition-transform duration-300 group-hover:scale-100" />
+            </a>
           ))}
           <a
             href={siteConfig.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted hover:text-accent transition-colors rounded-full border border-transparent hover:border-cyan/35 p-2 hover:bg-cyan/10"
+            aria-label="GitHub"
+            className="text-fog transition-colors hover:text-leaf"
           >
             <FiGithub size={18} />
           </a>
         </div>
 
-        {/* Mobile hamburger */}
+        {/* Mobile toggle */}
         <button
-          className="md:hidden text-muted hover:text-accent transition-colors rounded-full border border-transparent hover:border-cyan/35 p-2 hover:bg-cyan/10"
-          onClick={() => setMobileOpen(!mobileOpen)}
+          className="md:hidden relative z-50 text-fog transition-colors hover:text-leaf"
+          onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
+          aria-expanded={open}
         >
-          {mobileOpen ? <FiX size={22} /> : <FiMenu size={22} />}
+          {open ? <FiX size={24} /> : <FiMenu size={24} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile overlay */}
       <AnimatePresence>
-        {mobileOpen && (
+        {open && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden overflow-hidden bg-bg/95 backdrop-blur-xl border-b border-cyan/15"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="md:hidden fixed inset-0 z-40 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-sky via-night to-night"
           >
-            <div className="flex flex-col items-center gap-6 py-6">
-              {navLinks.map((link) => (
-                <button
-                  key={link.page}
-                  onClick={() => {
-                    goToPage(link.page);
-                    setMobileOpen(false);
-                  }}
-                  className={`font-mono text-sm transition-colors nav-link ${
-                    currentPage === link.page
-                      ? "text-accent"
-                      : "text-muted hover:text-accent"
-                  }`}
-                  data-active={currentPage === link.page}
-                >
-                  {link.label}
-                </button>
-              ))}
-              <a
-                href={siteConfig.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted hover:text-accent transition-colors rounded-full border border-transparent hover:border-cyan/35 p-2 hover:bg-cyan/10"
+            {navItems.map((item, i) => (
+              <motion.a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={() => setOpen(false)}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: 0.06 * i, duration: 0.35 }}
+                className="py-3 text-center"
               >
-                <FiGithub size={18} />
-              </a>
-            </div>
+                <span className="block font-display text-3xl font-semibold text-mist transition-colors hover:text-leaf">
+                  {item.nav}
+                </span>
+                <span className="mt-1 block font-mono text-[10px] uppercase tracking-[0.3em] text-moss/70">
+                  {item.num} · {item.name}
+                </span>
+              </motion.a>
+            ))}
+            <motion.a
+              href={siteConfig.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mt-6 text-fog hover:text-leaf"
+              aria-label="GitHub"
+            >
+              <FiGithub size={22} />
+            </motion.a>
           </motion.div>
         )}
       </AnimatePresence>

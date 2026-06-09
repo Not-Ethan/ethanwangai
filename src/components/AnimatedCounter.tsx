@@ -1,90 +1,60 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
+import { animate, useInView } from "framer-motion";
 
-interface AnimatedCounterProps {
+/** Parses values like "1.5M+", "13K+", "Top 100" into animatable parts. */
+function parseValue(value: string) {
+  const match = value.match(/^([^\d]*)([\d.]+)(.*)$/);
+  if (!match) return { prefix: "", target: 0, suffix: value, decimals: 0 };
+  const target = parseFloat(match[2]);
+  return {
+    prefix: match[1],
+    target,
+    suffix: match[3],
+    decimals: target % 1 !== 0 ? 1 : 0,
+  };
+}
+
+export default function AnimatedCounter({
+  value,
+  label,
+}: {
   value: string;
   label: string;
-  colorClass?: string;
-}
-
-function parseValue(value: string) {
-  // Find numeric portion (including commas/dots) in the original string
-  const match = value.match(/[\d,.]+/);
-  if (!match) return null;
-  const start = match.index!;
-  const prefix = value.substring(0, start);
-  const suffix = value.substring(start + match[0].length);
-  const target = parseFloat(match[0].replace(/,/g, ""));
-  const hasCommas = match[0].includes(",");
-  const isFloat = match[0].replace(/,/g, "").includes(".");
-  return { prefix, suffix, target, hasCommas, isFloat };
-}
-
-export default function AnimatedCounter({ value, label, colorClass = "text-accent" }: AnimatedCounterProps) {
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true });
-  const [displayValue, setDisplayValue] = useState(() => {
-    const parsed = parseValue(value);
-    if (!parsed) return value;
-    return `${parsed.prefix}0${parsed.suffix}`;
-  });
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const { prefix, target, suffix, decimals } = parseValue(value);
+  const [display, setDisplay] = useState("0");
 
   useEffect(() => {
-    if (!isInView) return;
-
-    const parsed = parseValue(value);
-    if (!parsed) return;
-
-    const { prefix, suffix, target, hasCommas, isFloat } = parsed;
-    const duration = 2000;
-    const startTime = Date.now();
-    let frameId = 0;
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = target * eased;
-
-      let formatted: string;
-      if (isFloat) {
-        formatted = current.toFixed(1);
-      } else if (hasCommas) {
-        formatted = Math.round(current).toLocaleString();
-      } else {
-        formatted = Math.round(current).toString();
-      }
-
-      setDisplayValue(`${prefix}${formatted}${suffix}`);
-
-      if (progress < 1) {
-        frameId = requestAnimationFrame(animate);
-      } else {
-        setDisplayValue(value);
-      }
-    };
-
-    frameId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [isInView, value]);
+    if (!inView) return;
+    const controls = animate(0, target, {
+      duration: 2,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (v) => setDisplay(v.toFixed(decimals)),
+    });
+    return () => controls.stop();
+  }, [inView, target, decimals]);
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="text-center"
+      className="group relative overflow-hidden rounded-2xl border border-moss/15 bg-pine/60 p-5 backdrop-blur-sm transition-all duration-500 hover:border-firefly/40 hover:shadow-[0_0_30px_rgba(251,191,36,0.12)]"
     >
-      <div className={`text-3xl md:text-4xl font-mono font-bold ${colorClass}`}>
-        {parseValue(value) ? displayValue : value}
+      <span
+        aria-hidden
+        className="absolute right-4 top-4 h-1.5 w-1.5 animate-lantern rounded-full bg-firefly"
+      />
+      <div className="font-mono text-3xl font-medium tabular-nums text-mist md:text-4xl">
+        {prefix}
+        {display}
+        {suffix}
       </div>
-      <div className="mt-1 text-sm text-muted font-mono">{label}</div>
-    </motion.div>
+      <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-fog">
+        {label}
+      </div>
+    </div>
   );
 }
