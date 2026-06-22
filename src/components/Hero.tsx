@@ -1,58 +1,106 @@
 "use client";
 
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
+import { FiArrowDown } from "react-icons/fi";
 import { siteConfig } from "@/lib/data";
 
-const ParticleNetwork = dynamic(() => import("./ParticleNetwork"), {
-  ssr: false,
-});
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export default function Hero() {
   return (
-    <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <ParticleNetwork />
-      </div>
+    <section
+      id="hero"
+      className="relative min-h-screen flex flex-col justify-center px-6 md:px-12"
+    >
+      <div className="absolute inset-0 scrim pointer-events-none" />
 
-      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/30 via-transparent to-bg" />
-
-      <div className="relative z-10 text-center px-6">
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
+      <div className="relative max-w-6xl mx-auto w-full">
+        <motion.p
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-6xl md:text-8xl font-heading font-bold text-light"
-          style={{ textShadow: "0 0 40px rgba(59, 130, 246, 0.3)" }}
+          transition={{ duration: 0.8, delay: 0.3, ease }}
+          className="font-mono text-xs md:text-sm tracking-[0.35em] uppercase text-accent"
         >
-          {siteConfig.name}
-        </motion.h1>
+          Chapter 00 — First Light
+        </motion.p>
+
+        <h1 className="mt-6 font-display font-light leading-[0.95] tracking-tight text-light text-[18vw] sm:text-[14vw] md:text-[10rem]">
+          <motion.span
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.4, ease }}
+            className="block"
+          >
+            Ethan
+          </motion.span>
+          <motion.span
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.55, ease }}
+            className="block text-gradient italic"
+            style={{ fontVariationSettings: '"opsz" 144, "SOFT" 60' }}
+          >
+            Wang
+          </motion.span>
+        </h1>
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="mt-6 text-lg md:text-xl text-muted font-mono"
+          transition={{ duration: 0.9, delay: 0.8, ease }}
+          className="mt-8 max-w-xl text-lg md:text-2xl text-light/80 font-body leading-relaxed"
         >
           {siteConfig.tagline}
         </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.9, delay: 1, ease }}
+          className="mt-4 max-w-xl text-sm md:text-base text-muted leading-relaxed"
+        >
+          Software engineer, quantitative trader, and startup founder — walk the
+          trail and see what grows.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 1.15, ease }}
+          className="mt-10 flex flex-wrap items-center gap-4"
+        >
+          <a
+            href="#projects"
+            className="px-7 py-3 rounded-full bg-accent text-bg font-mono text-sm font-medium hover:bg-accent-soft transition-colors shadow-[0_0_30px_-6px_rgba(227,168,87,0.5)]"
+          >
+            Explore the work
+          </a>
+          <a
+            href="#contact"
+            className="px-7 py-3 rounded-full glass glass-hover font-mono text-sm text-light"
+          >
+            Get in touch
+          </a>
+        </motion.div>
       </div>
 
-      <motion.div
+      <motion.a
+        href="#about"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.5, duration: 1 }}
-        className="absolute bottom-8 z-10 flex flex-col items-center gap-2"
+        transition={{ delay: 1.6, duration: 1 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted hover:text-accent transition-colors"
       >
-        <span className="text-xs font-mono text-muted">scroll</span>
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="w-4 h-7 border-2 border-muted/40 rounded-full flex justify-center pt-1"
+        <span className="font-mono text-[10px] tracking-[0.3em] uppercase">
+          Scroll
+        </span>
+        <motion.span
+          animate={{ y: [0, 7, 0] }}
+          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
         >
-          <div className="w-1 h-1.5 bg-accent rounded-full" />
-        </motion.div>
-      </motion.div>
+          <FiArrowDown size={16} />
+        </motion.span>
+      </motion.a>
     </section>
   );
 }

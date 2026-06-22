@@ -6,6 +6,47 @@ export const siteConfig = {
   linkedin: "https://linkedin.com/in/edw173",
 };
 
+// The scroll-through is structured as a walk through a forest, from first light
+// to nightfall. Each chapter names a section and carries a one-line narration.
+export const chapters = [
+  {
+    id: "hero",
+    index: "00",
+    name: "First Light",
+    line: "Dawn breaks over the canopy.",
+  },
+  {
+    id: "about",
+    index: "01",
+    name: "Roots",
+    line: "Where everything takes hold.",
+  },
+  {
+    id: "experience",
+    index: "02",
+    name: "The Trail",
+    line: "Every step leaves a mark on the path.",
+  },
+  {
+    id: "projects",
+    index: "03",
+    name: "Clearings",
+    line: "Things built where the light gets through.",
+  },
+  {
+    id: "skills",
+    index: "04",
+    name: "Undergrowth",
+    line: "The dense, living toolkit underfoot.",
+  },
+  {
+    id: "contact",
+    index: "05",
+    name: "Nightfall",
+    line: "The fireflies come out. Let's talk.",
+  },
+] as const;
+
 export const stats = [
   { value: "20M+", label: "Monthly Impressions" },
   { value: "500K", label: "Contracts Traded" },

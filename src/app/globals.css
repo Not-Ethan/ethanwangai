@@ -1,53 +1,109 @@
 @import "tailwindcss";
+@import "@fontsource-variable/fraunces/index.css";
 @import "@fontsource/space-grotesk/400.css";
+@import "@fontsource/space-grotesk/500.css";
 @import "@fontsource/space-grotesk/700.css";
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
 @import "@fontsource/jetbrains-mono/400.css";
 
 @theme {
-  --color-bg: #0a0a0f;
-  --color-bg-card: #12121a;
-  --color-bg-card-hover: #1a1a2e;
-  --color-accent: #3b82f6;
-  --color-accent-glow: #3b82f680;
-  --color-gold: #f59e0b;
-  --color-muted: #71717a;
-  --color-light: #e4e4e7;
+  /* Forest palette — deep, misty, refined. */
+  --color-bg: #070b09;
+  --color-bg-soft: #0c1410;
+  --color-accent: #e3a857;        /* sunlight / firefly gold */
+  --color-accent-soft: #f0c081;
+  --color-sage: #8fd0a6;          /* mossy mint highlight */
+  --color-sage-deep: #4f8a6b;
+  --color-gold: #f0b54a;
+  --color-muted: #8a9a8f;
+  --color-light: #e9efe7;
 
+  --font-display: "Fraunces Variable", Georgia, serif;
   --font-heading: "Space Grotesk", sans-serif;
   --font-body: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  --animate-float: float 6s ease-in-out infinite;
-  --animate-glow-pulse: glow-pulse 2s ease-in-out infinite alternate;
-  --animate-blink: blink 1s step-end infinite;
+  --animate-blink: blink 1.1s step-end infinite;
 
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-  }
-  @keyframes glow-pulse {
-    0% { box-shadow: 0 0 5px #3b82f640; }
-    100% { box-shadow: 0 0 20px #3b82f680; }
-  }
   @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
   }
+  @keyframes drift {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto; /* Lenis handles smoothing */
 }
 
 body {
   background-color: var(--color-bg);
   color: var(--color-light);
   font-family: var(--font-body);
+  overflow-x: hidden;
 }
 
 ::selection {
-  background-color: var(--color-accent);
-  color: white;
+  background-color: var(--color-sage);
+  color: #07120b;
+}
+
+/* Frosted "forest glass" surfaces that let the 3D scene glow through. */
+.glass {
+  background: rgba(10, 18, 14, 0.5);
+  backdrop-filter: blur(14px) saturate(125%);
+  -webkit-backdrop-filter: blur(14px) saturate(125%);
+  border: 1px solid rgba(143, 208, 166, 0.12);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 20px 60px -30px rgba(0, 0, 0, 0.8);
+}
+
+.glass-hover {
+  transition: border-color 0.5s ease, box-shadow 0.5s ease, transform 0.5s ease,
+    background 0.5s ease;
+}
+.glass-hover:hover {
+  border-color: rgba(227, 168, 87, 0.35);
+  background: rgba(14, 24, 18, 0.6);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 0 40px -8px rgba(227, 168, 87, 0.18),
+    0 24px 70px -30px rgba(0, 0, 0, 0.9);
+}
+
+/* Warm gradient text for emphasis. */
+.text-gradient {
+  background: linear-gradient(100deg, #f0c081 0%, #e3a857 40%, #8fd0a6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* A soft dark scrim placed behind text for legibility over bright fog. */
+.scrim {
+  background: radial-gradient(
+    60% 60% at 50% 50%,
+    rgba(5, 10, 8, 0.6) 0%,
+    rgba(5, 10, 8, 0) 75%
+  );
+}
+
+/* Fine film grain over the whole page for a cinematic finish. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain { display: none; }
 }

@@ -11,16 +11,17 @@ interface AnimatedCounterProps {
 export default function AnimatedCounter({ value, label }: AnimatedCounterProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [displayValue, setDisplayValue] = useState("0");
+  const isNumeric = /[\d.]/.test(value);
+  // Non-numeric values (e.g. "Top 100") render as-is; numeric ones count up.
+  const [displayValue, setDisplayValue] = useState(() =>
+    isNumeric ? "0" : value
+  );
 
   useEffect(() => {
-    if (!isInView) return;
+    if (!isInView || !isNumeric) return;
 
     const numericMatch = value.replace(/,/g, "").match(/[\d.]+/);
-    if (!numericMatch) {
-      setDisplayValue(value);
-      return;
-    }
+    if (!numericMatch) return;
 
     const target = parseFloat(numericMatch[0]);
     const prefix = value.substring(0, value.indexOf(numericMatch[0]));
@@ -54,7 +55,7 @@ export default function AnimatedCounter({ value, label }: AnimatedCounterProps) 
     };
 
     requestAnimationFrame(animate);
-  }, [isInView, value]);
+  }, [isInView, isNumeric, value]);
 
   return (
     <motion.div
