@@ -66,8 +66,11 @@ function ProjectCard({
 
 export default function Projects() {
   return (
-    <section id="projects" className="relative py-32 md:py-40 px-6 md:px-12">
-      <div className="max-w-5xl mx-auto">
+    <section
+      id="projects"
+      className="relative min-h-screen flex items-center py-28 px-6 md:px-12"
+    >
+      <div className="max-w-5xl mx-auto w-full">
         <SectionHeading chapterId="projects" kicker="Projects" />
 
         <div className="grid md:grid-cols-2 gap-5">

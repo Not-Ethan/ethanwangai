@@ -6,8 +6,11 @@ import { experience } from "@/lib/data";
 
 export default function Experience() {
   return (
-    <section id="experience" className="relative py-32 md:py-40 px-6 md:px-12">
-      <div className="max-w-4xl mx-auto">
+    <section
+      id="experience"
+      className="relative min-h-screen flex items-center py-28 px-6 md:px-12"
+    >
+      <div className="max-w-4xl mx-auto w-full">
         <SectionHeading chapterId="experience" kicker="Experience" />
 
         <div className="relative">

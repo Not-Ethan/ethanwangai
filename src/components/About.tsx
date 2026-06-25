@@ -7,8 +7,11 @@ import { stats } from "@/lib/data";
 
 export default function About() {
   return (
-    <section id="about" className="relative py-32 md:py-40 px-6 md:px-12">
-      <div className="max-w-6xl mx-auto">
+    <section
+      id="about"
+      className="relative min-h-screen flex items-center py-28 px-6 md:px-12"
+    >
+      <div className="max-w-6xl mx-auto w-full">
         <SectionHeading chapterId="about" kicker="About" />
 
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
@@ -17,14 +20,16 @@ export default function About() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7 }}
+            className="relative"
           >
-            <p className="text-2xl md:text-3xl font-display font-light text-light leading-snug">
+            <span className="veil" />
+            <p className="text-2xl md:text-3xl font-display font-light text-light leading-snug text-readable">
               I build things at the intersection of{" "}
               <span className="text-gradient">quantitative systems</span>,{" "}
               <span className="text-gradient">AI infrastructure</span>, and{" "}
               <span className="text-gradient">startups</span>.
             </p>
-            <p className="mt-6 text-muted leading-relaxed">
+            <p className="mt-6 text-light/75 leading-relaxed">
               I&apos;m a computer science and mathematics student at Case Western
               Reserve University. Currently co-founding Darch AI, where I
               architect high-throughput media pipelines serving 20M+ monthly

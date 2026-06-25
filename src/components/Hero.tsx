@@ -24,7 +24,7 @@ export default function Hero() {
           Chapter 00 — First Light
         </motion.p>
 
-        <h1 className="mt-6 font-display font-light leading-[0.95] tracking-tight text-light text-[18vw] sm:text-[14vw] md:text-[10rem]">
+        <h1 className="mt-6 font-display font-light leading-[0.95] tracking-tight text-light text-readable text-[18vw] sm:text-[14vw] md:text-[10rem]">
           <motion.span
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -48,7 +48,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.8, ease }}
-          className="mt-8 max-w-xl text-lg md:text-2xl text-light/80 font-body leading-relaxed"
+          className="mt-8 max-w-xl text-lg md:text-2xl text-light/90 font-body leading-relaxed text-readable"
         >
           {siteConfig.tagline}
         </motion.p>

@@ -35,7 +35,7 @@ export default function SectionHeading({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.7, delay: 0.05 }}
-        className="mt-4 font-display text-5xl md:text-7xl font-light text-light tracking-tight"
+        className="mt-4 font-display text-5xl md:text-7xl font-light text-light tracking-tight text-readable"
         style={{ fontVariationSettings: '"opsz" 144, "SOFT" 40' }}
       >
         {chapter.name}
@@ -46,7 +46,7 @@ export default function SectionHeading({
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.7, delay: 0.15 }}
-        className="mt-3 font-display italic text-lg md:text-xl text-sage/80"
+        className="mt-3 font-display italic text-lg md:text-xl text-sage/90 text-readable"
       >
         {chapter.line}
       </motion.p>

@@ -54,13 +54,34 @@ body {
 
 /* Frosted "forest glass" surfaces that let the 3D scene glow through. */
 .glass {
-  background: rgba(10, 18, 14, 0.5);
-  backdrop-filter: blur(14px) saturate(125%);
-  -webkit-backdrop-filter: blur(14px) saturate(125%);
-  border: 1px solid rgba(143, 208, 166, 0.12);
+  background: rgba(8, 15, 12, 0.62);
+  backdrop-filter: blur(16px) saturate(125%);
+  -webkit-backdrop-filter: blur(16px) saturate(125%);
+  border: 1px solid rgba(143, 208, 166, 0.16);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 20px 60px -30px rgba(0, 0, 0, 0.8);
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 20px 60px -28px rgba(0, 0, 0, 0.85);
+}
+
+/* Drop shadow that keeps headings/body legible over bright sky. */
+.text-readable {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 2px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* A soft local darkening placed behind a block of text for contrast. */
+.veil {
+  position: absolute;
+  inset: -8% -12%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    70% 75% at 30% 45%,
+    rgba(4, 8, 6, 0.62) 0%,
+    rgba(4, 8, 6, 0.32) 45%,
+    rgba(4, 8, 6, 0) 78%
+  );
 }
 
 .glass-hover {

@@ -8,8 +8,11 @@ export default function Skills() {
   const categories = Object.entries(skills);
 
   return (
-    <section id="skills" className="relative py-32 md:py-40 px-6 md:px-12">
-      <div className="max-w-5xl mx-auto">
+    <section
+      id="skills"
+      className="relative min-h-screen flex items-center py-28 px-6 md:px-12"
+    >
+      <div className="max-w-5xl mx-auto w-full">
         <SectionHeading chapterId="skills" kicker="Skills" />
 
         <div className="grid gap-5 md:grid-cols-3">

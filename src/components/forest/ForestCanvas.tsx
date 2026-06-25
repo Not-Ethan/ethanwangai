@@ -12,6 +12,7 @@ import {
 import * as THREE from "three";
 import { scrollState, lerp } from "@/lib/scroll";
 import { resolveMood, makeResolvedMood } from "./mood";
+import { resolveScene, SCENES } from "./scene";
 import { MoodContext } from "./MoodContext";
 import Trees, { GROUND_Y } from "./Trees";
 import { Motes, Fireflies } from "./Particles";
@@ -32,6 +33,7 @@ function MoodDriver() {
   const fog = useMemo(() => new THREE.FogExp2("#1b2a2b", 0.05), []);
   const bg = useMemo(() => new THREE.Color("#1b2a2b"), []);
   const look = useMemo(() => new THREE.Vector3(), []);
+  const cam = useMemo(() => ({ ...SCENES[0] }), []);
 
   // Attach exponential fog and a background colour once; both blend each frame.
   useLayoutEffect(() => {
@@ -41,6 +43,7 @@ function MoodDriver() {
 
   useFrame((state, delta) => {
     resolveMood(scrollState.progress, mood);
+    resolveScene(scrollState.progress, cam);
 
     fog.color.copy(mood.fog);
     fog.density = mood.fogDensity;
@@ -51,21 +54,28 @@ function MoodDriver() {
     const t = state.clock.elapsedTime;
     const bob = Math.sin(t * 1.4) * 0.06;
     const targetZ = -scrollState.progress * TRAVEL;
+    const persp = camera as THREE.PerspectiveCamera;
 
-    camera.position.x = lerp(camera.position.x, state.pointer.x * 1.5, k);
+    camera.position.x = lerp(camera.position.x, cam.x + state.pointer.x * 1.2, k);
     camera.position.y = lerp(
       camera.position.y,
-      0.9 + state.pointer.y * 0.6 + bob,
+      cam.y + state.pointer.y * 0.5 + bob,
       k
     );
     camera.position.z = lerp(camera.position.z, targetZ + 6, k);
 
     look.set(
-      state.pointer.x * 0.6,
-      1.2,
-      camera.position.z - 14
+      cam.x * 0.5 + state.pointer.x * 0.5,
+      cam.lookY,
+      camera.position.z - cam.lookDist
     );
     camera.lookAt(look);
+
+    // Ease the field of view between scenes for a subtle lens change.
+    if (Math.abs(persp.fov - cam.fov) > 0.01) {
+      persp.fov = lerp(persp.fov, cam.fov, k);
+      persp.updateProjectionMatrix();
+    }
   });
 
   return null;
