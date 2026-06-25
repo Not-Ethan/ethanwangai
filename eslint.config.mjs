@@ -23,6 +23,10 @@ const eslintConfig = defineConfig([
       "react-hooks/immutability": "off",
       "react-hooks/refs": "off",
       "react-hooks/use-memo": "off",
+      // The scene is generated procedurally (seeded/random placement) inside
+      // useMemo and read once; that's intentional for a WebGL render loop.
+      "react-hooks/purity": "off",
+      "react-hooks/set-state-in-effect": "off",
     },
   },
 ]);

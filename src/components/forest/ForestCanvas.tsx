@@ -2,13 +2,21 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  HueSaturation,
+  BrightnessContrast,
+} from "@react-three/postprocessing";
 import * as THREE from "three";
 import { scrollState, lerp } from "@/lib/scroll";
 import { resolveMood, makeResolvedMood } from "./mood";
 import { MoodContext } from "./MoodContext";
 import Trees, { GROUND_Y } from "./Trees";
 import { Motes, Fireflies } from "./Particles";
+import { Sky, Stars, HorizonRidges } from "./Sky";
+import { Terrain, GroundMist } from "./Terrain";
 import { useMood } from "./MoodContext";
 
 const TRAVEL = 95; // world units walked from top to bottom of the page
@@ -67,6 +75,7 @@ function MoodDriver() {
 function Lights() {
   const mood = useMood();
   const dir = useRef<THREE.DirectionalLight>(null);
+  const rim = useRef<THREE.DirectionalLight>(null);
   const amb = useRef<THREE.AmbientLight>(null);
   const hemi = useRef<THREE.HemisphereLight>(null);
   const target = useMemo(() => new THREE.Object3D(), []);
@@ -84,6 +93,16 @@ function Lights() {
       target.position.set(cam.position.x, GROUND_Y, cam.position.z - 16);
       target.updateMatrixWorld();
     }
+    if (rim.current) {
+      // Cool fill from behind the camera so near tree faces aren't pure black.
+      rim.current.color.copy(mood.skyZenith);
+      rim.current.intensity = 0.5 + mood.night * 0.3;
+      rim.current.position.set(
+        cam.position.x - 6,
+        mood.sunPos.y * 0.5 + 6,
+        cam.position.z + 18
+      );
+    }
     if (amb.current) {
       amb.current.color.copy(mood.ambient);
       amb.current.intensity = mood.ambientIntensity;
@@ -100,6 +119,7 @@ function Lights() {
       <ambientLight ref={amb} />
       <hemisphereLight ref={hemi} />
       <directionalLight ref={dir} target={target} />
+      <directionalLight ref={rim} target={target} />
       <primitive object={target} />
     </>
   );
@@ -132,56 +152,39 @@ function SunOrb() {
   );
 }
 
-/** A large ground plane that follows you and fades into the fog. */
-function Ground() {
-  const mood = useMood();
-  const ref = useRef<THREE.Mesh>(null);
-  const mat = useRef<THREE.MeshStandardMaterial>(null);
-
-  useFrame((state) => {
-    if (ref.current) {
-      ref.current.position.x = state.camera.position.x;
-      ref.current.position.z = state.camera.position.z;
-    }
-    if (mat.current) mat.current.color.copy(mood.ground);
-  });
-
-  return (
-    <mesh
-      ref={ref}
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, GROUND_Y, 0]}
-    >
-      <planeGeometry args={[400, 400, 1, 1]} />
-      <meshStandardMaterial ref={mat} color="#0d1512" roughness={1} />
-    </mesh>
-  );
-}
-
 function Scene({ quality }: { quality: "high" | "low" }) {
   const mood = useMemo(() => makeResolvedMood(), []);
-  const treeCount = quality === "high" ? 95 : 50;
-  const moteCount = quality === "high" ? 280 : 130;
-  const fireflyCount = quality === "high" ? 120 : 60;
+  const high = quality === "high";
+  const treeCount = high ? 95 : 50;
+  const moteCount = high ? 280 : 130;
+  const fireflyCount = high ? 120 : 60;
+  const starCount = high ? 700 : 350;
+  const mistCount = high ? 16 : 8;
 
   return (
     <MoodContext.Provider value={mood}>
       <MoodDriver />
+      <Sky />
+      <Stars count={starCount} />
+      <HorizonRidges />
       <Lights />
       <SunOrb />
-      <Ground />
+      <Terrain />
+      <GroundMist count={mistCount} />
       <Trees count={treeCount} />
       <Motes count={moteCount} />
       <Fireflies count={fireflyCount} />
       <EffectComposer enableNormalPass={false} multisampling={0}>
         <Bloom
-          intensity={0.95}
-          luminanceThreshold={0.5}
-          luminanceSmoothing={0.35}
+          intensity={1.05}
+          luminanceThreshold={0.45}
+          luminanceSmoothing={0.4}
           mipmapBlur
-          radius={0.7}
+          radius={0.75}
         />
-        <Vignette offset={0.25} darkness={0.82} eskil={false} />
+        <HueSaturation saturation={0.12} />
+        <BrightnessContrast brightness={-0.02} contrast={0.12} />
+        <Vignette offset={0.22} darkness={0.85} eskil={false} />
       </EffectComposer>
     </MoodContext.Provider>
   );
@@ -196,7 +199,7 @@ export default function ForestCanvas({
     <Canvas
       dpr={[1, 1.8]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
-      camera={{ fov: 55, near: 0.1, far: 220, position: [0, 0.9, 6] }}
+      camera={{ fov: 55, near: 0.1, far: 700, position: [0, 0.9, 6] }}
     >
       <Scene quality={quality} />
     </Canvas>

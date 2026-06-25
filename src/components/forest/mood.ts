@@ -6,8 +6,12 @@ import { segment, lerp } from "@/lib/scroll";
 // descent through the forest into a single day, from first light to nightfall.
 
 export type Mood = {
-  fog: string; // fog + sky colour (the scene background blends into this)
+  fog: string; // fog colour, and the sky's horizon colour (so trees blend in)
   fogDensity: number;
+  skyZenith: string; // colour at the top of the sky dome
+  sunGlow: number; // intensity of the atmospheric halo around the sun
+  night: number; // 0 day .. 1 night (drives stars)
+  mist: number; // 0..1 density of the drifting ground mist
   sun: string; // colour of the key light / sun-moon orb
   sunIntensity: number;
   sunPos: [number, number, number]; // offset from the camera
@@ -25,6 +29,10 @@ export const MOODS: Mood[] = [
   {
     fog: "#1b2a2b",
     fogDensity: 0.03,
+    skyZenith: "#102634",
+    sunGlow: 0.9,
+    night: 0,
+    mist: 0.9,
     sun: "#ffca7a",
     sunIntensity: 2.1,
     sunPos: [-10, 7, -34],
@@ -40,6 +48,10 @@ export const MOODS: Mood[] = [
   {
     fog: "#2a4438",
     fogDensity: 0.027,
+    skyZenith: "#173a4d",
+    sunGlow: 0.6,
+    night: 0,
+    mist: 0.6,
     sun: "#ffe0a8",
     sunIntensity: 2.6,
     sunPos: [-6, 10, -36],
@@ -55,6 +67,10 @@ export const MOODS: Mood[] = [
   {
     fog: "#395a48",
     fogDensity: 0.023,
+    skyZenith: "#1f5470",
+    sunGlow: 0.42,
+    night: 0,
+    mist: 0.3,
     sun: "#fff4d8",
     sunIntensity: 3.0,
     sunPos: [4, 14, -38],
@@ -70,6 +86,10 @@ export const MOODS: Mood[] = [
   {
     fog: "#52553a",
     fogDensity: 0.025,
+    skyZenith: "#314a52",
+    sunGlow: 1.0,
+    night: 0.05,
+    mist: 0.4,
     sun: "#ffc777",
     sunIntensity: 3.1,
     sunPos: [10, 8, -36],
@@ -85,6 +105,10 @@ export const MOODS: Mood[] = [
   {
     fog: "#332e4a",
     fogDensity: 0.03,
+    skyZenith: "#241f3a",
+    sunGlow: 1.15,
+    night: 0.45,
+    mist: 0.7,
     sun: "#ff8f5a",
     sunIntensity: 2.2,
     sunPos: [13, 3, -34],
@@ -100,6 +124,10 @@ export const MOODS: Mood[] = [
   {
     fog: "#0b1322",
     fogDensity: 0.036,
+    skyZenith: "#04070e",
+    sunGlow: 0.4,
+    night: 1,
+    mist: 0.5,
     sun: "#aec6ff",
     sunIntensity: 1.5,
     sunPos: [7, 13, -40],
@@ -126,6 +154,10 @@ function blendColorInto(target: THREE.Color, a: string, b: string, t: number) {
 export type ResolvedMood = {
   fog: THREE.Color;
   fogDensity: number;
+  skyZenith: THREE.Color;
+  sunGlow: number;
+  night: number;
+  mist: number;
   sun: THREE.Color;
   sunIntensity: number;
   sunPos: THREE.Vector3;
@@ -142,6 +174,10 @@ export function makeResolvedMood(): ResolvedMood {
   return {
     fog: new THREE.Color(),
     fogDensity: 0,
+    skyZenith: new THREE.Color(),
+    sunGlow: 0,
+    night: 0,
+    mist: 0,
     sun: new THREE.Color(),
     sunIntensity: 0,
     sunPos: new THREE.Vector3(),
@@ -162,12 +198,16 @@ export function resolveMood(progress: number, out: ResolvedMood) {
   const mb = MOODS[b];
 
   blendColorInto(out.fog, ma.fog, mb.fog, t);
+  blendColorInto(out.skyZenith, ma.skyZenith, mb.skyZenith, t);
   blendColorInto(out.sun, ma.sun, mb.sun, t);
   blendColorInto(out.ambient, ma.ambient, mb.ambient, t);
   blendColorInto(out.ground, ma.ground, mb.ground, t);
   blendColorInto(out.foliage, ma.foliage, mb.foliage, t);
 
   out.fogDensity = lerp(ma.fogDensity, mb.fogDensity, t);
+  out.sunGlow = lerp(ma.sunGlow, mb.sunGlow, t);
+  out.night = lerp(ma.night, mb.night, t);
+  out.mist = lerp(ma.mist, mb.mist, t);
   out.sunIntensity = lerp(ma.sunIntensity, mb.sunIntensity, t);
   out.ambientIntensity = lerp(ma.ambientIntensity, mb.ambientIntensity, t);
   out.fireflies = lerp(ma.fireflies, mb.fireflies, t);

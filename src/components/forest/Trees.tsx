@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mergeBufferGeometries } from "three-stdlib";
 import { useMood } from "./MoodContext";
+import { terrainHeight } from "./heightfield";
 
 export const GROUND_Y = -2.6;
 const FIELD = 130; // depth of the recycling forest band
@@ -67,15 +68,19 @@ export default function Trees({ count = 90 }: { count?: number }) {
   }, [count]);
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  const toneColor = useMemo(() => new THREE.Color(), []);
 
   // Write a tree's transform into both instanced meshes for a given index.
   const writeInstance = (i: number, t: TreeData) => {
-    dummy.position.set(t.x, GROUND_Y, t.z);
+    dummy.position.set(t.x, GROUND_Y + terrainHeight(t.x, t.z), t.z);
     dummy.rotation.set(0, t.rot, 0);
     dummy.scale.setScalar(t.scale);
     dummy.updateMatrix();
     foliageRef.current!.setMatrixAt(i, dummy.matrix);
     trunkRef.current!.setMatrixAt(i, dummy.matrix);
+    // Per-tree brightness variation multiplies the mood foliage colour.
+    toneColor.setScalar(t.tone);
+    foliageRef.current!.setColorAt(i, toneColor);
   };
 
   useLayoutEffect(() => {
@@ -83,6 +88,8 @@ export default function Trees({ count = 90 }: { count?: number }) {
     trees.forEach((t, i) => writeInstance(i, t));
     foliageRef.current.instanceMatrix.needsUpdate = true;
     trunkRef.current.instanceMatrix.needsUpdate = true;
+    if (foliageRef.current.instanceColor)
+      foliageRef.current.instanceColor.needsUpdate = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trees]);
 
@@ -106,6 +113,8 @@ export default function Trees({ count = 90 }: { count?: number }) {
     if (dirty && foliageRef.current && trunkRef.current) {
       foliageRef.current.instanceMatrix.needsUpdate = true;
       trunkRef.current.instanceMatrix.needsUpdate = true;
+      if (foliageRef.current.instanceColor)
+        foliageRef.current.instanceColor.needsUpdate = true;
     }
 
     // Drift foliage tint with the time of day.
