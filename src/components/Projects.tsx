@@ -1,162 +1,114 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRef } from "react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useReducedMotion,
+} from "framer-motion";
 import { projects } from "@/lib/data";
+import { fadeLeft, fadeRight, fadeUp, stagger, viewport } from "@/components/sections/reveal";
 
-const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 80 : -80,
-    opacity: 0,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-  },
-  exit: (direction: number) => ({
-    x: direction > 0 ? -80 : 80,
-    opacity: 0,
-  }),
-};
+function TiltCard({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const sx = useSpring(rx, { stiffness: 180, damping: 20 });
+  const sy = useSpring(ry, { stiffness: 180, damping: 20 });
 
-export default function Projects() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [direction, setDirection] = useState(1);
+  const onMove = (e: React.MouseEvent) => {
+    if (reduced || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    ry.set(px * 7);
+    rx.set(-py * 7);
+  };
 
-  const navigate = useCallback(
-    (index: number) => {
-      if (index === activeIndex) return;
-      setDirection(index > activeIndex ? 1 : -1);
-      setActiveIndex(index);
-    },
-    [activeIndex]
-  );
-
-  const prev = useCallback(() => {
-    if (activeIndex > 0) {
-      setDirection(-1);
-      setActiveIndex(activeIndex - 1);
-    }
-  }, [activeIndex]);
-
-  const next = useCallback(() => {
-    if (activeIndex < projects.length - 1) {
-      setDirection(1);
-      setActiveIndex(activeIndex + 1);
-    }
-  }, [activeIndex]);
-
-  const project = projects[activeIndex];
+  const onLeave = () => {
+    rx.set(0);
+    ry.set(0);
+  };
 
   return (
-    <section className="h-screen flex items-start md:items-center justify-center pt-20 pb-5 md:py-16 px-4 md:px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto w-full rounded-2xl glass-panel panel-ring p-4 sm:p-5 md:p-8 max-h-[calc(100vh-6.5rem)] md:max-h-none overflow-y-auto"
-      >
-        <h2 className="text-sm font-mono section-title mb-6">03 / Projects</h2>
+    <motion.div
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      style={{ rotateX: sx, rotateY: sy, transformPerspective: 900 }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
-        {/* Slide area */}
-        <div className="relative min-h-[240px] sm:min-h-[300px] overflow-hidden">
-          <AnimatePresence mode="wait" custom={direction}>
+export default function Projects() {
+  return (
+    <section id="projects" className="relative flex min-h-screen items-center px-6 md:px-12 py-28">
+      <div className="mx-auto w-full max-w-5xl">
+        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={viewport} className="section-scrim mb-14">
+          <motion.p variants={fadeUp} className="kicker mb-5">
+            03 · Dusk — Projects
+          </motion.p>
+          <motion.h2 variants={fadeUp} className="font-display font-semibold text-ink text-4xl md:text-6xl leading-tight">
+            Things that <em className="font-normal">glow</em> after dark
+          </motion.h2>
+        </motion.div>
+
+        <div className="grid gap-8 lg:grid-cols-2 items-stretch">
+          {projects.map((project, i) => (
             <motion.div
-              key={activeIndex}
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.35, ease: "easeInOut" }}
-              className="group"
+              key={project.title}
+              variants={i % 2 === 0 ? fadeLeft : fadeRight}
+              initial="hidden"
+              whileInView="show"
+              viewport={viewport}
             >
-              <div className="flex items-baseline justify-between gap-4">
-                <div>
-                  <p className="text-xs font-mono text-muted">{project.dates}</p>
-                  <h3 className="text-xl sm:text-2xl font-heading font-bold text-light mt-1">
-                    {project.title}
-                  </h3>
+              <TiltCard className="group h-full veil-panel rounded-2xl p-7 md:p-8 transition-colors duration-300 hover:border-amber/35">
+                <div className="flex items-start justify-between gap-4">
+                  <p className="font-mono text-[11px] text-muted">{project.dates}</p>
+                  {project.award && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber/35 bg-amber/10 px-3 py-1 font-mono text-[10px] tracking-[0.14em] uppercase text-amber">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M12 2L9 8.5H3L7.5 13L5.5 20L12 16L18.5 20L16.5 13L21 8.5H15L12 2Z" />
+                      </svg>
+                      award
+                    </span>
+                  )}
                 </div>
-                {project.featured && (
-                  <div className="px-2 py-0.5 text-xs font-mono text-gold bg-gold/10 rounded border border-gold/30 shrink-0">
-                    Featured
-                  </div>
-                )}
-              </div>
 
-              <p className="text-sm text-light/75 mt-3 leading-relaxed">{project.description}</p>
+                <h3 className="mt-3 font-display font-semibold text-2xl md:text-[1.7rem] leading-snug text-ink group-hover:text-amber transition-colors duration-300">
+                  {project.title}
+                </h3>
 
-              <div className={`mt-4 inline-flex items-center gap-2 px-3 py-1 rounded ${project.award ? "bg-gold/10 border border-gold/30" : "metric-pill"}`}>
-                {project.award && (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-gold shrink-0">
-                    <path d="M12 2L9 8.5H3L7.5 13L5.5 20L12 16L18.5 20L16.5 13L21 8.5H15L12 2Z" fill="currentColor"/>
-                  </svg>
-                )}
-                <span className={`text-sm font-mono ${project.award ? "text-gold" : "text-accent"}`}>{project.metric}</span>
-              </div>
+                <p className="mt-4 text-[15px] text-ink/80 leading-relaxed">{project.description}</p>
 
-              <ul className="mt-5 space-y-2.5">
-                {project.bullets.map((bullet, j) => (
-                  <li key={j} className="text-sm text-light/80 flex gap-2">
-                    <span className="text-cyan/70 mt-0.5 shrink-0">▹</span>
-                    {bullet}
-                  </li>
-                ))}
-              </ul>
+                <p className="mt-5 font-mono text-xs text-amber leading-relaxed">{project.metric}</p>
 
-              <div className="flex flex-wrap gap-2 mt-5">
-                {project.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-0.5 text-xs font-mono text-accent/90 bg-accent/10 rounded border border-cyan/25 shadow-[0_0_12px_rgba(86,215,211,0.15)]"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+                <ul className="mt-5 space-y-2.5">
+                  {project.bullets.map((bullet, j) => (
+                    <li key={j} className="flex gap-3 text-sm text-ink/75 leading-relaxed">
+                      <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-fern" />
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-7 flex flex-wrap gap-2">
+                  {project.tags.map((tag) => (
+                    <span key={tag} className="rounded-full border hairline px-3 py-1 font-mono text-[11px] text-moss">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </TiltCard>
             </motion.div>
-          </AnimatePresence>
+          ))}
         </div>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-center gap-4 mt-6">
-          <button
-            onClick={prev}
-            className={`p-1 transition-colors ${activeIndex === 0 ? "text-muted/20 cursor-default" : "text-muted hover:text-cyan"}`}
-            aria-label="Previous project"
-            disabled={activeIndex === 0}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-
-          <div className="flex gap-2">
-            {projects.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => navigate(i)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  i === activeIndex ? "bg-accent shadow-[0_0_12px_rgba(98,242,162,0.8)]" : "bg-muted/40"
-                }`}
-                aria-label={`Go to project ${i + 1}`}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={next}
-            className={`p-1 transition-colors ${activeIndex === projects.length - 1 ? "text-muted/20 cursor-default" : "text-muted hover:text-cyan"}`}
-            aria-label="Next project"
-            disabled={activeIndex === projects.length - 1}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

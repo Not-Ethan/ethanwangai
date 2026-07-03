@@ -3,10 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Ethan Wang",
-  description: "Software engineer, quantitative trader, and startup founder. Building systems that trade, scale, and think.",
+  description:
+    "Ethan Wang builds trading systems and video infrastructure. CS + math at Case Western Reserve University.",
   openGraph: {
     title: "Ethan Wang",
-    description: "Software engineer, quantitative trader, and startup founder.",
+    description: "Ethan Wang builds trading systems and video infrastructure.",
     url: "https://ethanwang.ai",
     type: "website",
   },
@@ -18,10 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className="bg-bg text-light font-body antialiased">
-        {children}
-      </body>
+    <html lang="en">
+      <body className="bg-bg text-ink font-body antialiased">{children}</body>
     </html>
   );
 }

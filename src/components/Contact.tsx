@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import { FiGithub, FiLinkedin, FiMail } from "react-icons/fi";
-import { siteConfig } from "@/lib/data";
+import { contact, siteConfig } from "@/lib/data";
+import { fadeUp, stagger, viewport } from "@/components/sections/reveal";
 
 const links = [
   { icon: FiMail, href: `mailto:${siteConfig.email}`, label: "Email" },
@@ -12,49 +13,56 @@ const links = [
 
 export default function Contact() {
   return (
-    <section className="h-screen flex items-start md:items-center justify-center pt-20 pb-5 md:py-16 px-4 md:px-6">
+    <section id="contact" className="relative flex min-h-screen flex-col items-center justify-center px-6 md:px-12 py-28">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto w-full text-center rounded-2xl glass-panel panel-ring p-5 sm:p-6 md:p-12 max-h-[calc(100vh-6.5rem)] md:max-h-none overflow-y-auto"
+        variants={stagger}
+        initial="hidden"
+        whileInView="show"
+        viewport={viewport}
+        className="section-scrim mx-auto max-w-2xl text-center"
       >
-        <h2 className="text-sm font-mono section-title mb-6">04 / Contact</h2>
+        <motion.p variants={fadeUp} className="kicker mb-5">
+          04 · Midnight — Contact
+        </motion.p>
 
-        <h3 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-light">
-          Let&apos;s build something.
-        </h3>
+        <motion.h2 variants={fadeUp} className="font-display font-semibold text-ink text-5xl md:text-7xl leading-tight">
+          The trail <em className="font-normal">ends</em> here.
+        </motion.h2>
 
-        <p className="mt-4 text-muted">
-          Always interested in new opportunities, collaborations, and interesting problems.
-        </p>
+        <motion.p variants={fadeUp} className="mt-7 text-base md:text-lg text-ink/80 leading-relaxed">
+          {contact.body}
+        </motion.p>
 
-        <motion.a
-          href={`mailto:${siteConfig.email}`}
-          whileHover={{ scale: 1.05 }}
-          className="inline-block mt-8 px-8 py-3 font-mono text-sm text-accent border border-cyan/40 rounded-lg bg-cyan/10 hover:bg-cyan/20 shadow-[0_0_26px_rgba(98,242,162,0.25)] transition-colors"
-        >
-          {siteConfig.email}<span className="animate-blink ml-0.5">▌</span>
-        </motion.a>
+        <motion.div variants={fadeUp} className="mt-10">
+          <motion.a
+            href={`mailto:${siteConfig.email}`}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.98 }}
+            className="inline-block rounded-full bg-amber px-8 py-4 font-mono text-sm font-medium text-[#1c1206] shadow-[0_0_38px_rgba(255,180,94,0.35)] hover:bg-ember hover:shadow-[0_0_46px_rgba(232,132,61,0.45)] transition-[background-color,box-shadow] duration-300"
+          >
+            {siteConfig.email}
+            <span className="animate-blink ml-1">▍</span>
+          </motion.a>
+        </motion.div>
 
-        <div className="flex justify-center gap-5 mt-8 md:mt-10">
+        <motion.div variants={fadeUp} className="mt-10 flex justify-center gap-4">
           {links.map(({ icon: Icon, href, label }) => (
             <a
               key={label}
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted hover:text-accent transition-all hover:scale-110 transform rounded-full border border-cyan/20 bg-bg/35 p-2 hover:border-accent/55 hover:bg-cyan/10"
               aria-label={label}
+              className="rounded-full border hairline p-3 text-ink/70 hover:text-amber hover:border-amber/40 hover:-translate-y-0.5 transition-all duration-300"
             >
-              <Icon size={22} />
+              <Icon size={19} />
             </a>
           ))}
-        </div>
+        </motion.div>
 
-        <p className="mt-10 md:mt-16 text-xs font-mono text-muted/40">
-          Designed &amp; built by Ethan Wang
-        </p>
+        <motion.p variants={fadeUp} className="mt-20 font-mono text-[11px] text-ink/35">
+          © 2026 Ethan Wang · designed &amp; built by hand · three.js + next.js
+        </motion.p>
       </motion.div>
     </section>
   );

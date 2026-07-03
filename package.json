@@ -9,14 +9,20 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@fontsource/inter": "^5.2.8",
+    "@fontsource/fraunces": "^5.2.9",
     "@fontsource/jetbrains-mono": "^5.2.8",
-    "@fontsource/space-grotesk": "^5.2.10",
+    "@fontsource/schibsted-grotesk": "^5.2.8",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@react-three/postprocessing": "^3.0.4",
+    "@types/three": "^0.185.0",
     "framer-motion": "^12.34.3",
+    "lenis": "^1.3.25",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
