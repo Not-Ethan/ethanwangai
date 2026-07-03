@@ -62,52 +62,51 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       };
     }
 
-    const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 1 });
-    lenisRef.current = lenis;
-
-    // Magnetic settle: when scrolling comes to rest near a section's
-    // center, ease the last stretch so stations feel like resting points
-    // — resistance, not a hard snap.
-    let settleTimer = 0;
-    let lastVelocity = 0;
-
-    const trySettle = () => {
-      if (Math.abs(lastVelocity) > 0.08) return;
+    // Section centers, measured once and on resize.
+    const centers: number[] = [];
+    const measure = () => {
       const vh = window.innerHeight;
       const maxScroll = document.documentElement.scrollHeight - vh;
-      let best: number | null = null;
-      let bestDist = Infinity;
+      centers.length = 0;
       for (const s of stations) {
         const el = document.getElementById(s.id);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
-        const center = Math.min(
-          Math.max(0, window.scrollY + rect.top + rect.height / 2 - vh / 2),
-          maxScroll
-        );
-        const dist = Math.abs(center - lenis.scroll);
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = center;
-        }
-      }
-      if (best !== null && bestDist > 6 && bestDist < vh * 0.3) {
-        lenis.scrollTo(best, {
-          duration: 1.1,
-          easing: (t) => 1 - Math.pow(1 - t, 3),
-        });
+        const center = window.scrollY + rect.top + rect.height / 2 - vh / 2;
+        centers.push(Math.min(Math.max(0, center), maxScroll));
       }
     };
 
-    lenis.on(
-      "scroll",
-      ({ scroll, limit, velocity }: { scroll: number; limit: number; velocity: number }) => {
-        progress.set(limit > 0 ? scroll / limit : 0);
-        lastVelocity = velocity;
-        window.clearTimeout(settleTimer);
-        settleTimer = window.setTimeout(trySettle, 160);
-      }
-    );
+    // Resistance valley: near a section's center, incoming wheel/touch
+    // deltas are scaled down, so it takes more input to push through the
+    // middle. Input shaping only — the scroll position is never moved
+    // programmatically.
+    const lenis = new Lenis({
+      lerp: 0.09,
+      wheelMultiplier: 1,
+      virtualScroll: (e: { deltaY: number }) => {
+        const vh = window.innerHeight;
+        const here = window.scrollY;
+        let dist = Infinity;
+        for (const c of centers) {
+          const d = Math.abs(c - here);
+          if (d < dist) dist = d;
+        }
+        const radius = vh * 0.34;
+        if (dist < radius) {
+          const depth = 1 - dist / radius; // 0 at the rim → 1 at the center
+          e.deltaY *= 1 - 0.75 * depth * depth; // down to ~0.25 at the center
+        }
+        return true;
+      },
+    });
+    lenisRef.current = lenis;
+    measure();
+    window.addEventListener("resize", measure);
+
+    lenis.on("scroll", ({ scroll, limit }: { scroll: number; limit: number }) => {
+      progress.set(limit > 0 ? scroll / limit : 0);
+    });
 
     let raf = 0;
     const loop = (time: number) => {
@@ -118,7 +117,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
     return () => {
       cancelAnimationFrame(raf);
-      window.clearTimeout(settleTimer);
+      window.removeEventListener("resize", measure);
       lenis.destroy();
       lenisRef.current = null;
     };
