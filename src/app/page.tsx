@@ -5,10 +5,10 @@ import Experience from "@/components/Experience";
 import Projects from "@/components/Projects";
 import Contact from "@/components/Contact";
 
-// Breathing room between stations: stretches of trail where the
-// forest has the stage to itself.
+// Breathing room between stations: a short stretch of trail where the
+// world has the stage to itself.
 function Trail() {
-  return <div aria-hidden className="h-[55vh]" />;
+  return <div aria-hidden className="h-[22vh]" />;
 }
 
 export default function Home() {

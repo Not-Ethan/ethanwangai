@@ -6,8 +6,13 @@ import { useFrame } from "@react-three/fiber";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { nightFactor } from "@/lib/journey";
 import { useWorld } from "./ForestCanvas";
+import Water from "./Water";
 import {
+  FLOWER_COLORS,
   buildTerrainGeometry,
+  generateFlowers,
+  generateGrass,
+  generateMountains,
   generateMushrooms,
   generateRocks,
   generateTrees,
@@ -17,10 +22,10 @@ import {
 const dummy = new THREE.Object3D();
 const tint = new THREE.Color();
 
-/** Inject gentle per-tree wind sway into an instanced material.
- *  The compiled shader is stashed on `material.userData.shader` so the
- *  frame loop can drive its uTime uniform. */
-function addWindSway(material: THREE.Material) {
+/** Inject gentle wind sway into an instanced material. The compiled
+ *  shader is stashed on `material.userData.shader` so the frame loop
+ *  can drive its uTime uniform. `minY`/`amp` are baked as constants. */
+function addWindSway(material: THREE.Material, minY: number, amp: number) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = { value: 0 };
     material.userData.shader = shader;
@@ -33,9 +38,11 @@ function addWindSway(material: THREE.Material) {
         #ifdef USE_INSTANCING
           mvPosition = instanceMatrix * mvPosition;
         #endif
-        float swayW = max(0.0, transformed.y - 1.0);
-        mvPosition.x += sin(uTime * 1.3 + mvPosition.x * 0.5 + mvPosition.z * 0.35) * swayW * 0.035;
-        mvPosition.z += cos(uTime * 0.9 + mvPosition.x * 0.3) * swayW * 0.022;
+        float swayW = max(0.0, transformed.y - ${minY.toFixed(2)});
+        mvPosition.x += sin(uTime * 1.3 + mvPosition.x * 0.5 + mvPosition.z * 0.35) * swayW * ${(
+          0.035 * amp
+        ).toFixed(4)};
+        mvPosition.z += cos(uTime * 0.9 + mvPosition.x * 0.3) * swayW * ${(0.022 * amp).toFixed(4)};
         mvPosition = modelViewMatrix * mvPosition;
         gl_Position = projectionMatrix * mvPosition;
         `
@@ -60,9 +67,15 @@ function Trees({ count }: { count: number }) {
 
   const foliageMaterial = useMemo(() => {
     const mat = new THREE.MeshLambertMaterial({ flatShading: true });
-    addWindSway(mat);
+    addWindSway(mat, 1.0, 1.0);
     return mat;
   }, []);
+
+  useFrame(({ clock }) => {
+    const mat = foliageMeshRef.current?.material as THREE.Material | undefined;
+    const shader = mat?.userData.shader;
+    if (shader) shader.uniforms.uTime.value = clock.elapsedTime;
+  });
 
   const setInstances = (foliage: THREE.InstancedMesh | null) => {
     if (!foliage) return;
@@ -98,12 +111,6 @@ function Trees({ count }: { count: number }) {
     trunks.instanceMatrix.needsUpdate = true;
   };
 
-  useFrame(({ clock }) => {
-    const mat = foliageMeshRef.current?.material as THREE.Material | undefined;
-    const shader = mat?.userData.shader;
-    if (shader) shader.uniforms.uTime.value = clock.elapsedTime;
-  });
-
   return (
     <>
       <instancedMesh
@@ -122,24 +129,125 @@ function Trees({ count }: { count: number }) {
   );
 }
 
+function Grass({ count }: { count: number }) {
+  const blades = useMemo(() => generateGrass(count), [count]);
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  const material = useMemo(() => {
+    const mat = new THREE.MeshLambertMaterial({ flatShading: true });
+    addWindSway(mat, 0.0, 3.2); // grass is short; it needs a livelier wave
+    return mat;
+  }, []);
+
+  useFrame(({ clock }) => {
+    const mat = meshRef.current?.material as THREE.Material | undefined;
+    const shader = mat?.userData.shader;
+    if (shader) shader.uniforms.uTime.value = clock.elapsedTime;
+  });
+
+  const setBlades = (mesh: THREE.InstancedMesh | null) => {
+    if (!mesh) return;
+    const dry = new THREE.Color("#8fa055");
+    const lush = new THREE.Color("#5f8a48");
+    blades.forEach((g, i) => {
+      dummy.position.set(g.x, g.y, g.z);
+      dummy.rotation.set(0, g.rot, 0);
+      dummy.scale.setScalar(g.scale);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+      tint.copy(lush).lerp(dry, (i % 7) / 6);
+      mesh.setColorAt(i, tint);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  };
+
+  return (
+    <instancedMesh
+      ref={(m: THREE.InstancedMesh | null) => {
+        meshRef.current = m;
+        setBlades(m);
+      }}
+      args={[undefined, material, blades.length]}
+      frustumCulled={false}
+    >
+      <coneGeometry args={[0.09, 0.62, 4]} />
+    </instancedMesh>
+  );
+}
+
+function Flowers({ count }: { count: number }) {
+  const flowers = useMemo(() => generateFlowers(count), [count]);
+  const palette = useMemo(() => FLOWER_COLORS.map((c) => new THREE.Color(c)), []);
+
+  const setFlowers = (mesh: THREE.InstancedMesh | null) => {
+    if (!mesh) return;
+    flowers.forEach((f, i) => {
+      dummy.position.set(f.x, f.y, f.z);
+      dummy.rotation.set(0, f.rot, 0);
+      dummy.scale.setScalar(f.scale);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+      mesh.setColorAt(i, palette[f.color]);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  };
+
+  return (
+    <instancedMesh ref={setFlowers} args={[undefined, undefined, flowers.length]} frustumCulled={false}>
+      <icosahedronGeometry args={[0.09, 0]} />
+      <meshLambertMaterial flatShading />
+    </instancedMesh>
+  );
+}
+
 function Rocks({ count }: { count: number }) {
   const rocks = useMemo(() => generateRocks(count), [count]);
   const setRocks = (mesh: THREE.InstancedMesh | null) => {
     if (!mesh) return;
+    const gray = new THREE.Color("#6d746b");
+    const snowy = new THREE.Color("#c9d4da");
     rocks.forEach((r, i) => {
       dummy.position.set(r.x, r.y, r.z);
       dummy.rotation.set(r.rot, r.rot * 1.7, 0);
       dummy.scale.set(r.scale, r.scale * 0.75, r.scale);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
+      tint.copy(gray).lerp(snowy, r.alpine * 0.8);
+      mesh.setColorAt(i, tint);
     });
     mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   };
   return (
     <instancedMesh ref={setRocks} args={[undefined, undefined, rocks.length]} frustumCulled={false}>
       <icosahedronGeometry args={[0.8, 0]} />
-      <meshLambertMaterial color="#6d746b" flatShading />
+      <meshLambertMaterial flatShading />
     </instancedMesh>
+  );
+}
+
+/** Hazy range on the horizon — the destination the trail climbs toward. */
+function Mountains() {
+  const specs = useMemo(() => generateMountains(), []);
+  return (
+    <group>
+      {specs.map((m, i) => (
+        <group key={i} position={[m.x, 0, m.z]}>
+          <mesh position={[0, m.h / 2 - 4, 0]}>
+            <coneGeometry args={[m.r, m.h, 7]} />
+            <meshLambertMaterial color="#4e5a68" flatShading />
+          </mesh>
+          {m.snow && (
+            <mesh position={[0, m.h - (m.h * 0.34) / 2 - 4.5, 0]}>
+              <coneGeometry args={[m.r * 0.36, m.h * 0.34, 7]} />
+              <meshLambertMaterial color="#dde7ee" flatShading />
+            </mesh>
+          )}
+        </group>
+      ))}
+    </group>
   );
 }
 
@@ -201,16 +309,16 @@ function Mushrooms({ count }: { count: number }) {
         <coneGeometry args={[0.24, 0.26, 7]} />
         <meshLambertMaterial ref={warmMat} color="#c07b3a" emissive="#ffb45e" emissiveIntensity={0.2} flatShading />
       </instancedMesh>
-      <pointLight ref={lightA} position={[-2.5, heightAt(-2.5, -36) + 1.4, -36]} color="#4fe3c0" distance={22} decay={1.8} intensity={0} />
-      <pointLight ref={lightB} position={[3, heightAt(3, -46) + 1.6, -46]} color="#ffb45e" distance={24} decay={1.8} intensity={0} />
+      <pointLight ref={lightA} position={[-2.5, heightAt(-2.5, -38) + 1.4, -38]} color="#4fe3c0" distance={22} decay={1.8} intensity={0} />
+      <pointLight ref={lightB} position={[3, heightAt(3, -48) + 1.6, -48]} color="#ffb45e" distance={24} decay={1.8} intensity={0} />
     </group>
   );
 }
 
 function Campfire() {
   const { frame } = useWorld();
-  const x = 0;
-  const z = -76;
+  const x = 1.6;
+  const z = -91;
   const y = useMemo(() => heightAt(x, z), [x, z]);
   const flameRef = useRef<THREE.Mesh>(null);
   const flameMat = useRef<THREE.MeshLambertMaterial>(null);
@@ -275,15 +383,19 @@ function Campfire() {
 
 export default function Forest() {
   const { low } = useWorld();
-  const terrainGeometry = useMemo(() => buildTerrainGeometry(low ? 72 : 112), [low]);
+  const terrainGeometry = useMemo(() => buildTerrainGeometry(low ? 72 : 104), [low]);
 
   return (
     <group>
       <mesh geometry={terrainGeometry}>
         <meshLambertMaterial vertexColors flatShading />
       </mesh>
-      <Trees count={low ? 140 : 380} />
-      <Rocks count={low ? 26 : 60} />
+      <Mountains />
+      <Water />
+      <Trees count={low ? 110 : 300} />
+      <Grass count={low ? 120 : 340} />
+      <Flowers count={low ? 40 : 110} />
+      <Rocks count={low ? 36 : 90} />
       <Mushrooms count={low ? 16 : 26} />
       <Campfire />
     </group>

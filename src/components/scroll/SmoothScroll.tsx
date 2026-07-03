@@ -10,6 +10,7 @@ import {
 } from "react";
 import Lenis from "lenis";
 import { motionValue, type MotionValue } from "framer-motion";
+import { stations } from "@/lib/journey";
 
 function subscribeReducedMotion(callback: () => void) {
   const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -63,9 +64,50 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
     const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 1 });
     lenisRef.current = lenis;
-    lenis.on("scroll", ({ scroll, limit }: { scroll: number; limit: number }) => {
-      progress.set(limit > 0 ? scroll / limit : 0);
-    });
+
+    // Magnetic settle: when scrolling comes to rest near a section's
+    // center, ease the last stretch so stations feel like resting points
+    // — resistance, not a hard snap.
+    let settleTimer = 0;
+    let lastVelocity = 0;
+
+    const trySettle = () => {
+      if (Math.abs(lastVelocity) > 0.08) return;
+      const vh = window.innerHeight;
+      const maxScroll = document.documentElement.scrollHeight - vh;
+      let best: number | null = null;
+      let bestDist = Infinity;
+      for (const s of stations) {
+        const el = document.getElementById(s.id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const center = Math.min(
+          Math.max(0, window.scrollY + rect.top + rect.height / 2 - vh / 2),
+          maxScroll
+        );
+        const dist = Math.abs(center - lenis.scroll);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = center;
+        }
+      }
+      if (best !== null && bestDist > 6 && bestDist < vh * 0.3) {
+        lenis.scrollTo(best, {
+          duration: 1.1,
+          easing: (t) => 1 - Math.pow(1 - t, 3),
+        });
+      }
+    };
+
+    lenis.on(
+      "scroll",
+      ({ scroll, limit, velocity }: { scroll: number; limit: number; velocity: number }) => {
+        progress.set(limit > 0 ? scroll / limit : 0);
+        lastVelocity = velocity;
+        window.clearTimeout(settleTimer);
+        settleTimer = window.setTimeout(trySettle, 160);
+      }
+    );
 
     let raf = 0;
     const loop = (time: number) => {
@@ -76,6 +118,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(settleTimer);
       lenis.destroy();
       lenisRef.current = null;
     };

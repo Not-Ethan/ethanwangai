@@ -14,16 +14,32 @@ export const stations = [
   { id: "contact", label: "Midnight", nav: "Contact", t: 1.0 },
 ] as const;
 
+// The walk crosses five biomes: dense forest (dawn) → wildflower
+// meadow (morning) → lakeshore (golden hour) → foothill grove (dusk)
+// → alpine summit above the treeline (midnight). The trail climbs
+// out of the valley over the last third.
+
+/** Height of the trail itself at a given z — the mountain ascent. */
+export function trailElevation(z: number): number {
+  const ascent = THREE.MathUtils.smoothstep(-z, 30, 80);
+  return Math.pow(ascent, 1.35) * 24 + Math.sin(z * 0.05) * 0.6;
+}
+
+function trailPoint(x: number, z: number, lift: number): THREE.Vector3 {
+  return new THREE.Vector3(x, trailElevation(z) + lift, z);
+}
+
 // Camera walks this path (arc-length parameterized on sample).
 export const cameraCurve = new THREE.CatmullRomCurve3(
   [
-    new THREE.Vector3(0, 3.4, 46),
-    new THREE.Vector3(2.6, 3.1, 28),
-    new THREE.Vector3(-3.2, 2.9, 10),
-    new THREE.Vector3(3.6, 3.5, -10),
-    new THREE.Vector3(-2.6, 2.7, -30),
-    new THREE.Vector3(1.8, 3.2, -50),
-    new THREE.Vector3(0, 3.8, -68),
+    trailPoint(0, 46, 3.4),
+    trailPoint(2.6, 28, 3.1),
+    trailPoint(-3.2, 10, 2.9),
+    trailPoint(3.6, -10, 3.3),
+    trailPoint(-2.6, -30, 3.0),
+    trailPoint(1.8, -52, 3.2),
+    trailPoint(-0.6, -68, 3.4),
+    trailPoint(0, -80, 3.6),
   ],
   false,
   "catmullrom",
@@ -54,7 +70,7 @@ export const skyKeys: SkyKey[] = [
     mid: "#6e5377",
     horizon: "#f2a65e",
     fog: "#a98087",
-    fogDensity: 0.02,
+    fogDensity: 0.015,
     sun: "#ffc687",
     sunIntensity: 1.5,
     hemiSky: "#8d7d9e",
@@ -69,7 +85,7 @@ export const skyKeys: SkyKey[] = [
     mid: "#8fb7d8",
     horizon: "#e9f0da",
     fog: "#b9cdc9",
-    fogDensity: 0.012,
+    fogDensity: 0.009,
     sun: "#fff3d6",
     sunIntensity: 2.1,
     hemiSky: "#bcd4e4",
@@ -84,7 +100,7 @@ export const skyKeys: SkyKey[] = [
     mid: "#c8875f",
     horizon: "#ffc966",
     fog: "#cf9a68",
-    fogDensity: 0.016,
+    fogDensity: 0.011,
     sun: "#ffb35c",
     sunIntensity: 1.9,
     hemiSky: "#c9a284",
@@ -99,7 +115,7 @@ export const skyKeys: SkyKey[] = [
     mid: "#4c3b66",
     horizon: "#c96f72",
     fog: "#57496a",
-    fogDensity: 0.019,
+    fogDensity: 0.013,
     sun: "#e78d78",
     sunIntensity: 0.9,
     hemiSky: "#5d5378",
@@ -114,7 +130,7 @@ export const skyKeys: SkyKey[] = [
     mid: "#0b1424",
     horizon: "#142238",
     fog: "#0d1723",
-    fogDensity: 0.022,
+    fogDensity: 0.015,
     sun: "#9fc0dd",
     sunIntensity: 0.65,
     hemiSky: "#25344a",

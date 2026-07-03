@@ -187,8 +187,8 @@ export default function Sky() {
     }
     if (moonHaloRef.current) {
       moonHaloRef.current.position.copy(moonDir).multiplyScalar(DOME_RADIUS * 0.88);
-      moonHaloRef.current.material.opacity = moonVisible * 0.3;
-      moonHaloRef.current.scale.setScalar(60);
+      moonHaloRef.current.material.opacity = moonVisible * 0.2;
+      moonHaloRef.current.scale.setScalar(42);
     }
 
     if (dirRef.current && dirTargetRef.current) {

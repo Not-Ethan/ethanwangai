@@ -19,9 +19,9 @@ function renderBullet(text: string) {
 
 export default function Experience() {
   return (
-    <section id="experience" className="relative flex min-h-screen items-center px-6 md:px-12 py-28">
+    <section id="experience" className="relative flex min-h-screen items-center px-6 md:px-12 py-20">
       <div className="mx-auto w-full max-w-4xl">
-        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={viewport} className="section-scrim mb-14">
+        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={viewport} className="section-scrim mb-10">
           <motion.p variants={fadeUp} className="kicker mb-5">
             02 · Golden Hour — Experience
           </motion.p>
@@ -30,7 +30,7 @@ export default function Experience() {
           </motion.h2>
         </motion.div>
 
-        <div className="relative border-l hairline pl-8 md:pl-12 space-y-14">
+        <div className="relative border-l hairline pl-8 md:pl-12 space-y-10">
           {experience.map((exp) => (
             <motion.article
               key={exp.company}

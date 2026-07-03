@@ -136,12 +136,10 @@ function ParticleCloud({
 }
 
 const MIST_PLACEMENTS = [
-  { x: -6, z: 36, w: 66, h: 12, o: 0.2 },
-  { x: 8, z: 14, w: 58, h: 10, o: 0.16 },
-  { x: -8, z: -12, w: 70, h: 13, o: 0.18 },
-  { x: 6, z: -36, w: 62, h: 11, o: 0.16 },
-  { x: -4, z: -58, w: 68, h: 12, o: 0.18 },
-  { x: 2, z: -74, w: 60, h: 10, o: 0.2 },
+  { x: -6, z: 36, w: 54, h: 10, o: 0.18 },
+  { x: 8, z: 12, w: 48, h: 9, o: 0.13 },
+  { x: -14, z: -16, w: 56, h: 10, o: 0.15 },
+  { x: 4, z: -44, w: 50, h: 9, o: 0.15 },
 ];
 
 function Mist() {
@@ -166,6 +164,7 @@ function Mist() {
       const mat = sprite.material;
       mat.opacity = placements[i].o * strength;
       mat.color.copy(mistColor.current);
+      sprite.visible = mat.opacity > 0.012;
     });
   });
 
@@ -190,9 +189,11 @@ function Mist() {
 function GodRays() {
   const { frame } = useWorld();
   const mats = useRef<(THREE.MeshBasicMaterial | null)[]>([]);
+  const groupRef = useRef<THREE.Group>(null);
 
   useFrame(() => {
     const dawn = dawnFactor(frame.current.p);
+    if (groupRef.current) groupRef.current.visible = dawn > 0.02;
     mats.current.forEach((m, i) => {
       if (m) m.opacity = dawn * (i % 2 === 0 ? 0.03 : 0.018);
     });
@@ -206,7 +207,7 @@ function GodRays() {
   ];
 
   return (
-    <>
+    <group ref={groupRef}>
       {rays.map((r, i) => (
         <mesh
           key={i}
@@ -229,7 +230,7 @@ function GodRays() {
           />
         </mesh>
       ))}
-    </>
+    </group>
   );
 }
 
@@ -240,16 +241,16 @@ export default function Atmosphere() {
     <group>
       <Mist />
       <GodRays />
-      {/* fireflies — amber swarm along the dusk stretch */}
+      {/* fireflies — amber swarm through the dusk grove */}
       <ParticleCloud
-        count={low ? 60 : 130}
+        count={low ? 55 : 120}
         seed={606}
         color="#ffc76b"
         size={10}
         amp={1.5}
-        zMin={-64}
-        zMax={-4}
-        maxPathDist={18}
+        zMin={-58}
+        zMax={-16}
+        maxPathDist={16}
         yMin={0.4}
         yMax={2.6}
         opacityFor={(p) => nightFactor(p) * 0.9 + Math.max(0, nightFactor(p + 0.12) - nightFactor(p)) * 0.4}
@@ -261,25 +262,25 @@ export default function Atmosphere() {
         color="#7dffd8"
         size={7}
         amp={1.1}
-        zMin={-54}
-        zMax={-26}
+        zMin={-56}
+        zMax={-32}
         maxPathDist={10}
         yMin={0.2}
         yMax={1.4}
         opacityFor={(p) => nightFactor(p) * 0.75}
       />
-      {/* sunlit dust motes in the morning clearing */}
+      {/* pollen + dust drifting over the morning meadow */}
       <ParticleCloud
         count={low ? 30 : 70}
         seed={303}
         color="#ffeccb"
         size={5}
         amp={0.8}
-        zMin={4}
-        zMax={36}
-        maxPathDist={15}
+        zMin={2}
+        zMax={32}
+        maxPathDist={16}
         yMin={0.5}
-        yMax={4.5}
+        yMax={4}
         opacityFor={(p) => dayFactor(p) * 0.65 + dawnFactor(p) * 0.25}
       />
     </group>

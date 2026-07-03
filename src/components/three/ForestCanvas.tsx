@@ -15,6 +15,7 @@ import CameraRig from "./CameraRig";
 import Sky from "./Sky";
 import Forest from "./Forest";
 import Atmosphere from "./Atmosphere";
+import Aurora from "./Aurora";
 import Effects from "./Effects";
 
 export interface FrameState {
@@ -70,9 +71,11 @@ export default function ForestCanvas() {
     <div className="fixed inset-0 z-0" aria-hidden>
       <CanvasErrorBoundary>
         <Canvas
-          dpr={low ? [1, 1.5] : [1, 2]}
+          dpr={low ? [1, 1.25] : [1, 1.6]}
           camera={{ fov: 55, near: 0.1, far: 420, position: [0, 3.4, 46] }}
-          gl={{ antialias: !low, powerPreference: "high-performance" }}
+          // On the high tier the EffectComposer renders offscreen, so MSAA
+          // there comes from the composer, not the default framebuffer.
+          gl={{ antialias: low, powerPreference: "high-performance" }}
           fallback={null}
         >
           <WorldContext.Provider value={world}>
@@ -80,6 +83,7 @@ export default function ForestCanvas() {
             <Sky />
             <Forest />
             <Atmosphere />
+            <Aurora />
             {!low && <Effects />}
           </WorldContext.Provider>
         </Canvas>

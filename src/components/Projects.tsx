@@ -47,9 +47,9 @@ function TiltCard({ children, className }: { children: React.ReactNode; classNam
 
 export default function Projects() {
   return (
-    <section id="projects" className="relative flex min-h-screen items-center px-6 md:px-12 py-28">
+    <section id="projects" className="relative flex min-h-screen items-center px-6 md:px-12 py-20">
       <div className="mx-auto w-full max-w-5xl">
-        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={viewport} className="section-scrim mb-14">
+        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={viewport} className="section-scrim mb-10">
           <motion.p variants={fadeUp} className="kicker mb-5">
             03 · Dusk — Projects
           </motion.p>

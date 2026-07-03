@@ -44,9 +44,9 @@ function CountUpValue({ value }: { value: string }) {
 
 export default function About() {
   return (
-    <section id="about" className="relative flex min-h-screen items-center px-6 md:px-12 py-28">
+    <section id="about" className="relative flex min-h-screen items-center px-6 md:px-12 py-20">
       <div className="mx-auto w-full max-w-6xl">
-        <div className="grid gap-14 md:grid-cols-[1.15fr_1fr] md:gap-20 items-start">
+        <div className="grid gap-10 md:grid-cols-[1.15fr_1fr] md:gap-16 items-start">
           {/* Left: the introduction */}
           <motion.div
             variants={stagger}
@@ -71,7 +71,7 @@ export default function About() {
               {about.body}
             </motion.p>
 
-            <motion.div variants={fadeUp} className="mt-10">
+            <motion.div variants={fadeUp} className="mt-8">
               {Object.entries(skills).map(([category, items]) => (
                 <div key={category} className="flex flex-wrap items-baseline gap-x-2 gap-y-2 py-3 border-b hairline first:border-t">
                   <span className="w-full sm:w-32 shrink-0 font-mono text-[10px] tracking-[0.2em] uppercase text-muted">

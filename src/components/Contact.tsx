@@ -13,7 +13,7 @@ const links = [
 
 export default function Contact() {
   return (
-    <section id="contact" className="relative flex min-h-screen flex-col items-center justify-center px-6 md:px-12 py-28">
+    <section id="contact" className="relative flex min-h-screen flex-col items-center justify-center px-6 md:px-12 py-20">
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -60,7 +60,7 @@ export default function Contact() {
           ))}
         </motion.div>
 
-        <motion.p variants={fadeUp} className="mt-20 font-mono text-[11px] text-ink/35">
+        <motion.p variants={fadeUp} className="mt-14 font-mono text-[11px] text-ink/35">
           © 2026 Ethan Wang · designed &amp; built by hand · three.js + next.js
         </motion.p>
       </motion.div>
