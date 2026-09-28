@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root, :root[data-theme="light"] {
-  --paper: #F1EEE9; --ink: #141416; --ink-top: #34343A; --ink-key: #222226; --ink-shade: #141416;
+  --paper: #F1EEE9; --ink: #141416; --ink-top: #44444C; --ink-key: #2C2C32; --ink-shade: #141416;
   --pencil: #B9B4AC; --hot: #FF4A1C; --shadow: #D8D3CB;
   color-scheme: light;
 }

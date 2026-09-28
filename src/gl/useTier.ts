@@ -3,8 +3,9 @@
 // detectTier() (pointer coarse, width < 820 or hardwareConcurrency ≤ 4) kept live by ScrollProvider and the one
 // tier the DOM laid its sections out with, plus what the renderer makes of it: DPR, the shadow map and the MSAA
 // sample count. drei's PerformanceMonitor calls onDecline, which lowers DPR by 0.25 steps to a floor of 1; the
-// rest of the step-down ladder arrives in Stage 6.
-import { useCallback, useState } from 'react';
+// rest of the step-down ladder arrives in Stage 6. `?tier=phone` (or `desktop`) forces the GL tier for stills and
+// Stage 5's phone checks; the DOM keeps the detected tier.
+import { useCallback, useMemo, useState } from 'react';
 import type { Tier } from '@/bench/types';
 import { useScroll } from '@/scroll/ScrollProvider';
 
@@ -22,8 +23,16 @@ export function dprAfterDeclines(tier: Tier, declines: number): number {
   return Math.max(DPR_FLOOR, TIER_SETTINGS[tier].dpr - DPR_STEP * declines);
 }
 
+/** The tier a `?tier=` query forces, or null when absent or not a tier name. */
+export function tierOverride(search: string): Tier | null {
+  const t = new URLSearchParams(search).get('tier');
+  return t === 'phone' || t === 'desktop' ? t : null;
+}
+
 export function useTier(): TierSettings & { onDecline: () => void } {
-  const { tier } = useScroll();
+  const scroll = useScroll();
+  const forced = useMemo(() => (typeof window === 'undefined' ? null : tierOverride(window.location.search)), []);
+  const tier = forced ?? scroll.tier;
   const [declines, setDeclines] = useState(0);
   // Stops counting at the floor, so a decline there is a no-op render-wise (same state, React bails out).
   const onDecline = useCallback(() => setDeclines((n) => (dprAfterDeclines(tier, n) > DPR_FLOOR ? n + 1 : n)), [tier]);

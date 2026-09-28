@@ -368,16 +368,17 @@ describe('stepFrame', () => {
     expect(lightRef.current).toBe(light);
   });
 
-  it('writes the unit travel axis from the pose delta while the camera rises, and the merge while section 02 scrubs', () => {
+  it('writes the unit travel axis from the pose delta while the camera travels to the bot, and the merge while section 02 scrubs', () => {
     const { d, uniforms, scroll } = driver();
     const r = scroll.current.ranges;
-    scroll.current.g = gAt(r, 0, 0.4);
+    const first = SECTIONS.findIndex((s) => s.id === 'first');
+    scroll.current.g = gAt(r, first, 0.1);
     stepFrame(d, DT, DT);
-    scroll.current.g = gAt(r, 0, 0.5);
+    scroll.current.g = gAt(r, first, 0.2);
     stepFrame(d, DT, 2 * DT);
     const a = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 }, b = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 };
-    evaluatePose(0, 0.4, 'desktop', a);
-    evaluatePose(0, 0.5, 'desktop', b);
+    evaluatePose(first, 0.1, 'desktop', a);
+    evaluatePose(first, 0.2, 'desktop', b);
     const expected = new THREE.Vector3().fromArray(b.position).sub(new THREE.Vector3().fromArray(a.position)).normalize();
     expect(uniforms.uTravelAxis.value.distanceTo(expected)).toBeLessThan(1e-9);
     expect(uniforms.uTravelAxis.value.length()).toBeCloseTo(1, 12);
@@ -465,7 +466,8 @@ describe('<Clocks result uniforms tier /> and <CameraRig /> mounted through R3F'
     const expected = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 };
     evaluatePose(0, 0.5, 'desktop', expected);
     expect(hud.pose.position).toEqual(expected.position);
-    expect(camera.position.toArray()).toEqual(expected.position);   // CameraRig ran after Clocks in the same frame
+    // CameraRig ran after Clocks in the same frame; its orbit round-trips through the lookAt, so compare within an ulp
+    camera.position.toArray().forEach((v, k) => expect(v).toBeCloseTo(expected.position[k], 12));
     expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);       // no ?built=1: no intro in Stage 2
     expect(uniforms.uTime.value).toBeCloseTo(DT, 9);
     await act(async () => root.unmount());

@@ -1,51 +1,68 @@
-// Camera pose tables and the pure pose evaluator. Bench space; poses are initial
-// values to be tuned at gates G1/G3/G4 and re-emitted.
+// Camera pose tables and the pure pose evaluator. Bench space. The tables were re-authored at gate G1 against
+// src/bench/cameraClearance.test.ts: every section's subject sits right of the DOM copy column (the left 42% on
+// desktop; the hero's copy block is the left 58% down to 65% of the height), framed by lookAt rather than by
+// moving the camera, so the whole desktop path stays under 45 units. Hold-then-move keys: no section starts with a cut.
 import type { Tier, Vec3 } from './types';
 import { clamp01, lerp, power2InOut } from './math';
-import { TIMING } from './timing';
 
 export interface Pose { position: Vec3; lookAt: Vec3; fov: number }
 export interface CameraKey { section: number; u: number; pose: Pose }
 
+// Desktop, fov 30. One far station front-left for the hero and `more` (the rise is a tilt: the small machines enter
+// from the bottom edge), a descent to the bot for the macro, one climb along the front row (the kalshi dolly, then the
+// balance, splitter and watch by lookAt), the poster from the front, and a drop to the slot.
 const D: CameraKey[] = [
-  { section: 0, u: 0.00, pose: { position: [6.5, 4.2, 11.5], lookAt: [1.2, 0.4, -2.2], fov: 30 } },   // hero product shot; bench cropped at frame edge
-  { section: 0, u: 0.15, pose: { position: [6.5, 4.2, 11.5], lookAt: [1.2, 0.4, -2.2], fov: 30 } },   // hold while the copy is sticky
-  { section: 0, u: 1.00, pose: { position: [3.5, 9.5, 8.5], lookAt: [0.2, 0.2, -1.2], fov: 30 } },    // risen; bench enters from the bottom
-  { section: 1, u: 0.10, pose: { position: [2.8, 10.5, 5.5], lookAt: [0, 0.3, -2], fov: 30 } },       // high 3/4, ~55°, frame and carriages in frame
-  { section: 1, u: 1.00, pose: { position: [2.8, 10.5, 5.5], lookAt: [0, 0.3, -2], fov: 30 } },
-  { section: 2, u: 0.30, pose: { position: [-4.3, 0.9, 4.3], lookAt: [-5.4, 0.25, 2.5], fov: 30 } },  // macro on the bot
-  { section: 2, u: 0.70, pose: { position: [-1.5, 3.2, 9.0], lookAt: [-2.5, 0.3, 0.0], fov: 30 } },   // bot and quoter share the frame
-  { section: 2, u: 1.00, pose: { position: [-1.5, 3.2, 9.0], lookAt: [-2.5, 0.3, 0.0], fov: 30 } },
-  { section: 3, u: 0.08, pose: { position: [-9.5, 2.4, 4.5], lookAt: [-4.5, 0.2, -2.0], fov: 30 } },  // dolly start
-  { section: 3, u: 0.30, pose: { position: [8.5, 2.4, 4.5], lookAt: [3.5, 0.2, -2.0], fov: 30 } },    // dolly end (the one lateral dolly)
-  { section: 3, u: 1.00, pose: { position: [8.5, 2.4, 4.5], lookAt: [3.5, 0.2, -2.0], fov: 30 } },
-  { section: 4, u: 0.15, pose: { position: [-4.2, 1.7, 10.0], lookAt: [-4.2, 0.45, 4.4], fov: 30 } }, // side on the balance, quoter behind
-  { section: 4, u: 1.00, pose: { position: [-4.2, 1.7, 10.0], lookAt: [-4.2, 0.45, 4.4], fov: 30 } },
-  { section: 5, u: 0.15, pose: { position: [-3.6, 1.1, 7.6], lookAt: [1.2, 0.3, 4.4], fov: 30 } },    // long low along the splitter
-  { section: 5, u: 1.00, pose: { position: [-3.6, 1.1, 7.6], lookAt: [1.2, 0.3, 4.4], fov: 30 } },
-  { section: 6, u: 0.15, pose: { position: [4.6, 4.8, 8.2], lookAt: [4.6, 0.0, 4.4], fov: 30 } },     // high calm on the watch
-  { section: 6, u: 1.00, pose: { position: [4.6, 4.8, 8.2], lookAt: [4.6, 0.0, 4.4], fov: 30 } },
-  { section: 7, u: 0.60, pose: { position: [4.5, 2.8, 14.0], lookAt: [-0.6, 0.6, -0.5], fov: 30 } },  // poster: small machines large, quoter the wall
-  { section: 7, u: 1.00, pose: { position: [4.5, 2.8, 14.0], lookAt: [-0.6, 0.6, -0.5], fov: 30 } },
-  { section: 8, u: 0.25, pose: { position: [7.8, 1.3, 10.2], lookAt: [6.0, 0.2, 6.4], fov: 30 } },    // low on the slot
-  { section: 8, u: 1.00, pose: { position: [7.8, 1.3, 10.2], lookAt: [6.0, 0.2, 6.4], fov: 30 } },
+  { section: 0, u: 0.00, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-4.1, 3.2, -8.1], fov: 30 } },   // hero: quoter lower-right, tight to the right edge; small machines cropped at the bottom edge
+  { section: 0, u: 0.15, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-4.1, 3.2, -8.1], fov: 30 } },   // hold while the copy is sticky
+  { section: 0, u: 1.00, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-4.5, 0.2, -1.1], fov: 30 } },   // risen: the tilt brings the bench in from the bottom edge
+  { section: 1, u: 0.10, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-5.2, -0.6, 3.2], fov: 30 } },   // whole quoter right of the copy column
+  { section: 1, u: 1.00, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-5.2, -0.6, 3.2], fov: 30 } },
+  { section: 2, u: 0.30, pose: { position: [-4.4, 3.3, 9.9], lookAt: [-6.8, 0.8, 2.9], fov: 30 } },      // macro on the bot
+  { section: 2, u: 0.70, pose: { position: [-4.1, 3.6, 10.7], lookAt: [-7.6, 1.5, 1.5], fov: 30 } },     // bot and quoter share the frame
+  { section: 2, u: 1.00, pose: { position: [-4.1, 3.6, 10.7], lookAt: [-7.6, 1.5, 1.5], fov: 30 } },
+  { section: 3, u: 0.08, pose: { position: [-4.1, 3.6, 10.7], lookAt: [-7.2, 0.6, 0.0], fov: 30 } },     // dolly start
+  { section: 3, u: 0.30, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.8, -0.6, -1.8], fov: 30 } },   // dolly end (the one lateral dolly): low oblique along the bed
+  { section: 3, u: 1.00, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.8, -0.6, -1.8], fov: 30 } },
+  { section: 4, u: 0.15, pose: { position: [-1.6, 4.8, 13.7], lookAt: [-5.2, 2.7, 7.2], fov: 30 } },     // on the balance, quoter behind
+  { section: 4, u: 1.00, pose: { position: [-1.6, 4.8, 13.7], lookAt: [-5.2, 2.7, 7.2], fov: 30 } },
+  { section: 5, u: 0.15, pose: { position: [-1.3, 4.9, 14.0], lookAt: [-1.3, 3.2, 8.2], fov: 30 } },     // low along the splitter
+  { section: 5, u: 1.00, pose: { position: [-1.3, 4.9, 14.0], lookAt: [-1.3, 3.2, 8.2], fov: 30 } },
+  { section: 6, u: 0.15, pose: { position: [1.4, 7.2, 16.7], lookAt: [0.9, -0.1, 6.0], fov: 30 } },      // high calm on the watch
+  { section: 6, u: 1.00, pose: { position: [1.4, 7.2, 16.7], lookAt: [0.9, -0.1, 6.0], fov: 30 } },
+  { section: 7, u: 0.60, pose: { position: [6.0, 8.5, 23.8], lookAt: [-2.0, 2.8, 6.0], fov: 30 } },      // poster: whole bench, small machines large in front
+  { section: 7, u: 1.00, pose: { position: [6.0, 8.5, 23.8], lookAt: [-2.0, 2.8, 6.0], fov: 30 } },
+  { section: 8, u: 0.25, pose: { position: [6.0, 4.4, 15.4], lookAt: [2.6, 0.3, 5.5], fov: 30 } },       // low on the slot
+  { section: 8, u: 1.00, pose: { position: [6.0, 4.4, 15.4], lookAt: [2.6, 0.3, 5.5], fov: 30 } },
 ];
 
-// Phone: fov 38; the hero is a macro on the bed's front-left corner; every other pose is
-// pulled 20% closer to its lookAt and raised so machines sit in the lower 55% of a portrait frame.
-const PHONE_FOV = 38;
-const PHONE_PULL = 0.8;
-const PHONE_RAISE = 1.2;
-const PHONE_HERO: Pose = { position: [-2.6, 2.2, 5.2], lookAt: [-4.2, 0.3, 0.6], fov: PHONE_FOV };
+// Phone, fov 38, portrait: the frame is 2.7× narrower than desktop's, so each section's machine is framed whole
+// inside the width and in the lower 55%, under the copy. The quoter sections are far front shots; the small
+// machines are closer, each from its own side.
+const P: CameraKey[] = [
+  { section: 0, u: 0.00, pose: { position: [-11.0, 13.0, 39.0], lookAt: [1.5, 3.8, -6.0], fov: 38 } },   // hero: the whole quoter low in the frame, the bot at its near corner
+  { section: 0, u: 0.15, pose: { position: [-11.0, 13.0, 39.0], lookAt: [1.5, 3.8, -6.0], fov: 38 } },
+  { section: 0, u: 1.00, pose: { position: [-9.0, 18.0, 40.0], lookAt: [1.0, 3.0, -4.5], fov: 38 } },    // risen
+  { section: 1, u: 0.10, pose: { position: [-9.0, 18.0, 40.0], lookAt: [1.0, 3.0, -4.5], fov: 38 } },
+  { section: 1, u: 1.00, pose: { position: [-9.0, 18.0, 40.0], lookAt: [1.0, 3.0, -4.5], fov: 38 } },
+  { section: 2, u: 0.30, pose: { position: [-6.4, 1.9, 4.5], lookAt: [-5.0, 0.3, 2.1], fov: 38 } },      // macro on the bot
+  { section: 2, u: 0.70, pose: { position: [-5.7, 1.8, 5.0], lookAt: [-5.1, -1.3, -2.0], fov: 38 } },    // bot and quoter share the frame
+  { section: 2, u: 1.00, pose: { position: [-5.7, 1.8, 5.0], lookAt: [-5.1, -1.3, -2.0], fov: 38 } },
+  { section: 3, u: 0.08, pose: { position: [-8.0, 20.0, 40.0], lookAt: [1.5, 3.0, -4.5], fov: 38 } },    // dolly start
+  { section: 3, u: 0.30, pose: { position: [-4.0, 20.0, 40.0], lookAt: [1.5, 3.0, -4.5], fov: 38 } },    // dolly end
+  { section: 3, u: 1.00, pose: { position: [-4.0, 20.0, 40.0], lookAt: [1.5, 3.0, -4.5], fov: 38 } },
+  { section: 4, u: 0.15, pose: { position: [-7.3, 9.2, 12.5], lookAt: [-3.4, 2.1, 3.0], fov: 38 } },     // on the balance
+  { section: 4, u: 1.00, pose: { position: [-7.3, 9.2, 12.5], lookAt: [-3.4, 2.1, 3.0], fov: 38 } },
+  { section: 5, u: 0.15, pose: { position: [0.5, 5.9, 19.6], lookAt: [-0.1, 3.3, 5.4], fov: 38 } },      // along the splitter
+  { section: 5, u: 1.00, pose: { position: [0.5, 5.9, 19.6], lookAt: [-0.1, 3.3, 5.4], fov: 38 } },
+  { section: 6, u: 0.15, pose: { position: [3.5, 11.2, 21.1], lookAt: [3.8, 3.8, 4.7], fov: 38 } },      // high on the watch
+  { section: 6, u: 1.00, pose: { position: [3.5, 11.2, 21.1], lookAt: [3.8, 3.8, 4.7], fov: 38 } },
+  { section: 7, u: 0.60, pose: { position: [10.0, 22.0, 38.0], lookAt: [-2.0, 3.5, -5.0], fov: 38 } },   // poster
+  { section: 7, u: 1.00, pose: { position: [10.0, 22.0, 38.0], lookAt: [-2.0, 3.5, -5.0], fov: 38 } },
+  { section: 8, u: 0.25, pose: { position: [4.3, 1.9, 12.5], lookAt: [6.5, 0.0, 2.5], fov: 38 } },       // low on the slot
+  { section: 8, u: 1.00, pose: { position: [4.3, 1.9, 12.5], lookAt: [6.5, 0.0, 2.5], fov: 38 } },
+];
 
-function toPhone(k: CameraKey): CameraKey {
-  if (k.section === 0 && k.u <= TIMING.heroGuardU) return { section: k.section, u: k.u, pose: PHONE_HERO };
-  const { position: p, lookAt: l } = k.pose;
-  const position: Vec3 = [lerp(l[0], p[0], PHONE_PULL), lerp(l[1], p[1], PHONE_PULL) + PHONE_RAISE, lerp(l[2], p[2], PHONE_PULL)];
-  return { section: k.section, u: k.u, pose: { position, lookAt: l, fov: PHONE_FOV } };
-}
-
-export const CAMERA_KEYS: Record<Tier, CameraKey[]> = { desktop: D, phone: D.map(toPhone) };
+export const CAMERA_KEYS: Record<Tier, CameraKey[]> = { desktop: D, phone: P };
 
 /** Blends the two keys surrounding `section + u` with power2InOut; two keys sharing a pose hold. Writes into `out`; allocates nothing. */
 export function evaluatePose(section: number, u: number, tier: Tier, out: { position: number[]; lookAt: number[]; fov: number }): void {

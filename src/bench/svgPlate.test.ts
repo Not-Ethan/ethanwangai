@@ -27,7 +27,7 @@ describe('svgPlate', () => {
   const hero = heroPlateSvg(result, pose, ASPECT, opts);
 
   it('uses the section-0 desktop pose from the key table', () => {
-    expect(pose).toEqual({ position: [6.5, 4.2, 11.5], lookAt: [1.2, 0.4, -2.2], fov: 30 });
+    expect(pose).toEqual({ position: [-6.7, 11.6, 24.0], lookAt: [-4.1, 3.2, -8.1], fov: 30 });
   });
 
   it('hero plate is an NDC svg with the y flip', () => {

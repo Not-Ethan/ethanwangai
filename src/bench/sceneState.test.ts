@@ -30,8 +30,8 @@ describe('sceneState', () => {
     expect(s.click).toBe(-1);
     expect(s.trickle).toBe(true);
     expect(s.active).toBe(MACHINE.quoter);
-    expect(s.pose.position).toEqual([6.5, 4.2, 11.5]);
-    expect(s.pose.lookAt).toEqual([1.2, 0.4, -2.2]);
+    expect(s.pose.position).toEqual([-6.7, 11.6, 24.0]);
+    expect(s.pose.lookAt).toEqual([-4.1, 3.2, -8.1]);
     expect(s.pose.fov).toBe(30);
   });
 
@@ -135,26 +135,30 @@ describe('camera', () => {
 
   it('blends between keys with power2InOut and holds when both keys share a pose', () => {
     const out = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 };
-    // midway through the hero rise: keys (0, 0.15) and (0, 1.00)
+    const D = CAMERA_KEYS.desktop;
+    // midway through the hero rise, keys (0, 0.15) and (0, 1.00): the station holds, the lookAt tilts
+    const hero = D[1].pose, risen = D[2].pose;
     evaluatePose(0, 0.575, 'desktop', out);
-    expect(out.position[0]).toBeCloseTo(5.0, 6);
-    expect(out.position[1]).toBeCloseTo(6.85, 6);
-    expect(out.position[2]).toBeCloseTo(10.0, 6);
-    expect(out.lookAt[0]).toBeCloseTo(0.7, 6);
+    expect(out.position).toEqual([...hero.position]);
+    for (let k = 0; k < 3; k++) expect(out.lookAt[k]).toBeCloseTo((hero.lookAt[k] + risen.lookAt[k]) / 2, 6);
     // a quarter of the way is eased, not linear
     evaluatePose(0, 0.15 + 0.25 * 0.85, 'desktop', out);
-    expect(out.position[0]).toBeCloseTo(6.5 + (3.5 - 6.5) * power2InOut(0.25), 6);
+    expect(out.lookAt[1]).toBeCloseTo(hero.lookAt[1] + (risen.lookAt[1] - hero.lookAt[1]) * power2InOut(0.25), 6);
+    // the travel into section 2 moves the camera: a quarter of the way from (1, 1.00) to (2, 0.30)
+    const more = D[4].pose, macro = D[5].pose;
+    evaluatePose(2, 0.075, 'desktop', out);
+    for (let k = 0; k < 3; k++) expect(out.position[k]).toBeCloseTo(more.position[k] + (macro.position[k] - more.position[k]) * power2InOut(0.25), 6);
     // hold inside section 1
     evaluatePose(1, 0.5, 'desktop', out);
-    expect(out.position).toEqual([2.8, 10.5, 5.5]);
-    expect(out.lookAt).toEqual([0, 0.3, -2]);
+    expect(out.position).toEqual([-6.7, 11.6, 24.0]);
+    expect(out.lookAt).toEqual([-5.2, -0.6, 3.2]);
     expect(out.fov).toBe(30);
     // after the last key
     evaluatePose(8, 1, 'desktop', out);
-    expect(out.position).toEqual([7.8, 1.3, 10.2]);
+    expect(out.position).toEqual([6.0, 4.4, 15.4]);
   });
 
-  it('phone keys: fov 38, a macro hero, every other pose 20% closer to its lookAt and raised 1.2', () => {
+  it('phone keys: fov 38, the same key times as desktop, the hero held while the copy is sticky', () => {
     const D = CAMERA_KEYS.desktop;
     const P = CAMERA_KEYS.phone;
     expect(P.length).toBe(D.length);
@@ -163,16 +167,6 @@ describe('camera', () => {
       expect(k.u).toBe(D[i].u);
       expect(k.pose.fov).toBe(38);
     });
-    expect(P[0].pose.position).toEqual([-2.6, 2.2, 5.2]);
-    expect(P[0].pose.lookAt).toEqual([-4.2, 0.3, 0.6]);
-    expect(P[1].pose.position).toEqual([-2.6, 2.2, 5.2]);
-    for (let i = 2; i < D.length; i++) {
-      const d = D[i].pose, p = P[i].pose;
-      expect(p.lookAt).toEqual(d.lookAt);
-      for (let k = 0; k < 3; k++) {
-        const closer = d.lookAt[k] + 0.8 * (d.position[k] - d.lookAt[k]);
-        expect(p.position[k]).toBeCloseTo(closer + (k === 1 ? 1.2 : 0), 9);
-      }
-    }
+    expect(P[1].pose).toEqual(P[0].pose);
   });
 });

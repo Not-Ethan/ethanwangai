@@ -3,7 +3,7 @@ import { act, createElement, useEffect } from 'react';
 import { createRoot } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { Tier } from '@/bench/types';
-import { useTier, dprAfterDeclines, TIER_SETTINGS, DPR_STEP, DPR_FLOOR } from './useTier';
+import { useTier, dprAfterDeclines, tierOverride, TIER_SETTINGS, DPR_STEP, DPR_FLOOR } from './useTier';
 
 const mockScroll: { tier: Tier } = { tier: 'desktop' };
 vi.mock('@/scroll/ScrollProvider', () => ({ useScroll: () => ({ state: { current: null }, reducedMotion: false, tier: mockScroll.tier, scrollTo() {} }) }));
@@ -12,6 +12,15 @@ describe('TIER_SETTINGS', () => {
   it('desktop renders at DPR 1.25 with the shadow map and 4× MSAA; phone at DPR 1, no shadow map, 2×', () => {
     expect(TIER_SETTINGS.desktop).toEqual({ dpr: 1.25, shadows: true, msaa: 4 });
     expect(TIER_SETTINGS.phone).toEqual({ dpr: 1, shadows: false, msaa: 2 });
+  });
+});
+
+describe('tierOverride', () => {
+  it('reads ?tier=phone or ?tier=desktop and ignores anything else', () => {
+    expect(tierOverride('?built=1&tier=phone')).toBe('phone');
+    expect(tierOverride('?tier=desktop')).toBe('desktop');
+    expect(tierOverride('?tier=tablet')).toBeNull();
+    expect(tierOverride('')).toBeNull();
   });
 });
 
