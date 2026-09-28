@@ -6,7 +6,9 @@ import { SECTIONS, sectionRanges, locate } from './sections';
 import { DWELL, projectBounds, elevationDeg, azimuthDeg, type NdcBounds } from './cameraClearance';
 
 // The DOM's copy columns in NDC: every section's copy is the left 42% (x < −0.16); the hero's copy block is the left 58%
-// down to 65% of the height (x < 0.17, y > −0.3). The bounds below keep each section's subject clear of them.
+// down to 65% of the height (x < 0.17, y > −0.3). The bounds below keep each section's subject clear of them, and at
+// the hero and darch also the tall, dense non-subject machines (the intake's hopper, the balance's tile stacks) that
+// would otherwise sit dark-on-dark under the copy.
 const BENCH: Record<Tier, ReturnType<typeof buildBench>> = { desktop: buildBench('desktop'), phone: buildBench('phone') };
 const ASPECT: Record<Tier, number> = { desktop: 1.6, phone: 390 / 844 };
 const { quoter, intake, balance, splitter, watch, bot, slot } = MACHINE;
@@ -58,7 +60,7 @@ describe('elevationDeg and azimuthDeg', () => {
 });
 
 describe('desktop clearance at the dwells (aspect 1.6)', () => {
-  it('hero (0, 0): the whole quoter below the headline and right of the plate, its top near the deck, tight to the right edge; bot in frame; small machines cropped at the bottom edge', () => {
+  it('hero (0, 0): the whole quoter below the headline and right of the plate, its top near the deck, tight to the right edge; bot in frame; intake below the copy block; small machines cropped at the bottom edge', () => {
     const q = at(0, 0, [quoter]);
     expect(q.left, 'quoter left').toBeGreaterThanOrEqual(-0.20);
     expect(q.top, 'quoter top').toBeGreaterThanOrEqual(-0.12);
@@ -66,6 +68,7 @@ describe('desktop clearance at the dwells (aspect 1.6)', () => {
     expect(q.right, 'quoter right').toBeLessThanOrEqual(1.02);
     expect(inFrame(at(0, 0, [bot])), 'bot in frame').toBe(true);
     expect(at(0, 0, SMALL).top, 'small machines top').toBeLessThanOrEqual(-0.72);
+    expect(at(0, 0, [intake]).top, 'intake top').toBeLessThanOrEqual(-0.3);   // the hopper is under the plate and the honesty line otherwise
   });
 
   it('risen (0, 1): the quoter within [−0.7, 1.02] × [−1.02, 0.6]', () => {
@@ -111,13 +114,20 @@ describe('desktop clearance at the dwells (aspect 1.6)', () => {
     expect(Math.abs(azimuthDeg(pose)), '|azimuth|').toBeLessThanOrEqual(25);
   });
 
-  it('darch (5, 0.7): the splitter long and low (camera under y 2.2, pitched under 16°), clear of the copy column and wide', () => {
+  it('darch (5, 0.7): the splitter long and low (camera under y 2.2, pitched under 16°), clear of the copy column and wide; the balance and the intake behind it clear of the column too', () => {
     const s = at(5, 0.7, [splitter]);
     const pose = poseAt(5, 0.7, 'desktop');
     expect(s.left).toBeGreaterThanOrEqual(-0.12);
     expect(width(s)).toBeGreaterThanOrEqual(0.5);
     expect(elevationDeg(pose), 'elevation').toBeLessThanOrEqual(16);
     expect(pose.position[1], 'camera height').toBeLessThanOrEqual(2.2);
+    // The balance's tile stacks and the intake's hopper are the tall, dense machines left of the splitter: from a low
+    // front view they land in the copy column's band at the height of the darch copy, dark on dark. Each is either
+    // right of the column or out of the frame.
+    for (const [name, m] of [['balance', balance], ['intake', intake]] as const) {
+      const b = at(5, 0.7, [m]);
+      expect(b.left >= -0.16 || !intersectsFrame(b), `${name} right of the copy column or out of frame (L ${b.left.toFixed(2)} R ${b.right.toFixed(2)})`).toBe(true);
+    }
   });
 
   it('summers (6, 0.7): the watch from high up (45° or more), clear of the copy column and wide', () => {

@@ -30,8 +30,8 @@ describe('sceneState', () => {
     expect(s.click).toBe(-1);
     expect(s.trickle).toBe(true);
     expect(s.active).toBe(MACHINE.quoter);
-    expect(s.pose.position).toEqual([-7.2, 15.0, 20.6]);
-    expect(s.pose.lookAt).toEqual([-3.9, 3.2, -4.0]);
+    expect(s.pose.position).toEqual([-9.9, 18.2, 20.5]);
+    expect(s.pose.lookAt).toEqual([-4.8, 4.3, -3.2]);
     expect(s.pose.fov).toBe(30);
   });
 
@@ -153,8 +153,8 @@ describe('camera', () => {
     for (let k = 0; k < 3; k++) expect(out.position[k]).toBeCloseTo(more.position[k] + (macro.position[k] - more.position[k]) * power2InOut(0.25), 6);
     // hold inside section 1
     evaluatePose(1, 0.5, 'desktop', out);
-    expect(out.position).toEqual([-6.4, 18.4, 20.3]);
-    expect(out.lookAt).toEqual([-5.1, -1.2, -2.2]);
+    expect(out.position).toEqual([-9.0, 18.7, 19.8]);
+    expect(out.lookAt).toEqual([-5.0, -1.7, -3.1]);
     expect(out.fov).toBe(30);
     // after the last key
     evaluatePose(8, 1, 'desktop', out);
