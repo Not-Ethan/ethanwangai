@@ -1,0 +1,498 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { act, createElement } from 'react';
+import * as THREE from 'three';
+import { createRoot, extend } from '@react-three/fiber';
+import type { RefObject } from 'react';
+import { MACHINE, MACHINE_COUNT, type Tier } from '@/bench/types';
+import { buildBench } from '@/bench/counts';
+import { SECTIONS, sectionRanges, type SectionRange } from '@/bench/sections';
+import { CAMERA_KEYS, evaluatePose } from '@/bench/camera';
+import { TIMING, lockStart } from '@/bench/timing';
+import { smoothstep } from '@/bench/math';
+import { PALETTES, type ThemeName } from '@/theme/palettes';
+import type { ScrollState } from '@/scroll/ScrollProvider';
+import { createUniforms, hexToColor, type BenchUniforms } from './material/uniforms';
+import { KEY_LIGHT, configureKeyLight } from './Lights';
+import { lightRef, setLightRef, cameraRef } from './registry';
+import { hud } from './hud';
+import { CameraRig } from './CameraRig';
+import {
+  Clocks, createClocksDriver, stepFrame, isBuilt,
+  createPaletteLerp, retargetPalette, stepPalette, PALETTE_LERP_S,
+  travelAxis, fitShadowCamera, createShadowFit, SHADOW_MARGIN, SHADOW_FIT_TAU, SHADOW_DISTANCE,
+  sortedBirths, inkedCount, INK_T, INK_THRESHOLD,
+} from './Clocks';
+
+// ---- the scroll layer, stubbed: Clocks reads useScroll().state.current and reducedMotion --------------------------
+
+const VH = 900;
+function pageRanges(tier: Tier): { ranges: SectionRange[]; tops: number[]; maxScroll: number } {
+  const tops: number[] = [];
+  let y = 0;
+  for (const s of SECTIONS) { tops.push(y); y += (s.vh[tier] * VH) / 100; }
+  return { ranges: sectionRanges(tops, y, VH), tops, maxScroll: y - VH };
+}
+/** g at local `u` of `section`, the inverse of locate(). */
+function gAt(ranges: SectionRange[], section: number, u: number): number {
+  const r = ranges[section];
+  return r.start + u * (r.end - r.start);
+}
+function scrollRef(tier: Tier, g = 0, velocity = 0): RefObject<ScrollState> {
+  const { ranges, tops, maxScroll } = pageRanges(tier);
+  return { current: { g, scrollY: g * maxScroll, velocity, maxScroll, vh: VH, vw: 1440, ranges, tops } };
+}
+
+const mockScroll: { state: RefObject<ScrollState>; reducedMotion: boolean; tier: Tier; scrollTo: () => void } = {
+  state: scrollRef('desktop'), reducedMotion: false, tier: 'desktop', scrollTo() {},
+};
+vi.mock('@/scroll/ScrollProvider', () => ({ useScroll: () => mockScroll }));
+
+// ---- the DOM, stubbed: data-theme on <html>, `themechange` on window, location.search --------------------------------
+
+let theme: ThemeName = 'light';
+let search = '';
+const win = new EventTarget();
+function stubDom(initial: ThemeName, query = ''): void {
+  theme = initial;
+  search = query;
+  // <html> is an EventTarget too: CameraRig listens for pointerleave on it
+  const html = Object.assign(new EventTarget(), { getAttribute: (name: string) => (name === 'data-theme' ? theme : null) });
+  vi.stubGlobal('document', { documentElement: html });
+  vi.stubGlobal('window', Object.assign(win, { location: { search } }));
+}
+function switchTheme(next: ThemeName): void {
+  theme = next;
+  win.dispatchEvent(new CustomEvent('themechange', { detail: next }));
+}
+
+const DT = 1 / 60;
+const hexOf = (c: THREE.Color) => `#${c.getHexString().toUpperCase()}`;
+function expectColorClose(actual: THREE.Color, expected: THREE.Color, tol: number, label: string): void {
+  for (const ch of ['r', 'g', 'b'] as const) expect(Math.abs(actual[ch] - expected[ch]), `${label}.${ch}`).toBeLessThanOrEqual(tol);
+}
+
+const desktop = buildBench('desktop');
+
+function driver(opts: { tier?: Tier; g?: number; velocity?: number; built?: boolean; reducedMotion?: boolean; theme?: ThemeName } = {}) {
+  const tier = opts.tier ?? 'desktop';
+  const result = tier === 'desktop' ? desktop : buildBench(tier);
+  const uniforms = createUniforms();
+  const scroll = scrollRef(tier, opts.g ?? 0, opts.velocity ?? 0);
+  const d = createClocksDriver({ result, uniforms, tier, scroll, reducedMotion: opts.reducedMotion ?? false, built: opts.built ?? false, theme: opts.theme ?? 'light' });
+  return { d, result, uniforms, scroll };
+}
+function frames(d: ReturnType<typeof createClocksDriver>, n: number, dt = DT, t0 = 0): number {
+  let t = t0;
+  for (let i = 0; i < n; i++) { t += dt; stepFrame(d, dt, t); }
+  return t;
+}
+
+afterEach(() => { vi.unstubAllGlobals(); setLightRef(null); });
+
+describe('hud', () => {
+  it('starts on the desktop hero key so the first frame is framed before Clocks runs', () => {
+    const hero = CAMERA_KEYS.desktop[0].pose;
+    expect(hud.pose.position).toEqual([...hero.position]);
+    expect(hud.pose.lookAt).toEqual([...hero.lookAt]);
+    expect(hud.pose.fov).toBe(hero.fov);
+    expect(hud.pose.position).not.toBe(hero.position);   // its own array: Clocks writes into it
+    expect(hud.hover).toEqual({ machine: -1, col: -1, x: 0, y: 0 });
+  });
+});
+
+describe('isBuilt', () => {
+  it('reads the ?built=1 debug switch and nothing looser', () => {
+    expect(isBuilt('?built=1')).toBe(true);
+    expect(isBuilt('?nogl=1&built=1')).toBe(true);
+    expect(isBuilt('')).toBe(false);
+    expect(isBuilt('?built=0')).toBe(false);
+    expect(isBuilt('?rebuilt=1')).toBe(false);
+  });
+});
+
+describe('palette lerp', () => {
+  it('createPaletteLerp snaps the uniforms to the theme and returns a finished lerp', () => {
+    const u = createUniforms();
+    const l = createPaletteLerp(u, 'dark');
+    expect(hexOf(u.uPaper.value)).toBe(PALETTES.dark.paper);
+    expect(hexOf(u.uPencil.value)).toBe(PALETTES.dark.pencil);
+    expect(l).toEqual({ from: PALETTES.dark, to: PALETTES.dark, t: 1 });
+  });
+
+  it('retargeting to the theme already shown is a no-op; to the other theme starts a 300 ms lerp', () => {
+    const u = createUniforms();
+    const l = createPaletteLerp(u, 'light');
+    retargetPalette(l, 'light');
+    expect(l.t).toBe(1);
+    retargetPalette(l, 'dark');
+    expect(l).toEqual({ from: PALETTES.light, to: PALETTES.dark, t: 0 });
+    expect(PALETTE_LERP_S).toBe(0.3);
+  });
+
+  it('stepPalette lands on the target after 0.3 s, halfway at 0.15 s, and stops writing once done', () => {
+    const u = createUniforms();
+    const l = createPaletteLerp(u, 'light');
+    retargetPalette(l, 'dark');
+    stepPalette(l, u, 0.15);
+    expect(l.t).toBeCloseTo(0.5, 10);
+    const a = hexToColor(PALETTES.light.paper), b = hexToColor(PALETTES.dark.paper);
+    expectColorClose(u.uPaper.value, new THREE.Color().lerpColors(a, b, 0.5), 1 / 255, 'uPaper at t 0.5');
+    stepPalette(l, u, 0.15);
+    expect(l.t).toBe(1);
+    expect(hexOf(u.uPaper.value)).toBe(PALETTES.dark.paper);
+    expect(hexOf(u.uShadow.value)).toBe(PALETTES.dark.shadow);
+    u.uPaper.value.setRGB(0.5, 0.5, 0.5);
+    stepPalette(l, u, 1);
+    expect(u.uPaper.value.r).toBe(0.5);   // finished: no further writes
+  });
+
+  it('a toggle mid-lerp reverses from the colours on screen without a jump', () => {
+    const u = createUniforms();
+    const l = createPaletteLerp(u, 'light');
+    retargetPalette(l, 'dark');
+    stepPalette(l, u, 0.1);   // t = 1/3 toward dark
+    const onScreen = u.uInkTop.value.clone();
+    retargetPalette(l, 'light');
+    expect(l.from).toBe(PALETTES.dark);
+    expect(l.to).toBe(PALETTES.light);
+    expect(l.t).toBeCloseTo(2 / 3, 10);
+    stepPalette(l, u, 0);   // apply at the same t: identical colour
+    expectColorClose(u.uInkTop.value, onScreen, 1e-6, 'uInkTop continuity');
+    stepPalette(l, u, 0.1);
+    expect(l.t).toBe(1);
+    expect(hexOf(u.uInkTop.value)).toBe(PALETTES.light.inkTop);
+  });
+});
+
+describe('travelAxis', () => {
+  it('normalizes the camera travel and falls back to the bed axis when still', () => {
+    const out = new THREE.Vector3();
+    travelAxis(new THREE.Vector3(1, 2, 3), new THREE.Vector3(1, 2, 3), out);
+    expect(out.toArray()).toEqual([1, 0, 0]);
+    travelAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 3, 4), out);
+    expect(out.x).toBeCloseTo(0, 12);
+    expect(out.y).toBeCloseTo(0.6, 12);
+    expect(out.z).toBeCloseTo(0.8, 12);
+    expect(out.length()).toBeCloseTo(1, 12);
+    travelAxis(new THREE.Vector3(0, 0, 0), new THREE.Vector3(-1e-9, 0, 0), out);
+    expect(out.toArray()).toEqual([1, 0, 0]);   // sub-threshold jitter reads as still
+  });
+});
+
+describe('fitShadowCamera', () => {
+  function keyLight(): THREE.DirectionalLight {
+    const light = new THREE.DirectionalLight();
+    configureKeyLight(light, 'desktop');
+    return light;
+  }
+  /** Projects a world point through the shadow camera exactly as three's DirectionalLightShadow.updateMatrices frames it. */
+  function shadowNdc(light: THREE.DirectionalLight, p: THREE.Vector3): THREE.Vector3 {
+    light.updateMatrixWorld();
+    light.shadow.updateMatrices(light);
+    return p.clone().project(light.shadow.camera);
+  }
+  function corners(min: THREE.Vector3, max: THREE.Vector3): THREE.Vector3[] {
+    const out: THREE.Vector3[] = [];
+    for (const x of [min.x, max.x]) for (const y of [min.y, max.y]) for (const z of [min.z, max.z]) out.push(new THREE.Vector3(x, y, z));
+    return out;
+  }
+
+  it('snaps on the first call to the machine bounds ± 3 and frames every corner of that box, tightly', () => {
+    const light = keyLight();
+    const fit = createShadowFit();
+    const m = desktop.machines[MACHINE.quoter];
+    fitShadowCamera(light, m, fit, DT);
+    expect(fit.primed).toBe(true);
+    expect(fit.min.toArray()).toEqual(m.min.map((v) => v - SHADOW_MARGIN));
+    expect(fit.max.toArray()).toEqual(m.max.map((v) => v + SHADOW_MARGIN));
+    expect(SHADOW_MARGIN).toBe(3);
+    let maxX = 0, maxY = 0, maxZ = 0;
+    for (const c of corners(fit.min, fit.max)) {
+      const n = shadowNdc(light, c);
+      for (const ch of ['x', 'y', 'z'] as const) expect(Math.abs(n[ch]), `corner ${c.toArray()} ndc.${ch}`).toBeLessThanOrEqual(1 + 1e-6);
+      maxX = Math.max(maxX, Math.abs(n.x)); maxY = Math.max(maxY, Math.abs(n.y)); maxZ = Math.max(maxZ, Math.abs(n.z));
+    }
+    // tight: the box touches every face of the frustum, so the 2048 map is spent on the machine, not on empty paper
+    expect(maxX).toBeCloseTo(1, 6);
+    expect(maxY).toBeCloseTo(1, 6);
+    expect(maxZ).toBeCloseTo(1, 6);
+    expect(light.shadow.camera.near).toBeGreaterThan(0);
+  });
+
+  it('keeps the key direction: only the light\'s position and target move', () => {
+    const light = keyLight();
+    fitShadowCamera(light, desktop.machines[MACHINE.watch], createShadowFit(), DT);
+    const dir = light.position.clone().sub(light.target.position).normalize();
+    const key = new THREE.Vector3(...KEY_LIGHT.position).normalize();
+    expect(dir.distanceTo(key)).toBeLessThan(1e-9);
+    expect(light.position.distanceTo(light.target.position)).toBeCloseTo(SHADOW_DISTANCE, 9);
+    const m = desktop.machines[MACHINE.watch];
+    for (let k = 0; k < 3; k++) expect(light.target.position.getComponent(k)).toBeCloseTo((m.min[k] + m.max[k]) / 2, 9);
+  });
+
+  it('damps toward a new active machine with τ 0.3 s instead of cutting', () => {
+    const light = keyLight();
+    const fit = createShadowFit();
+    fitShadowCamera(light, desktop.machines[MACHINE.quoter], fit, DT);
+    const from = fit.min.clone();
+    const target = new THREE.Vector3().fromArray(desktop.machines[MACHINE.balance].min).subScalar(SHADOW_MARGIN);
+    fitShadowCamera(light, desktop.machines[MACHINE.balance], fit, SHADOW_FIT_TAU);
+    const expected = from.clone().lerp(target, 1 - Math.exp(-1));
+    expect(fit.min.distanceTo(expected)).toBeLessThan(1e-9);
+    for (let i = 0; i < 300; i++) fitShadowCamera(light, desktop.machines[MACHINE.balance], fit, DT);
+    expect(fit.min.distanceTo(target)).toBeLessThan(1e-3);
+  });
+});
+
+describe('inkedCount', () => {
+  const births = sortedBirths(desktop);
+
+  it('INK_T is where smoothstep reaches the fragment shader\'s ink threshold', () => {
+    expect(INK_THRESHOLD).toBe(0.6);
+    expect(smoothstep(0, 1, INK_T)).toBeCloseTo(0.6, 9);
+  });
+
+  it('sorts one birth list per machine with the layout\'s counts', () => {
+    expect(births).toHaveLength(MACHINE_COUNT);
+    for (let m = 0; m < MACHINE_COUNT; m++) {
+      expect(births[m].length, `machine ${m}`).toBe(desktop.counts.byMachine[m]);
+      for (let i = 1; i < births[m].length; i++) expect(births[m][i]).toBeGreaterThanOrEqual(births[m][i - 1]);
+    }
+  });
+
+  it('counts nothing at compile 0, everything at compile 1, and never decreases in between', () => {
+    const q = births[MACHINE.quoter];
+    expect(inkedCount(q, 0)).toBe(0);
+    expect(inkedCount(q, 1)).toBe(desktop.counts.byMachine[MACHINE.quoter]);
+    let last = 0;
+    for (let c = 0; c <= 1; c += 0.01) { const n = inkedCount(q, c); expect(n).toBeGreaterThanOrEqual(last); last = n; }
+  });
+
+  it('agrees with the shader\'s assembleFactor ≥ 0.6 part by part across the compile', () => {
+    const parts = desktop.parts.filter((p) => p.machine === MACHINE.intake);
+    const b = births[MACHINE.intake];
+    for (let c = 0.3; c <= 1; c += 0.025) {
+      const brute = parts.filter((p) => smoothstep(lockStart(p.birth), lockStart(p.birth) + TIMING.lockW, c) >= INK_THRESHOLD).length;
+      expect(inkedCount(b, c), `compile ${c.toFixed(3)}`).toBe(brute);
+    }
+  });
+});
+
+describe('stepFrame', () => {
+  it('does nothing until ScrollProvider has measured the section ranges', () => {
+    const { d, uniforms, scroll } = driver({ built: true });
+    scroll.current.ranges = [];
+    const before = { ...hud, pose: undefined };
+    stepFrame(d, DT, DT);
+    expect(Array.from(uniforms.uCompile.value)).toEqual(new Array(MACHINE_COUNT).fill(0));
+    expect(d.hasPrev).toBe(false);
+    expect({ ...hud, pose: undefined }).toEqual(before);
+  });
+
+  it('at the top with no intro: the quoter stays pencil and parked while the bot and slot run from load', () => {
+    const { d, uniforms } = driver();
+    frames(d, 60);
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);
+    expect(uniforms.uMachineTime.value[MACHINE.quoter]).toBe(0);
+    expect(uniforms.uRun.value[MACHINE.quoter]).toBe(0);
+    expect(uniforms.uMachineTime.value[MACHINE.bot]).toBeCloseTo(1, 6);
+    expect(uniforms.uMachineTime.value[MACHINE.slot]).toBeCloseTo(1, 6);
+    expect(uniforms.uRun.value[MACHINE.bot]).toBe(1);
+    expect(uniforms.uCompile.value[MACHINE.bot]).toBe(1);
+    expect(uniforms.uTime.value).toBeCloseTo(1, 6);
+    expect(uniforms.uVel.value).toBe(0);
+    expect(Array.from(uniforms.uFillRate.value)).toEqual(new Array(MACHINE_COUNT).fill(1));
+    expect(uniforms.uTravelAxis.value.toArray()).toEqual([1, 0, 0]);   // still: the bed axis
+    expect(hud.section).toBe(0);
+    expect(hud.u).toBe(0);
+    expect(hud.compile).toBe(0);
+    expect(hud.parts).toBe(0);
+    expect(hud.running).toBe(false);
+    expect(hud.uptime).toBeCloseTo(1, 6);
+    const hero = CAMERA_KEYS.desktop[0].pose;
+    expect(hud.pose.position).toEqual([...hero.position]);
+    expect(hud.pose.lookAt).toEqual([...hero.lookAt]);
+    expect(hud.pose.fov).toBe(30);
+  });
+
+  it('?built=1: every machine built on the first frame; the quoter locks, fires the impulse and the rate spike, and the ladder reads its full count', () => {
+    const { d, uniforms, result } = driver({ built: true });
+    stepFrame(d, DT, DT);
+    expect(Array.from(uniforms.uCompile.value)).toEqual(new Array(MACHINE_COUNT).fill(1));
+    expect(uniforms.uVel.value).toBeCloseTo(TIMING.impulse, 9);                          // 0.6 impulse on the lock crossing, no scroll velocity
+    expect(Array.from(uniforms.uFillRate.value)).toEqual(new Array(MACHINE_COUNT).fill(3));   // 1 + 2 · rateSpike, clamped
+    expect(hud.running).toBe(true);
+    expect(hud.compile).toBe(1);
+    expect(hud.parts).toBe(result.counts.byMachine[MACHINE.quoter] + result.counts.byMachine[MACHINE.intake]);
+    frames(d, 120, DT, DT);
+    expect(uniforms.uVel.value).toBeLessThan(0.01);                 // the impulse has decayed
+    expect(uniforms.uFillRate.value[0]).toBeLessThan(1.05);          // and the spike
+    expect(uniforms.uMachineTime.value[MACHINE.quoter]).toBeGreaterThan(1.5);   // running: carriages sweep, rotors turn
+    expect(uniforms.uRun.value[MACHINE.quoter]).toBeCloseTo(1, 3);
+  });
+
+  it('scrubbing heron: the balance compiles under the finger, the shadow fit frames it, merge and lean are off', () => {
+    const heron = SECTIONS.findIndex((s) => s.id === 'heron');
+    const build = SECTIONS[heron].build!;
+    const uMid = (build.from + build.to) / 2;
+    const { d, uniforms, scroll, result } = driver();
+    scroll.current.g = gAt(scroll.current.ranges, heron, uMid);
+    const light = new THREE.DirectionalLight();
+    configureKeyLight(light, 'desktop');
+    setLightRef(light);
+    stepFrame(d, DT, DT);
+    expect(hud.section).toBe(heron);
+    expect(hud.u).toBeCloseTo(uMid, 6);
+    expect(uniforms.uCompile.value[MACHINE.balance]).toBeCloseTo(0.5, 6);
+    expect(uniforms.uCompile.value[MACHINE.intake]).toBe(1);      // kalshi is behind us
+    expect(uniforms.uCompile.value[MACHINE.splitter]).toBe(0);    // darch is ahead
+    expect(uniforms.uMerge.value).toBe(0);
+    expect(uniforms.uLean.value).toBe(0);
+    const m = result.machines[MACHINE.balance];
+    for (let k = 0; k < 3; k++) expect(light.target.position.getComponent(k)).toBeCloseTo((m.min[k] + m.max[k]) / 2, 9);
+    const expectedPose = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 };
+    evaluatePose(heron, uMid, 'desktop', expectedPose);
+    expect(hud.pose.position).toEqual(expectedPose.position);
+    expect(hud.pose.lookAt).toEqual(expectedPose.lookAt);
+  });
+
+  it('leaves the shadow camera alone when the light casts none (phone)', () => {
+    const { d, scroll } = driver({ tier: 'phone' });
+    scroll.current.g = gAt(scroll.current.ranges, 4, 0.5);
+    const light = new THREE.DirectionalLight();
+    configureKeyLight(light, 'phone');
+    setLightRef(light);
+    const before = light.position.toArray();
+    stepFrame(d, DT, DT);
+    expect(light.position.toArray()).toEqual(before);
+    expect(lightRef.current).toBe(light);
+  });
+
+  it('writes the unit travel axis from the pose delta while the camera rises, and the merge while section 02 scrubs', () => {
+    const { d, uniforms, scroll } = driver();
+    const r = scroll.current.ranges;
+    scroll.current.g = gAt(r, 0, 0.4);
+    stepFrame(d, DT, DT);
+    scroll.current.g = gAt(r, 0, 0.5);
+    stepFrame(d, DT, 2 * DT);
+    const a = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 }, b = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 };
+    evaluatePose(0, 0.4, 'desktop', a);
+    evaluatePose(0, 0.5, 'desktop', b);
+    const expected = new THREE.Vector3().fromArray(b.position).sub(new THREE.Vector3().fromArray(a.position)).normalize();
+    expect(uniforms.uTravelAxis.value.distanceTo(expected)).toBeLessThan(1e-9);
+    expect(uniforms.uTravelAxis.value.length()).toBeCloseTo(1, 12);
+    const more = SECTIONS.findIndex((s) => s.id === 'more');
+    scroll.current.g = gAt(r, more, 0.66);   // level 6 hold
+    stepFrame(d, DT, 3 * DT);
+    expect(uniforms.uMerge.value).toBe(6);
+    expect(hud.section).toBe(more);
+  });
+
+  it('passes the scroll velocity through, damped, so fills and sweeps speed up under a fast scroll', () => {
+    const { d, uniforms } = driver({ velocity: 1 });
+    frames(d, 120);
+    expect(uniforms.uVel.value).toBeCloseTo(1, 3);
+    expect(uniforms.uFillRate.value[MACHINE.quoter]).toBeCloseTo(3, 2);   // 1 + 2|vel|, at the clamp
+  });
+
+  it('under reduced motion the machine clocks run at 0.3×', () => {
+    const { d, uniforms } = driver({ reducedMotion: true });
+    frames(d, 60);
+    expect(uniforms.uMachineTime.value[MACHINE.bot]).toBeCloseTo(0.3, 6);
+  });
+
+  it('drives the palette lerp: created on the DOM theme, retargeted on themechange, done after 0.3 s', () => {
+    const { d, uniforms } = driver({ theme: 'dark' });
+    expect(hexOf(uniforms.uPaper.value)).toBe(PALETTES.dark.paper);
+    retargetPalette(d.palette, 'light');
+    frames(d, 9, 1 / 60);   // 0.15 s
+    expect(d.palette.t).toBeCloseTo(0.5, 6);
+    frames(d, 9, 1 / 60, 0.15);
+    expect(d.palette.t).toBe(1);
+    expect(hexOf(uniforms.uPaper.value)).toBe(PALETTES.light.paper);
+  });
+
+  it('clamps a long frame to 50 ms so a tab switch never leaps the clocks', () => {
+    const { d, uniforms } = driver();
+    stepFrame(d, 5, 5);
+    expect(uniforms.uMachineTime.value[MACHINE.bot]).toBeCloseTo(0.05, 6);
+    expect(uniforms.uTime.value).toBe(5);   // the wall clock is the renderer's, unclamped
+  });
+});
+
+// The component wiring, through R3F's reconciler against a renderer stub: useScroll inside the canvas, the themechange
+// listener, useFrame at −1 before CameraRig at 0, and the debug switch read from location.search.
+describe('<Clocks result uniforms tier /> and <CameraRig /> mounted through R3F', () => {
+  (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  extend({ Group: THREE.Group });
+
+  function rendererStub(): THREE.WebGLRenderer {
+    return {
+      render() {}, setSize() {}, setPixelRatio() {},
+      shadowMap: { enabled: false, type: THREE.PCFShadowMap, needsUpdate: false },
+      outputColorSpace: THREE.SRGBColorSpace, toneMapping: THREE.NoToneMapping, domElement: {},
+    } as unknown as THREE.WebGLRenderer;
+  }
+  function withoutClockWarning<T>(fn: () => T): T {
+    const warn = console.warn;
+    const spy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => { if (!String(args[0]).startsWith('THREE.Clock')) warn(...args); });
+    try { return fn(); } finally { spy.mockRestore(); }
+  }
+
+  beforeEach(() => {
+    mockScroll.state = scrollRef('desktop');
+    mockScroll.reducedMotion = false;
+    mockScroll.tier = 'desktop';
+  });
+
+  async function mount(query: string, uniforms: BenchUniforms = createUniforms()) {
+    stubDom('light', query);
+    const root = withoutClockWarning(() => createRoot({} as HTMLCanvasElement));
+    await root.configure({ gl: rendererStub(), size: { width: 1440, height: 900, top: 0, left: 0 }, dpr: 1, frameloop: 'never' });
+    const store = await act(async () => root.render(createElement('group', null,
+      createElement(Clocks, { result: desktop, uniforms, tier: 'desktop' }),
+      createElement(CameraRig))));
+    return { root, store, uniforms, advance: (t: number) => act(async () => { store.getState().advance(t, true); }) };
+  }
+
+  it('reads the scroll refs through useScroll, runs before CameraRig, and the camera lands on the pose Clocks wrote this frame', async () => {
+    const { root, store, uniforms, advance } = await mount('');
+    const camera = store.getState().camera as THREE.PerspectiveCamera;
+    expect(cameraRef.current).toBe(camera);
+    const r = mockScroll.state.current.ranges;
+    mockScroll.state.current.g = gAt(r, 0, 0.5);
+    await advance(DT);
+    const expected = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 };
+    evaluatePose(0, 0.5, 'desktop', expected);
+    expect(hud.pose.position).toEqual(expected.position);
+    expect(camera.position.toArray()).toEqual(expected.position);   // CameraRig ran after Clocks in the same frame
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);       // no ?built=1: no intro in Stage 2
+    expect(uniforms.uTime.value).toBeCloseTo(DT, 9);
+    await act(async () => root.unmount());
+    expect(cameraRef.current).toBeNull();
+  });
+
+  it('?built=1 builds and runs everything from the first frame', async () => {
+    const { root, uniforms, advance } = await mount('?built=1');
+    await advance(DT);
+    expect(Array.from(uniforms.uCompile.value)).toEqual(new Array(MACHINE_COUNT).fill(1));
+    expect(hud.running).toBe(true);
+    await advance(2 * DT);
+    expect(uniforms.uMachineTime.value[MACHINE.quoter]).toBeGreaterThan(0);
+    await act(async () => root.unmount());
+  });
+
+  it('follows themechange with the 300 ms lerp while mounted, and lets go of the listener on unmount', async () => {
+    const { root, uniforms, advance } = await mount('');
+    expect(hexOf(uniforms.uPaper.value)).toBe(PALETTES.light.paper);
+    switchTheme('dark');
+    for (let i = 1; i <= 9; i++) await advance(i / 60);   // 0.15 s of frames: a frame is clamped to 50 ms, so one long advance would not do
+    const a = hexToColor(PALETTES.light.paper), b = hexToColor(PALETTES.dark.paper);
+    expectColorClose(uniforms.uPaper.value, new THREE.Color().lerpColors(a, b, 0.5), 1 / 255, 'uPaper mid-lerp');
+    for (let i = 10; i <= 30; i++) await advance(i / 60);
+    expect(hexOf(uniforms.uPaper.value)).toBe(PALETTES.dark.paper);
+    await act(async () => root.unmount());
+    switchTheme('light');
+    expect(hexOf(uniforms.uPaper.value)).toBe(PALETTES.dark.paper);   // unsubscribed
+  });
+});

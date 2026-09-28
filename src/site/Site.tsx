@@ -1,4 +1,5 @@
 'use client';
+import dynamic from 'next/dynamic';
 import { ScrollProvider } from '@/scroll/ScrollProvider';
 import { Nav } from './chrome/Nav';
 import { SectionStrip } from './chrome/SectionStrip';
@@ -12,10 +13,13 @@ import { Summers } from './sections/Summers';
 import { Alive } from './sections/Alive';
 import { Yours } from './sections/Yours';
 
+// The GL scene is client-only: it needs a WebGL2 context and reads the DOM's theme; the server renders the complete DOM site without it.
+const Scene = dynamic(() => import('@/gl/Scene').then((m) => m.Scene), { ssr: false });
+
 export function Site() {
   return (
     <ScrollProvider>
-      {/* Stage 2 mounts <Scene /> here, fixed behind the DOM. */}
+      <Scene />
       <Nav />
       <SectionStrip />
       <main className="relative z-10">
