@@ -1,5 +1,7 @@
 // The visitor's sentence becomes a machine: one cell per word, one rail per row of words,
 // a spoked ring as the motor at the rails' -x end, and a lever last. Pure: no React, no DOM.
+// The frame is centred on the slot it builds inside (configs/slot.ts, same origin in bench.ts):
+// a full row of twelve cells spans the slot's field and each rail lies on one of its four pencil rails.
 import { KIND, MACHINE, MACHINE_NAMES, PRIMITIVE, type MachineConfig, type PartSpec, type Vec3 } from './types';
 import { IDENTITY_Q } from './math';
 import { hash2, hashString } from './hash';
@@ -9,24 +11,28 @@ export const VISITOR_RESERVE = 30;
 
 export const WORD_CAP = 24;
 export const SENTENCE_CAP = 4;
-/** A row holds up to this many cells; a longer run wraps onto the next rail. */
+/** A row holds up to this many cells; a longer run wraps onto the next rail, and what does not fit on the last rail is dropped. */
 export const ROW_CAP = 12;
 export const WORD_PITCH = 0.14;
-export const ROW_PITCH = 0.4;
+/** Row spacing along z: the slot's pencil-rail pitch, so rows land at z = -0.45, -0.15, 0.15, 0.45. */
+export const ROW_PITCH = 0.3;
 
 /** Ring, spoke and lever: the parts every non-empty sentence gets besides its words and rails. */
 const FIXED_PARTS = 3;
-const RAIL_H = 0.12;                 // bar primitive is Box(1, 0.12, 0.12); rails rest on the bench
-const MOTOR: Vec3 = [-0.3, 0.25, 0]; // ring centre; torus lies in the xy plane so it spins about z, face-on from the front
-const RING_SCALE = 0.4;              // torus radius 0.5 * 0.4 = 0.2
+const RAIL_H = 0.12;                          // bar primitive is Box(1, 0.12, 0.12); rails rest on the bench like the slot's
+const ROW_X0 = -(ROW_CAP * WORD_PITCH) / 2;   // -0.84: rows start here, so a full row is centred on the slot
+const MOTOR: Vec3 = [ROW_X0 - 0.3, 0.25, 0];  // ring centre past the rails' -x end; torus in the xy plane spins about z, face-on from the front
+const RING_SCALE = 0.4;                       // torus radius 0.5 * 0.4 = 0.2
 
 const TERMINATED = /[.!?]['")\]]*$/;
 
+/** Row index per word that fits. A new row opens at a sentence boundary or when a row is full, up to four rows; once the last row is full the rest is left out. */
 function rowsFor(words: readonly string[]): number[] {
   const rows: number[] = [];
   let row = 0, inRow = 0;
   for (let i = 0; i < words.length; i++) {
     if (i > 0 && (inRow >= ROW_CAP || TERMINATED.test(words[i - 1])) && row < SENTENCE_CAP - 1) { row++; inRow = 0; }
+    else if (inRow >= ROW_CAP) break;
     rows.push(row); inRow++;
   }
   return rows;
@@ -34,9 +40,10 @@ function rowsFor(words: readonly string[]): number[] {
 
 const rowCount = (words: readonly string[]) => (words.length === 0 ? 0 : rowsFor(words)[words.length - 1] + 1);
 
-/** Whitespace-split tokens (cap 24, 23 when four rails would push the build past the reserve); sentences = runs ending in . ! ? or at the end of the text (min 1 if any word, cap 4). */
+/** Whitespace-split tokens: cap 24, only what fits on four rails of twelve, and 23 when four rails would push the build past the reserve; sentences = runs ending in . ! ? or at the end of the text (min 1 if any word, cap 4). */
 export function parseSentence(text: string): { words: string[]; sentences: number } {
   let words = text.split(/\s+/).filter(Boolean).slice(0, WORD_CAP);
+  words = words.slice(0, rowsFor(words).length);
   while (words.length > 0 && words.length + rowCount(words) + FIXED_PARTS > VISITOR_RESERVE) words = words.slice(0, -1);
   if (words.length === 0) return { words, sentences: 0 };
   let runs = 0;
@@ -53,11 +60,11 @@ function buildVisitor(text: string): PartSpec[] {
   const rowZ = (r: number) => (r - (SENTENCE_CAP - 1) / 2) * ROW_PITCH;
   const parts: PartSpec[] = [];
 
-  // Group 0: rails, one per row, along x from the motor's end; then the motor.
+  // Group 0: rails, one per row, along x from the frame's -x end on the slot's pencil rails; then the motor.
   for (let r = 0; r < nRows; r++) {
     const n = rows.filter((x) => x === r).length;
     const len = n * WORD_PITCH;
-    parts.push({ primitive: PRIMITIVE.bar, kind: KIND.static, position: [len / 2, RAIL_H / 2, rowZ(r)], quaternion: IDENTITY_Q, scale: [len, 1, 1], param: [0, 0, 0, 0], col: -1, module: `row${r}`, group: 0, explodeMode: 'module' });
+    parts.push({ primitive: PRIMITIVE.bar, kind: KIND.static, position: [ROW_X0 + len / 2, RAIL_H / 2, rowZ(r)], quaternion: IDENTITY_Q, scale: [len, 1, 1], param: [0, 0, 0, 0], col: -1, module: `row${r}`, group: 0, explodeMode: 'module' });
   }
   parts.push({ primitive: PRIMITIVE.ring, kind: KIND.spin, position: MOTOR, quaternion: IDENTITY_Q, scale: [RING_SCALE, RING_SCALE, RING_SCALE], param: [2, 2.0, 0, 0], col: -1, module: 'motor', group: 0, explodeMode: 'module' });
   parts.push({ primitive: PRIMITIVE.bar, kind: KIND.spin, position: MOTOR, quaternion: IDENTITY_Q, scale: [RING_SCALE, RING_SCALE, RING_SCALE], param: [2, 2.0, 0, 0], col: -1, module: 'motor', group: 0, explodeMode: 'module' });
@@ -69,7 +76,7 @@ function buildVisitor(text: string): PartSpec[] {
     if (r !== prevRow) { col = 0; prevRow = r; }
     parts.push({
       primitive: PRIMITIVE.cell, kind: KIND.ping,
-      position: [WORD_PITCH * (col + 0.5), RAIL_H, rowZ(r)], quaternion: IDENTITY_Q,
+      position: [ROW_X0 + WORD_PITCH * (col + 0.5), RAIL_H, rowZ(r)], quaternion: IDENTITY_Q,
       scale: [0.1, 0.15 + 0.03 * Math.min(w.length, 12), 0.1],
       param: [1.2 + 0.6 * hash2(i, seed), i / words.length, 1.6, 0],
       col, module: `row${r}`, group: 1, explodeMode: 'module',
@@ -86,7 +93,8 @@ export function visitorConfig(text: string): MachineConfig {
   return {
     id: MACHINE.visitor,
     name: MACHINE_NAMES[MACHINE.visitor],
-    footprint: { w: ROW_CAP * WORD_PITCH + 0.6, d: SENTENCE_CAP * ROW_PITCH },
+    // The field the rows fill, matching the slot's; the motor and lever hang 0.3 past its -x end.
+    footprint: { w: ROW_CAP * WORD_PITCH, d: SENTENCE_CAP * ROW_PITCH },
     build: () => buildVisitor(text),
   };
 }

@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { parseSentence, visitorConfig, VISITOR_RESERVE } from './visitorLayout';
+import { parseSentence, visitorConfig, VISITOR_RESERVE, ROW_CAP, WORD_PITCH } from './visitorLayout';
 import { KIND, MACHINE, PRIMITIVE } from './types';
 import { mulberry32 } from './hash';
 import { layout } from './layout';
+import { PLACEMENT } from './bench';
+import { SLOT } from './configs/slot';
 
 const ctx = { tier: 'desktop' as const, rng: mulberry32(1), density: 1, caps: true };
 const words = (n: number) => Array(n).fill('w').join(' ');
@@ -42,6 +44,45 @@ describe('visitor layout', () => {
     expect(one.filter((x) => x.kind === KIND.static)).toHaveLength(2);
     const many = visitorConfig('a. b. c. d. e. f.').build(ctx);
     expect(many.filter((x) => x.kind === KIND.static)).toHaveLength(4);
+  });
+  it('caps the last row at twelve: what does not fit on four rails is dropped, not hung off the end', () => {
+    const text = `a. b. c. ${words(21)}`;   // three one-word sentences take three rails; only twelve of the 21 fit on the fourth
+    expect(parseSentence(text)).toEqual({ words: ['a.', 'b.', 'c.', ...Array(12).fill('w')], sentences: 4 });
+    const p = visitorConfig(text).build(ctx);
+    expect(p.filter((x) => x.kind === KIND.ping)).toHaveLength(15);
+    expect(p.filter((x) => x.kind === KIND.ping && x.module === 'row3')).toHaveLength(ROW_CAP);
+    const rails = p.filter((x) => x.kind === KIND.static);
+    expect(rails).toHaveLength(4);
+    expect(rails[3].scale[0]).toBeCloseTo(ROW_CAP * WORD_PITCH);
+  });
+  it('sits centred on the slot: rails on its pencil rails, a full row spanning its field, motor past the -x end', () => {
+    const slotRails = SLOT.build(ctx).filter((x) => x.kind === KIND.static);
+    const rails = visitorConfig('a. b. c. d.').build(ctx).filter((x) => x.kind === KIND.static);
+    expect(rails).toHaveLength(slotRails.length);
+    rails.forEach((r, i) => {
+      expect(r.position[1]).toBeCloseTo(slotRails[i].position[1]);
+      expect(r.position[2]).toBeCloseTo(slotRails[i].position[2]);
+    });
+    const full = visitorConfig(words(ROW_CAP)).build(ctx);
+    const rail = full.find((x) => x.kind === KIND.static)!;
+    expect(rail.position[0]).toBeCloseTo(0);
+    expect(rail.scale[0]).toBeCloseTo(ROW_CAP * WORD_PITCH);
+    const cells = full.filter((x) => x.kind === KIND.ping);
+    expect(cells[0].position[0]).toBeCloseTo(-cells[ROW_CAP - 1].position[0]);
+    expect(Math.abs(cells[0].position[0])).toBeLessThan(rail.scale[0] / 2);
+    full.filter((x) => x.kind === KIND.spin).forEach((m) => expect(m.position[0]).toBeLessThan(rail.position[0] - rail.scale[0] / 2));
+  });
+  it('keeps every part within the slot origin +/- 1.2 through layout(), for any sentence shape', () => {
+    const o = PLACEMENT[MACHINE.visitor].origin;
+    for (const text of [words(24), `a. b. ${words(22)}`, `a. b. c. ${words(21)}`, 'a. b. c. d. e. f.', 'one', words(13)]) {
+      const r = layout({ tier: 'desktop', seed: 7, configs: [visitorConfig(text)] });
+      expect(r.parts.length).toBeGreaterThan(0);
+      r.parts.forEach((p) => {
+        expect(Math.abs(p.position[0] - o[0])).toBeLessThanOrEqual(1.2);
+        expect(Math.abs(p.position[2] - o[2])).toBeLessThanOrEqual(1.2);
+      });
+      r.parts.filter((p) => p.kind === KIND.static).forEach((p) => expect(p.scale[0]).toBeLessThanOrEqual(ROW_CAP * WORD_PITCH + 1e-9));
+    }
   });
   it('uses the primitives the plan names and keeps the lever alone in the highest group', () => {
     const p = visitorConfig('one two. three!').build(ctx);
