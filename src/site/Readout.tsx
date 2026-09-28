@@ -1,12 +1,19 @@
 // The bed's hover readout (design §3.1/04, §8 Pointer, task 4.3): one fixed mono line beside the cursor with the
 // hovered market's own numbers. Hover.tsx writes hud.hover from the scene; hudSync's rAF calls the sync below, which
-// places #readout 14 px below and right of the pointer and fills it, writing only what changed. Hidden while no
-// machine is hovered. Solid paper behind the type, no shadow and no backdrop filter over the canvas.
+// places #readout 14 px below and right of the pointer and fills it, writing only what changed. Near the right or
+// bottom edge CSS min() stops it a gutter short of the viewport, so the line is never cut off and nothing reads a
+// layout. Hidden while no machine is hovered. Solid paper behind the type, no shadow and no backdrop filter over the
+// canvas.
 import type { HudHover } from '@/gl/hud';
 import { copy } from '@/site/copy';
 
 /** CSS px from the pointer to the readout's top-left corner, both axes. */
 export const READOUT_OFFSET = 14;
+/** CSS px the readout keeps clear of the viewport's right and bottom edges: the page's side gutter. */
+export const READOUT_MARGIN = 16;
+
+/** One axis of the translate: the pointer's offset, or the viewport less the readout's own size (a translate's 100%). */
+const axis = (p: number, viewport: string) => `min(${p + READOUT_OFFSET}px, ${viewport} - 100% - ${READOUT_MARGIN}px)`;
 
 /** `market 23 · bid 21 · ask 26 · fills 3`, labels from copy.kalshi.readout. */
 export function readoutText(h: HudHover): string {
@@ -27,7 +34,7 @@ export function createReadoutSync(el: HTMLElement | null): (h: HudHover) => void
     if (h.x !== x || h.y !== y) {
       x = h.x;
       y = h.y;
-      el.style.transform = `translate3d(${x + READOUT_OFFSET}px, ${y + READOUT_OFFSET}px, 0)`;
+      el.style.transform = `translate3d(${axis(x, '100vw')}, ${axis(y, '100vh')}, 0)`;
     }
   };
 }

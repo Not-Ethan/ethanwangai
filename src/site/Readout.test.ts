@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { copy } from '@/site/copy';
-import { READOUT_OFFSET, Readout, createReadoutSync, readoutText } from './Readout';
+import { READOUT_MARGIN, READOUT_OFFSET, Readout, createReadoutSync, readoutText } from './Readout';
 
 const quote = { machine: 0, col: 23, x: 300, y: 200, mid: 24, bid: 21, ask: 26, fills: 3 };
 
@@ -49,9 +49,17 @@ describe('createReadoutSync', () => {
     expect(READOUT_OFFSET).toBe(14);
     expect(state.hidden).toBe(false);
     expect(state.text).toBe('market 23 · bid 21 · ask 26 · fills 3');
-    expect(state.transform).toBe('translate3d(314px, 214px, 0)');
+    expect(state.transform).toBe(`translate3d(min(314px, 100vw - 100% - ${READOUT_MARGIN}px), min(214px, 100vh - 100% - ${READOUT_MARGIN}px), 0)`);
     sync({ ...quote, machine: -1 });
     expect(state.hidden).toBe(true);
+  });
+
+  it('keeps the whole line on screen: past the right or bottom edge it stops a 16 px gutter short, measured by CSS, not by a layout read', () => {
+    const { el, state } = fakeEl();
+    createReadoutSync(el)({ ...quote, x: 1400, y: 880 });
+    expect(READOUT_MARGIN).toBe(16);
+    // min() of the pointer offset and the viewport less the readout's own size (100% of a translate is the element's box)
+    expect(state.transform).toBe('translate3d(min(1414px, 100vw - 100% - 16px), min(894px, 100vh - 100% - 16px), 0)');
   });
 
   it('writes only what changed: a still frame touches nothing, a new quote only the text, a move only the transform', () => {
