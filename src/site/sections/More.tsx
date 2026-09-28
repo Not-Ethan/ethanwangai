@@ -25,11 +25,18 @@ export function More() {
             </div>
           </div>
         </div>
-        <ol id="rungs" className="mono pencil col-span-12 mt-8 flex flex-col gap-1 md:col-span-3 md:col-start-10 md:mt-0" aria-label="levels">
-          {c.rungs.map((rung, i) => (
-            <li key={rung} data-rung={i}>{rung}</li>
-          ))}
-        </ol>
+        <div className="col-span-12 mt-8 md:col-span-3 md:col-start-10 md:mt-0">
+          {/* desktop: pinned top-right, clear of the bed's frame, in a track that runs past the section by the
+              ladder's own pinned bottom (globals.css .rungs-track), so the rungs stay on screen through the clicks,
+              the hold and the burst and leave with #more's end */}
+          <div className="rungs-track">
+            <ol id="rungs" className="mono pencil flex flex-col gap-1 md:sticky md:top-20 md:text-right" aria-label="levels">
+              {c.rungs.map((rung, i) => (
+                <li key={rung} data-rung={i}>{rung}</li>
+              ))}
+            </ol>
+          </div>
+        </div>
       </div>
     </section>
   );

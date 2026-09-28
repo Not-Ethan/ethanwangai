@@ -87,6 +87,16 @@ a:hover, button.link:hover { color: var(--hot); }
   }
 }
 
+/* section 02's ladder track (#rungs' sticky containing block): #more is 100vh on desktop, so a ladder left at the
+   top of its grid is under the nav by the first merge click. Pinned top-right (top-20), it holds through the clicks,
+   the hold and the burst as long as its track runs past the section by the ladder's own pinned bottom: 5rem, then
+   six .mono rows at line-height 1.5 and five gap-1s. So it lets go exactly at #more's end and scrolls off with it,
+   never lingering into 03. The percentage resolves against the stretched grid column, as .copy-track's does. Phones
+   keep the column as the range. */
+@media (min-width: 48rem) {
+  .rungs-track { min-height: calc(100% + 5rem + 6 * 1.5 * 0.8125rem + 5 * 0.25rem); }
+}
+
 /* section rail: one rotated line up the left edge, desktop only. It occupies x < 28px; copy starts
    at 48px (md:px-12). About a `left center` origin, rotate(-90deg) swings the line upward from
    top: 50%, so the last translateX(-50%) runs back along the rotated line to centre it on the

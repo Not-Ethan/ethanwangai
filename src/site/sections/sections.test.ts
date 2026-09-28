@@ -194,6 +194,38 @@ describe('copy lead and tail (Step 3 gate: u = 0.7 of #heron)', () => {
   });
 });
 
+describe("section 02's ladder (#rungs)", () => {
+  // hudSync lights the rungs per merge click and darkens them again through the burst, but #more is 100vh on desktop,
+  // so a ladder left at the top of its grid is under the nav by the first click and gone by the third. It pins
+  // top-right instead, in a track that runs past the section by the ladder's pinned bottom, so it holds through the
+  // clicks, the hold and the burst and scrolls off with the section's end. Phones keep the column as it is.
+  const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8');
+  const desktopRule = (selector: string) =>
+    new RegExp(`@media \\(min-width: 48rem\\)\\s*\\{\\s*${selector.replace('.', '\\.')}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? null;
+
+  it('pins the ladder top-right on desktop, inside a track that opens its column', () => {
+    const html = render('more');
+    const column = elementAt(html, html.indexOf('md:col-start-10'), 'div');
+    expect(column.replace(/^<div[^>]*>\s*/, '').startsWith('<div class="rungs-track"')).toBe(true);
+    expect(elementAt(html, html.indexOf('rungs-track'), 'div')).toContain('id="rungs"');
+    const ol = enclosingClass(html, html.indexOf('id="rungs"'), 'ol');
+    for (const cls of ['md:sticky', 'md:top-20', 'md:text-right']) expect(ol).toMatch(new RegExp(`(?:^|\\s)${cls}(?:\\s|$)`));
+  });
+
+  it("runs the ladder's track past the section by the ladder's own pinned bottom, so it lets go at #more's end", () => {
+    // top-20, then six rows of .mono at the root line-height 1.5, then gap-1 between them: all rem, no vh, so the
+    // section's end is where the ladder leaves at every viewport height, not somewhere inside 03.
+    const rem = (v: string) => Number(/^([\d.]+)rem$/.exec(v.trim())?.[1] ?? NaN);
+    const monoSize = rem(/(?:^|\n)\.mono\s*\{[^}]*font-size:\s*([^;]+);/.exec(css)?.[1] ?? '');
+    const pinnedBottom = 5 + 6 * 1.5 * monoSize + 5 * 0.25;
+    const tail = /min-height:\s*calc\(100% \+ (.+)\);/.exec(desktopRule('.rungs-track') ?? '')?.[1] ?? '';
+    expect(tail).not.toMatch(/vh/);
+    const terms = tail.split(' + ').map((t) => t.split(' * ').reduce((acc, f) => acc * (f.endsWith('rem') ? rem(f) : Number(f)), 1));
+    expect(terms.reduce((a, b) => a + b, 0)).toBeCloseTo(pinnedBottom, 6);
+    expect(css).not.toMatch(/(?:^|\n)\.rungs-track\s*\{/);
+  });
+});
+
 describe('the visitor echo (#yours-echo)', () => {
   // Stage 5 (Task 4.6) writes the submitted sentence into this span so the ink sampler has glyph pixels to read
   // (an <input> has none). It must render in the input's own face at the input's own place, and never be seen:
