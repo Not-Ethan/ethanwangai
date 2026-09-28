@@ -44,7 +44,8 @@ export const copy = {
       'the first thing i built that people actually used was a discord bot. seventh grade. my classmates.',
       'i never really liked the coding. i liked watching it run.',
     ],
-    plate: 'fig. 0 — v0. 6 parts. still pinging.',
+    // parts is a live count (MachineSummary.count for the bot machine), never hand-typed.
+    plate: (parts: number) => `fig. 0 — v0. ${parts} ${parts === 1 ? 'part' : 'parts'}. still pinging.`,
   },
   kalshi: {
     heading: 'a trading algo i wrote climbed into the top 100 in the world on kalshi.',
