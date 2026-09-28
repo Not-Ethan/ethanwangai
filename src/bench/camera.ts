@@ -16,8 +16,8 @@ const D: CameraKey[] = [
   { section: 2, u: 0.30, pose: { position: [-4.3, 0.9, 4.3], lookAt: [-5.4, 0.25, 2.5], fov: 30 } },  // macro on the bot
   { section: 2, u: 0.70, pose: { position: [-1.5, 3.2, 9.0], lookAt: [-2.5, 0.3, 0.0], fov: 30 } },   // bot and quoter share the frame
   { section: 2, u: 1.00, pose: { position: [-1.5, 3.2, 9.0], lookAt: [-2.5, 0.3, 0.0], fov: 30 } },
-  { section: 3, u: 0.00, pose: { position: [-9.5, 2.4, 4.5], lookAt: [-4.5, 0.2, -2.0], fov: 30 } },  // dolly start
-  { section: 3, u: 0.25, pose: { position: [8.5, 2.4, 4.5], lookAt: [3.5, 0.2, -2.0], fov: 30 } },    // dolly end (the one lateral dolly)
+  { section: 3, u: 0.08, pose: { position: [-9.5, 2.4, 4.5], lookAt: [-4.5, 0.2, -2.0], fov: 30 } },  // dolly start
+  { section: 3, u: 0.30, pose: { position: [8.5, 2.4, 4.5], lookAt: [3.5, 0.2, -2.0], fov: 30 } },    // dolly end (the one lateral dolly)
   { section: 3, u: 1.00, pose: { position: [8.5, 2.4, 4.5], lookAt: [3.5, 0.2, -2.0], fov: 30 } },
   { section: 4, u: 0.15, pose: { position: [-4.2, 1.7, 10.0], lookAt: [-4.2, 0.45, 4.4], fov: 30 } }, // side on the balance, quoter behind
   { section: 4, u: 1.00, pose: { position: [-4.2, 1.7, 10.0], lookAt: [-4.2, 0.45, 4.4], fov: 30 } },
