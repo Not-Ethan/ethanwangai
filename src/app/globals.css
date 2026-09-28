@@ -55,12 +55,37 @@ a:hover, button.link:hover { color: var(--hot); }
 ::selection { background: var(--hot); color: var(--paper); }
 :focus-visible { outline: 2px solid var(--hot); outline-offset: 3px; }
 
-/* sticky copy: every section but the hero wraps its copy in one of these; it holds on screen
-   for its section and hands off to the next section's block at the boundary. The wrapper carries
-   no measure: a max-width here resolves `ch` in the 16px body default (312px) and squeezes the h2
-   to 7-11 lines. `.body` keeps the 34ch (spec §9, body max 34ch) and the heading keeps the column,
-   the widths the Task 2.9 camera clearance was tuned against. */
+/* sticky copy: every section but the hero wraps its copy in one of these, inside a .copy-track
+   (below). The wrapper carries no measure: a max-width here resolves `ch` in the 16px body default
+   (312px) and squeezes the h2 to 7-11 lines. `.body` keeps the 34ch (spec §9, body max 34ch) and
+   the heading keeps the column, the widths the Task 2.9 camera clearance was tuned against. */
 .copy-col { padding-bottom: 6vh; }
+
+/* copy track: the sticky block's containing block, the only child of the copy column. On phones
+   it is simply the column (min-height: 100% of the stretched grid item), so the block pins at
+   top-24 and its section's bottom pushes it out.
+   On desktop the section's u is read at the viewport's top edge, so at u = 0.7 of a 90vh section
+   only 27vh of it is still below that edge and the next section's heading is on screen unless it
+   sits more than 73vh into its own section. So the track leads the block by --copy-lead from the
+   section's top (the grid's pt-24 is the first 6rem of it) and runs --copy-tail past the section's
+   bottom: at heron u = 0.7 the heron block is still pinned at top-28 (its range ends 27vh + 65vh
+   below the fold's top edge) and darch's heading, 27vh + 75vh down, is below the fold. The block
+   climbs into place during its section's first 70%, pins, and is pushed out by its track's end
+   65vh into the next section, which is where the next block's lead puts that block's top (tail <
+   lead, so the two never overlap; the 6vh padding above plus 10vh here is the air between them).
+   The negative margin-bottom hands the lead back to the grid, so no section grows by it: the
+   track's margin box is still just the block, and the lead and tail are overflow. The percentage
+   resolves against the column, a stretched grid item, which is definite after track sizing. */
+.copy-track { min-height: 100%; }
+@media (min-width: 48rem) {
+  .copy-track {
+    --copy-lead: 75vh;
+    --copy-tail: 65vh;
+    padding-top: calc(var(--copy-lead) - 6rem);
+    margin-bottom: calc(6rem - var(--copy-lead));
+    min-height: calc(100% + var(--copy-tail));
+  }
+}
 
 /* section rail: one rotated line up the left edge, desktop only. It occupies x < 28px; copy starts
    at 48px (md:px-12). About a `left center` origin, rotate(-90deg) swings the line upward from

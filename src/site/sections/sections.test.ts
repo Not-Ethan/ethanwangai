@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createElement, type ComponentType } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ScrollProvider } from '@/scroll/ScrollProvider';
-import { SECTIONS } from '@/bench/sections';
+import { SECTIONS, SECTION_INDEX } from '@/bench/sections';
 import { MACHINE } from '@/bench/types';
 import { Sentence } from './Sentence';
 import { More } from './More';
@@ -133,5 +133,47 @@ describe('copy measure', () => {
       expect(h2s.length, `${s.id} has one h2`).toBe(1);
       expect(h2s[0], s.id).not.toMatch(/max-w/);
     }
+  });
+});
+
+describe('copy lead and tail (Step 3 gate: u = 0.7 of #heron)', () => {
+  // u is measured at the viewport's top edge, so at u of a section only (1 − u) of it is still
+  // below that edge and the next section's heading sits (1 − u)·H + lead below it. The block
+  // therefore leads its section by --copy-lead (its sticky containing block is the .copy-track,
+  // which starts that far down) and the track runs --copy-tail past the section's bottom so the
+  // block is still pinned at top-28 when the next heading is below the fold.
+  const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8');
+  const base = /(?:^|\n)\.copy-track\s*\{([^}]*)\}/.exec(css)?.[1] ?? null;
+  const desktop = /@media \(min-width: 48rem\)\s*\{\s*\.copy-track\s*\{([^}]*)\}/.exec(css)?.[1] ?? null;
+  const vhOf = (decls: string | null, prop: string): number =>
+    Number(new RegExp(`${prop}:\\s*([\\d.]+)vh`).exec(decls ?? '')?.[1] ?? NaN);
+
+  it('puts every sticky copy-col inside one copy-track that is the copy column itself', () => {
+    for (const s of SECTIONS.slice(1)) {
+      const html = render(s.id);
+      expect(html.split('copy-track').length - 1, `${s.id} has one copy-track`).toBe(1);
+      const track = elementAt(html, html.indexOf('copy-track'), 'div');
+      expect(track, `${s.id} track holds the copy-col`).toContain('copy-col');
+      // the track is the direct child of the column, so its 100% resolves against the stretched column
+      const column = elementAt(html, html.indexOf('md:col-span-5'), 'div');
+      expect(column.indexOf('copy-track'), s.id).toBeLessThan(column.indexOf('copy-col'));
+      expect(column.replace(/^<div[^>]*>\s*/, '').startsWith('<div class="copy-track"'), `${s.id} track first in column`).toBe(true);
+    }
+  });
+
+  it('leads each block far enough that the next heading is below the fold at u = 0.7 of a 90vh section', () => {
+    const heron = SECTIONS[SECTION_INDEX.heron];
+    const darch = SECTIONS[SECTION_INDEX.darch];
+    expect(heron.vh.desktop).toBe(darch.vh.desktop);
+    const bound = 100 - (1 - 0.7) * heron.vh.desktop;       // 73vh at any viewport height
+    expect(vhOf(desktop, '--copy-lead')).toBeGreaterThanOrEqual(bound);
+  });
+
+  it('never lets a track run past the next block, and keeps the column as the range on phones', () => {
+    expect(vhOf(desktop, '--copy-tail')).toBeLessThanOrEqual(vhOf(desktop, '--copy-lead'));
+    expect(desktop).toMatch(/padding-top:\s*calc\(var\(--copy-lead\) - 6rem\)/);   // the grid's pt-24 is the first 6rem of the lead
+    expect(desktop).toMatch(/margin-bottom:\s*calc\(6rem - var\(--copy-lead\)\)/); // hands the lead back so no section grows
+    expect(desktop).toMatch(/min-height:\s*calc\(100% \+ var\(--copy-tail\)\)/);
+    expect(base).toMatch(/min-height:\s*100%/);
   });
 });
