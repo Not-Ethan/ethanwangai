@@ -3,7 +3,10 @@ import { copy } from '@/site/copy';
 import { SECTIONS } from '@/bench/sections';
 import { useScroll } from '@/scroll/ScrollProvider';
 
-/** Four lines revealed per merge click (Stage 4); the six-rung ladder lights per click. */
+/**
+ * Four lines, each shown as hud.click reaches its data-click, and a six-rung ladder lit up to hud.rung: sceneState
+ * keys both to the merge clicks and the burst, and hudSync toggles .is-revealed / .is-lit / .is-current (task 4.1).
+ */
 export function More() {
   const { tier } = useScroll();
   const c = copy.more;

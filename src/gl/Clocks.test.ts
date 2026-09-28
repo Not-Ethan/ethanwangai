@@ -7,7 +7,7 @@ import { MACHINE, MACHINE_COUNT, type Tier } from '@/bench/types';
 import { buildBench } from '@/bench/counts';
 import { SECTIONS, sectionRanges, type SectionRange } from '@/bench/sections';
 import { CAMERA_KEYS, evaluatePose } from '@/bench/camera';
-import { createSceneState, sceneState } from '@/bench/sceneState';
+import { createSceneState, mergeBurst, sceneState } from '@/bench/sceneState';
 import { TIMING, lockStart } from '@/bench/timing';
 import { smoothstep } from '@/bench/math';
 import { PALETTES, type ThemeName } from '@/theme/palettes';
@@ -451,6 +451,27 @@ describe('stepFrame', () => {
     stepFrame(d, DT, (t += DT));
     expect(hud.rung).toBe(-1);
     expect(hud.click).toBe(-1);
+  });
+
+  it("writes section 02's merge and lean from sceneState every frame, and hands Ink its burst through hud.section and hud.u", () => {
+    const { d, uniforms, scroll } = driver({ built: true });
+    const r = scroll.current.ranges;
+    const more = SECTIONS.findIndex((s) => s.id === 'more');
+    const at = (u: number) => sceneState(gAt(r, more, u), r, 'desktop', createSceneState());
+    let t = 0;
+    // the clicks, the hold, the burst, then back up through them: every value is the table's, so it reverses exactly
+    for (const u of [0.05, 0.2, 0.375, 0.66, 0.8, 0.86, 0.9, 0.95, 0.86, 0.375, 0.05]) {
+      scroll.current.g = gAt(r, more, u);
+      stepFrame(d, DT, (t += DT));
+      const s = at(u);
+      expect(uniforms.uMerge.value, `u ${u}`).toBe(s.merge);
+      expect(uniforms.uLean.value, `u ${u}`).toBe(s.lean);
+      expect(mergeBurst(hud.section, hud.u), `u ${u}`).toBe(s.burst);   // Ink.writeInkFrame's uBurst, after Clocks
+    }
+    expect(at(0.9).burst).toBeGreaterThan(0.5);
+    expect(at(0.9).lean).toBeGreaterThan(0.5);
+    expect(at(0.375).merge).toBeGreaterThan(2);
+    expect(at(0.375).merge).toBeLessThan(4);
   });
 
   it('passes the scroll velocity through, damped, so fills and sweeps speed up under a fast scroll', () => {

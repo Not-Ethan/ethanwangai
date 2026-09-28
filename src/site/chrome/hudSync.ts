@@ -1,10 +1,12 @@
 // The chrome's per-frame sync (design §3.1, §9, task 3.6): a plain DOM rAF loop, outside R3F, that reads `hud`
 // (gl/hud.ts, which Clocks writes every frame) and writes only what changed: the hero ladder's lines, parts and
 // running clock, the alive section's uptime, the footer's total, the section rail's current item, section 02's lit
-// rung and its revealed copy lines. No React state and no layout reads: every node is looked up once, at start, and
-// the last value written to each is kept here, so a frame where nothing changed touches no DOM at all.
+// rungs (every one up to hud.rung, that one current) and its revealed copy lines (task 4.1). No React state and no
+// layout reads: every node is looked up once, at start, and the last value written to each is kept here, so a frame
+// where nothing changed touches no DOM at all.
 import { SECTIONS } from '@/bench/sections';
 import { smoothstep } from '@/bench/math';
+import { TIMING } from '@/bench/timing';
 import { BAND_ROWS, PARTITION } from '@/gl/inkGeometry';
 import { hud } from '@/gl/hud';
 import { copy } from '@/site/copy';
@@ -18,8 +20,12 @@ export interface HudSyncOptions {
   wordCount: number;
 }
 
-/** The ladder's lines rung ticks with the quoter's compile across this window, while the band prints (design §3.1). */
-const LINES_FROM = 0.05, LINES_TO = 0.35;
+/**
+ * The ladder's lines rung ticks with the quoter's compile while the rows band prints: T0 + 0.35 → 0.5 s of the hero
+ * compile (design §3.1), the first quarter of ink.vert.ts's band window BAND_T0..BAND_T1 (T0 + 0.35 → 0.95 s), where
+ * its printing front seats the last row. 0.159 → 0.227 in uCompile, so the count and the rows on screen agree.
+ */
+const LINES_FROM = 0.35 / TIMING.heroCompileS, LINES_TO = 0.5 / TIMING.heroCompileS;
 /** Rows the quoter's ink prints through the band: 40, or 0 if the band is ever cut, and the rung reads 0 with it. */
 const BAND_LINES = BAND_ROWS[PARTITION.quoter];
 /** The running clock until the quoter's lever locks: the width of hh:mm:ss, so the ladder line never reflows. */
@@ -76,7 +82,11 @@ export function startHudSync({ lockEnds, wordCount }: HudSyncOptions): () => voi
 
     if (hud.rung !== lastRung) {
       lastRung = hud.rung;
-      for (const el of rungs) el.classList.toggle(CLASS.lit, Number(el.dataset.rung) === hud.rung);
+      for (const el of rungs) {
+        const i = Number(el.dataset.rung);
+        el.classList.toggle(CLASS.lit, i <= hud.rung);
+        el.classList.toggle(CLASS.current, i === hud.rung);
+      }
     }
 
     if (hud.click !== lastClick) {

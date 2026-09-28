@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { ScrollProvider } from '@/scroll/ScrollProvider';
 import { SECTIONS, SECTION_INDEX } from '@/bench/sections';
 import { MACHINE } from '@/bench/types';
+import { copy } from '@/site/copy';
 import { Sentence } from './Sentence';
 import { More } from './More';
 import { First } from './First';
@@ -88,6 +89,21 @@ describe('section copy', () => {
       const grid = enclosingClass(html, html.indexOf('grid-cols-12'), 'div');
       expect(grid, s.id).toMatch(/(^|\s)min-h-\[inherit\](\s|$)/);
     }
+  });
+
+  it("keys section 02's lines to the merge clicks in copy order, and lifts its ink burst from the line about thousands of lines", () => {
+    const html = render('more');
+    const unescape = (t: string) => t.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+    const lines = Array.from(html.matchAll(/<(?:h2|p)\b([^>]*\bdata-click="[^"]*"[^>]*)>([^<]*)</g), (m) => ({ attrs: m[1], text: unescape(m[2]) }));
+    expect(lines.map((l) => l.text)).toEqual(copy.more.lines);
+    lines.forEach((l, i) => {
+      expect(l.attrs, l.text).toContain(`data-click="${i}"`);
+      expect(l.attrs, l.text).toMatch(/\bdata-reveal=/);
+    });
+    const source = lines.filter((l) => l.attrs.includes('data-ink-source="more"')).map((l) => l.text);
+    expect(source).toEqual([copy.more.lines[2]]);
+    expect(source[0]).toContain('thousands of lines');
+    expect(Array.from(html.matchAll(/<li data-rung="(\d)">([^<]*)</g), (m) => [Number(m[1]), m[2]])).toEqual(copy.more.rungs.map((r, i) => [i, r]));
   });
 
   it('keeps the ladder rungs as their own column beside the sticky copy', () => {
