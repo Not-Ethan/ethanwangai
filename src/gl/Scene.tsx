@@ -5,8 +5,8 @@
 // `flat` (no tone mapping): the palette uniforms must reach the screen as the palette's own sRGB values, so the paper,
 // pencil and ink match the DOM's CSS tokens and the SVG plate they cross-fade with (§11). Warm-up and the cross-fade
 // arrive in Stage 5.
-import { Component, useEffect, useMemo, type ReactNode } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Component, useEffect, useLayoutEffect, useMemo, type ReactNode } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 import { MACHINE, type LayoutResult, type Tier, type Vec3 } from '@/bench/types';
@@ -62,6 +62,26 @@ export function configureUniforms(u: BenchUniforms, tier: Tier, result: LayoutRe
   return u;
 }
 
+/** Points `scene.background` and the clear colour at the registry's uPaper Color, by reference, opaque. */
+export function bindPaper(scene: THREE.Scene, gl: THREE.WebGLRenderer, u: BenchUniforms): void {
+  scene.background = u.uPaper.value;
+  gl.setClearColor(u.uPaper.value, 1);
+}
+
+/**
+ * Keeps the paper behind the bench bound to the registry Clocks is lerping. A tier change rebuilds `u` with fresh Color
+ * objects, and a one-time `onCreated` binding would keep pointing at the old paper, which the lerp no longer writes (load
+ * on desktop, resize below 820 px, toggle the theme: kits and ground change, background frozen). The layout effect is
+ * keyed on the registry, and a child's layout effect runs before R3F's Provider flags the canvas active, so the first
+ * frame clears to paper too.
+ */
+export function PaperBackground({ uniforms }: { uniforms: BenchUniforms }) {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  useLayoutEffect(() => bindPaper(scene, gl, uniforms), [uniforms, gl, scene]);
+  return null;
+}
+
 /** Keeps a renderer failure (no WebGL2, context creation refused) from taking the DOM down with it; the DOM is the site on its own. */
 export class GLErrorBoundary extends Component<{ fallback: ReactNode; children?: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -84,10 +104,10 @@ export function Scene() {
           shadows={shadows ? SHADOW_MAP : false}
           gl={GL_OPTIONS}
           camera={CAMERA_OPTIONS}
-          onCreated={({ gl, scene }) => { scene.background = u.uPaper.value; gl.setClearColor(u.uPaper.value, 1); }}
           frameloop="always"
           flat
         >
+          <PaperBackground uniforms={u} />
           <PerformanceMonitor onDecline={onDecline}>
             <Lights uniforms={u} tier={tier} />
             <Ground uniforms={u} tier={tier} result={result} />

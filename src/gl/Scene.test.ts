@@ -9,9 +9,10 @@ import { BENCH_SEED_TEXT } from '@/bench/bench';
 import { OU, generateOU } from '@/bench/ou';
 import { QUOTER_BED } from '@/bench/configs/quoter';
 import { TIMING } from '@/bench/timing';
-import { createUniforms } from './material/uniforms';
+import { PALETTES } from '@/theme/palettes';
+import { applyPalette, createUniforms, hexToColor, type BenchUniforms } from './material/uniforms';
 import { KEY_LIGHT } from './Lights';
-import { bedPitch, createOUTexture, configureUniforms, GLErrorBoundary, CAMERA, BENCH_CENTER, BALANCE_PIVOT_Y } from './Scene';
+import { bedPitch, createOUTexture, configureUniforms, GLErrorBoundary, PaperBackground, bindPaper, CAMERA, BENCH_CENTER, BALANCE_PIVOT_Y } from './Scene';
 
 describe('bedPitch', () => {
   it('is the quoter bed pitch on desktop and double it on phone, matching the columns the config actually laid out', () => {
@@ -151,5 +152,91 @@ describe('GLErrorBoundary', () => {
     } finally {
       quiet.mockRestore();
     }
+  });
+});
+
+// The paper behind the bench: scene.background and the clear colour are the registry's uPaper Color by reference, and the
+// binding follows the registry when a tier change rebuilds it, so the palette lerp Clocks writes into the new Color reaches
+// the background too (load on desktop, resize below 820 px, toggle the theme).
+describe('<PaperBackground uniforms /> mounted through R3F', () => {
+  (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+  function clearingRendererStub() {
+    const clears: Array<{ color: THREE.Color; alpha: number }> = [];
+    const gl = {
+      render() {}, setSize() {}, setPixelRatio() {},
+      setClearColor(color: THREE.Color, alpha: number) { clears.push({ color, alpha }); },
+      shadowMap: { enabled: false, type: THREE.PCFShadowMap, needsUpdate: false },
+      outputColorSpace: THREE.SRGBColorSpace, toneMapping: THREE.NoToneMapping, domElement: {},
+    } as unknown as THREE.WebGLRenderer;
+    return { gl, clears };
+  }
+  function withoutClockWarning<T>(fn: () => T): T {
+    const warn = console.warn;
+    const spy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => { if (!String(args[0]).startsWith('THREE.Clock')) warn(...args); });
+    try { return fn(); } finally { spy.mockRestore(); }
+  }
+
+  async function mount(uniforms: BenchUniforms) {
+    const { gl, clears } = clearingRendererStub();
+    const root = withoutClockWarning(() => createRoot({} as HTMLCanvasElement));
+    await root.configure({ gl, size: { width: 1440, height: 900, top: 0, left: 0 }, dpr: 1, frameloop: 'never' });
+    const store = await act(async () => root.render(createElement(PaperBackground, { uniforms })));
+    const rerender = (next: BenchUniforms) => act(async () => { root.render(createElement(PaperBackground, { uniforms: next })); });
+    return { root, store, clears, rerender };
+  }
+
+  it('binds scene.background and the clear colour to the registry\'s uPaper Color, by reference and opaque', async () => {
+    const u = createUniforms();
+    const { root, store, clears } = await mount(u);
+    expect(store.getState().scene.background).toBe(u.uPaper.value);
+    expect(clears).toHaveLength(1);
+    expect(clears[0].color).toBe(u.uPaper.value);
+    expect(clears[0].alpha).toBe(1);
+    await act(async () => root.unmount());
+  });
+
+  it('follows a rebuilt registry, so a theme lerp after a tier change moves the background and not a stale Color', async () => {
+    const u1 = createUniforms();
+    const { root, store, clears, rerender } = await mount(u1);
+    const lightPaper = hexToColor(PALETTES.light.paper).getHex();
+    expect(u1.uPaper.value.getHex()).toBe(lightPaper);   // a fresh registry sits on the light palette
+
+    const u2 = createUniforms();                          // what Scene's useMemo builds when the tier flips
+    await rerender(u2);
+    const background = store.getState().scene.background as THREE.Color;
+    expect(background).toBe(u2.uPaper.value);
+    expect(background).not.toBe(u1.uPaper.value);
+    expect(clears).toHaveLength(2);
+    expect(clears[1].color).toBe(u2.uPaper.value);
+
+    // The toggle lerps the registry Clocks now holds (u2); the background is that Color, so it moves with kits and ground.
+    applyPalette(u2, PALETTES.light, PALETTES.dark, 1);
+    const darkPaper = hexToColor(PALETTES.dark.paper).getHex();
+    expect(darkPaper).not.toBe(lightPaper);
+    expect(background.getHex()).toBe(darkPaper);
+    expect(u1.uPaper.value.getHex()).toBe(lightPaper);   // the Color a one-time onCreated binding would still be showing
+    await act(async () => root.unmount());
+  });
+
+  it('does not rebind when the same registry re-renders (a theme change re-renders Scene without rebuilding u)', async () => {
+    const u = createUniforms();
+    const { root, store, clears, rerender } = await mount(u);
+    await rerender(u);
+    expect(clears).toHaveLength(1);
+    expect(store.getState().scene.background).toBe(u.uPaper.value);
+    await act(async () => root.unmount());
+  });
+});
+
+describe('bindPaper', () => {
+  it('points scene.background and the clear colour at the same uPaper Color object, opaque', () => {
+    const u = createUniforms();
+    const scene = new THREE.Scene();
+    const clears: Array<[THREE.Color, number]> = [];
+    const gl = { setClearColor: (c: THREE.Color, a: number) => { clears.push([c, a]); } } as unknown as THREE.WebGLRenderer;
+    bindPaper(scene, gl, u);
+    expect(scene.background).toBe(u.uPaper.value);
+    expect(clears).toEqual([[u.uPaper.value, 1]]);
   });
 });
