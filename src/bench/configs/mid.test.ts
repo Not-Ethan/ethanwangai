@@ -201,7 +201,7 @@ describe('watch', () => {
     expect(rail.group).toBe(0);
     expect(rail.explodeMode).toBe('module');
     spans(rail, [-w / 2, 0.2, -d / 2], [-w / 2, 0.2, d / 2]);
-    near(rail.param, [w, 4.0, 0, 0]);
+    near(rail.param, [w, 4.0, 0, 1]);
 
     expectLever(parts, [-w / 2, 0.35, -d / 2 - 0.1], [-w / 2 + 0.4, 0.35, -d / 2 - 0.1]);
   });
@@ -221,7 +221,7 @@ describe('watch', () => {
     });
     const rail = parts.find((p) => p.kind === KIND.scan && p.primitive === PRIMITIVE.bar)!;
     spans(rail, [-w / 2, 0.2, -d / 2], [-w / 2, 0.2, d / 2]);
-    near(rail.param, [w, 4.0, 0, 0]);
+    near(rail.param, [w, 4.0, 0, 1]);
     expectLever(parts, [-w / 2, 0.35, -d / 2 - 0.1], [-w / 2 + 0.4, 0.35, -d / 2 - 0.1]);
   });
 });
