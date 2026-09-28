@@ -194,6 +194,7 @@ export interface ClocksDriver {
   clocks: ClockState; scene: SceneState; inputs: ClockInputs; births: Float64Array[];
   fit: ShadowFit; palette: PaletteLerp;
   pos: THREE.Vector3; prevPos: THREE.Vector3; hasPrev: boolean;
+  wasQuoterLocked: boolean;   // edge-detects the quoter's lock for hud.runningSince
 }
 
 export function createClocksDriver(o: {
@@ -207,6 +208,7 @@ export function createClocksDriver(o: {
     inputs: { dt: 0, compileTarget: BUILT, heroCompile: 0, visitorCompile: 0, velocity: 0, reducedMotion: o.reducedMotion },
     births: sortedBirths(o.result), fit: createShadowFit(), palette: createPaletteLerp(o.uniforms, o.theme),
     pos: new THREE.Vector3(), prevPos: new THREE.Vector3(), hasPrev: false,
+    wasQuoterLocked: false,
   };
 }
 
@@ -260,10 +262,16 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
 
   hud.section = s.section;
   hud.u = s.u;
+  hud.rung = s.rung;
+  hud.click = s.click;
   hud.compile = c.compile[MACHINE.quoter];
+  hud.compilePerMachine.set(c.compile);
   hud.parts = inkedCount(d.births[MACHINE.quoter], c.compile[MACHINE.quoter]) + inkedCount(d.births[MACHINE.intake], c.compile[MACHINE.intake]);
   hud.uptime = c.uptime;
-  hud.running = c.locked[MACHINE.quoter] === 1;
+  const quoterLocked = c.locked[MACHINE.quoter] === 1;
+  if (quoterLocked && !d.wasQuoterLocked) hud.runningSince = c.uptime;
+  d.wasQuoterLocked = quoterLocked;
+  hud.running = quoterLocked;
 }
 
 export function Clocks({ result, uniforms, tier }: { result: LayoutResult; uniforms: BenchUniforms; tier: Tier }) {

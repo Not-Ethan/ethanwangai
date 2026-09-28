@@ -7,6 +7,7 @@ import { MACHINE, MACHINE_COUNT, type Tier } from '@/bench/types';
 import { buildBench } from '@/bench/counts';
 import { SECTIONS, sectionRanges, type SectionRange } from '@/bench/sections';
 import { CAMERA_KEYS, evaluatePose } from '@/bench/camera';
+import { createSceneState, sceneState } from '@/bench/sceneState';
 import { TIMING, lockStart } from '@/bench/timing';
 import { smoothstep } from '@/bench/math';
 import { PALETTES, type ThemeName } from '@/theme/palettes';
@@ -430,6 +431,28 @@ describe('stepFrame', () => {
     expect(hud.section).toBe(more);
   });
 
+  it('mirrors section 02\'s lit rung and revealed line, and every machine\'s compile, into the hud for the DOM chrome', () => {
+    const { d, uniforms, scroll } = driver();
+    const r = scroll.current.ranges;
+    const more = SECTIONS.findIndex((s) => s.id === 'more');
+    const at = (u: number) => sceneState(gAt(r, more, u), r, 'desktop', createSceneState());
+    let t = 0;
+    for (const u of [0.05, 0.2, 0.4, 0.66, 0.85, 0.95]) {
+      scroll.current.g = gAt(r, more, u);
+      stepFrame(d, DT, (t += DT));
+      expect(hud.rung, `u ${u}`).toBe(at(u).rung);
+      expect(hud.click, `u ${u}`).toBe(at(u).click);
+      expect(Array.from(hud.compilePerMachine), `u ${u}`).toEqual(Array.from(uniforms.uCompile.value));
+    }
+    scroll.current.g = gAt(r, more, 0.66);                           // the level-6 hold: the top rung
+    stepFrame(d, DT, (t += DT));
+    expect(hud.rung).toBe(5);
+    scroll.current.g = 0;                                            // back at the hero: nothing lit, nothing revealed
+    stepFrame(d, DT, (t += DT));
+    expect(hud.rung).toBe(-1);
+    expect(hud.click).toBe(-1);
+  });
+
   it('passes the scroll velocity through, damped, so fills and sweeps speed up under a fast scroll', () => {
     const { d, uniforms } = driver({ velocity: 1 });
     frames(d, 120);
@@ -513,6 +536,28 @@ describe('the intro', () => {
     frames(d, 60, DT, TIMING.heroCompileS);
     expect(uniforms.uMachineTime.value[MACHINE.quoter]).toBeGreaterThan(0.5);   // carriages leave the rail end
     expect(uniforms.uRun.value[MACHINE.quoter]).toBeGreaterThan(0.9);
+  });
+
+  it('stamps runningSince with the uptime on the lock frame, holds it while running, and re-stamps it when a rebuild re-locks', () => {
+    const { d } = driver();
+    d.intro.pending = true;
+    stepFrame(d, DT, 0);                                             // T0 = 0
+    stepFrame(d, DT, LOCK_S - 0.01);
+    expect(hud.running).toBe(false);
+    stepFrame(d, DT, LOCK_S);
+    expect(hud.running).toBe(true);
+    const lockedAt = hud.uptime;
+    expect(hud.runningSince).toBe(lockedAt);
+    const t = frames(d, 120, DT, LOCK_S);                            // 2 s of running
+    expect(hud.runningSince).toBe(lockedAt);
+    expect(hud.uptime - hud.runningSince).toBeCloseTo(2, 6);
+    d.intro.pending = true;                                          // rebuild: back to pencil, the clock stops
+    stepFrame(d, DT, t + DT);
+    expect(hud.running).toBe(false);
+    frames(d, Math.ceil(TIMING.heroCompileS / DT) + 2, DT, t + DT);
+    expect(hud.running).toBe(true);                                  // re-locked, and the running clock starts over
+    expect(hud.runningSince).toBeGreaterThan(lockedAt + 2);
+    expect(hud.uptime - hud.runningSince).toBeLessThan(0.1);
   });
 
   it('a rebuild sends the quoter back to pencil from wherever it is: run drops as the compile falls below the lock, and it re-locks when the lever lands again', () => {
