@@ -187,3 +187,16 @@ Fragment: a soft dot (`length(gl_PointCoord − 0.5) < 0.5`), `uInk` color, alph
 
 - [ ] **Step 1:** Playwright 1440 × 900, light theme: `/?freeze=0.3`, `0.6`, `1.2`, `2.2`, and `/` waited to T0 + 3.0 s (poll `window.__dbso.t0`); save `.playwright-mcp/gates/g2-<t>.png`. Also `page.evaluate` that the hero sample count is > 400 (`window.__dbso.samples[0]`), and after `page.setViewportSize({ width: 1100, height: 800 })` the count is re-sampled (Review Focus #1).
 - [ ] **Step 2:** The orchestrator judges against spec §3.1: ink visibly lifts from the glyphs of "build things"; the 0.6 s still reads as rows of dots (lines), not rain or confetti; the 1.2 s still shows parts locking with the bed racking in from the headline side; the 2.2 s still shows a complete, still machine; the 3.0 s still shows carriages away from the rail end and a hot cap. Fixes per §14 if not.
+
+---
+
+### Task 3.0: Sticky copy per section and a left-edge section rail (added after judging the 2.9 stills) **[parallel-safe]**
+
+In the 2.9 stills each section's copy has scrolled off screen by the middle of its own section, and the fixed section strip at the bottom-left overlaps copy. Fix both in the DOM.
+
+**Files:**
+- Modify: `src/site/sections/More.tsx`, `First.tsx`, `Kalshi.tsx`, `Heron.tsx`, `Darch.tsx`, `Summers.tsx`, `Alive.tsx`, `Yours.tsx`, `src/site/chrome/SectionStrip.tsx`, `src/app/globals.css`
+
+- [ ] **Step 1: Sticky copy.** In every section except `Sentence` (already sticky), wrap the copy column's inner block in `<div className="copy-col sticky top-24 md:top-28">` so the copy stays on screen for the whole section and hands off to the next section's block at the boundary. Keep every `id`, `data-ink-source`, `data-reveal`, `data-plate`, and form element exactly as it is (Stage 3 samples ink from those elements). Give `.copy-col` `max-width: 34ch` and `padding-bottom: 6vh`. Sections keep their `min-height`.
+- [ ] **Step 2: Section rail.** Turn `SectionStrip` into a vertical rail at the left edge: `position: fixed; left: 12px; top: 50%; transform: translateY(-50%) rotate(-90deg); transform-origin: left center;` rendered as one line of nine mono items separated by ` · `, 10px, pencil color, the current item in ink (Stage 6 toggles `.is-current`). Keep `id="section-strip"` and `data-strip={id}` on each item. Shift the main copy gutter so nothing sits under the rail: `px-4 md:px-12` on every section's grid (the hero too), so the rail occupies x < 28px and copy starts at 48px on desktop; phones keep 16px and hide the rail (`hidden md:block`).
+- [ ] **Step 3: Verify** with the dev server and Playwright at 1440 × 900 and `?built=1`: at u 0.7 of `#heron` the heron heading and body are on screen and the darch heading is not; the rail does not overlap any copy at any section; console has zero errors. Save `.playwright-mcp/gates/s30-heron-sticky.png` and `s30-rail.png`. Stop the server. `npx tsc --noEmit`, lint, `npx vitest run src/site` clean. **Commit:** `git add -A && git commit -m "Sticky copy per section; section strip becomes a left-edge rail"`

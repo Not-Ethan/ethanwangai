@@ -535,3 +535,19 @@ Gate G1 verdict: the quoter reads as a designed instrument in both themes and th
 - [ ] **Step 3: Light-theme form.** Start the dev server (port 3111), open `/?built=1` in the light theme and judge the hero still: the frame bars and cells must show three distinguishable tones (top, key side, shade). Tune in this order until they do: `Lights.tsx` hemisphere intensity 0.6 → up to 1.0, directional intensity 2.4 → up to 3.0; then, only if still a silhouette, light `inkTop` → `#44444C` and `inkKey` → `#2C2C32` in `palettes.ts` and the same hexes in `globals.css` (the palettes test enforces the match). The dark theme must keep reading well; check it after every change.
 - [ ] **Step 4: Stills** with Playwright at 1440 × 900 and `?built=1`, saved to `.playwright-mcp/gates/`: `g1b-hero-light.png`, `g1b-hero-dark.png`, `g1b-more.png` (u 0.5), `g1b-kalshi.png` (u 0.6), `g1b-heron.png` (u 0.7), `g1b-alive.png` (u 0.8), `g1b-phone-hero.png` (390 × 844 with `?built=1&tier=phone`; if `tier=phone` is not yet honoured by `useTier`, add that query override now, it is needed by Stage 5 anyway). Scroll with `window.scrollTo(0, top + u·height)` and wait 3 s. Stop the server after.
 - [ ] **Step 5: Verify** `npx vitest run src/bench` green, `npx tsc --noEmit` clean, lint clean. **Commit:** `git add -A && git commit -m "Tune camera keys for copy-column clearance; give the light theme form"`
+
+---
+
+### Task 2.10: Camera round two — larger hero, expressive poses under a 60-unit budget (added after judging the 2.9 stills)
+
+The 2.9 tables clear the copy column everywhere; keep that. Two things are still wrong: the hero quoter is small (bbox top at NDC −0.26 when the copy allows 0.05), and the 45-unit path budget flattened heron (should be side-on), darch (long and low), `more` (~45–55° high 3/4) and the poster (small machines large in the foreground). Relax the budget to 60 units and add numeric pose constraints.
+
+**Files:**
+- Modify: `src/bench/camera.ts` (desktop table; phone only if a desktop change forces it), `src/bench/cameraClearance.test.ts` (extend), `src/bench/cameraClearance.ts` (add `elevationDeg(pose)` and `azimuthDeg(pose)` helpers)
+
+**Interfaces:** `elevationDeg(pose): number` = `asin((position.y − lookAt.y) / |position − lookAt|)` in degrees; `azimuthDeg(pose)` = angle of the horizontal view direction from the bench +z axis (0 = looking straight along −z toward the back of the bench, ±90 = looking along the bench's x axis).
+
+- [ ] **Step 1: Extend the test.** Keep every existing assertion, change the path budget to 60, and add: hero (0,0): quoter bbox `top ≥ −0.12` and `≤ 0.05`, `left ≥ −0.20`, `right ≤ 1.02`; `more` (1, 0.5): elevation between 40° and 58°; heron (4, 0.7): elevation ≤ 22° and `|azimuth| ≤ 25°` (side-on to the balance's long axis, which runs along bench x, viewed from +z), balance bbox height ≥ 0.28; darch (5, 0.7): elevation ≤ 16°, `position.y ≤ 2.2`, splitter bbox width ≥ 0.5; summers (6, 0.7): elevation ≥ 45°; alive (7, 0.8): union of balance, splitter, watch height ≥ 0.45 and the quoter bbox intersects the frame; yours (8, 0.6): elevation ≤ 20°. Run it: it must fail on the current table.
+- [ ] **Step 2: Re-author the desktop table** until it passes. Holds and moves as before (no section starts with a cut; kalshi's dolly is still the only lateral dolly). Phone table: leave the far-shot hero as is; adjust only if a shared helper changes.
+- [ ] **Step 3: Stills** at 1440 × 900 with `?built=1`, light theme: `g1c-hero.png`, `g1c-more.png` (u 0.5), `g1c-kalshi.png` (u 0.6), `g1c-heron.png` (u 0.7), `g1c-darch.png` (u 0.7), `g1c-summers.png` (u 0.7), `g1c-alive.png` (u 0.8), `g1c-yours.png` (u 0.6). Stop the server after.
+- [ ] **Step 4: Verify** `npx vitest run src/bench src/gl` green, tsc clean, lint clean. **Commit:** `git add -A && git commit -m "Camera round two: larger hero, side-on heron, low darch, poster foreground"`
