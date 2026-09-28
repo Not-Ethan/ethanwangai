@@ -15,7 +15,7 @@ export const copy = {
     ],
     resume: 'resume',
     menu: 'menu',
-    theme: { light: 'light', dark: 'dark' },
+    theme: { light: 'light', dark: 'dark', ariaLabel: (name: string) => `switch to ${name} theme` },
     home: 'ethan wang',
   },
   sentence: {
