@@ -5,7 +5,7 @@ import { bar, tile } from './helpers';
 const HALF = 0.6;                       // the hopper is a 1.2 cube
 const CY = 1.6;                         // hopper centre height
 const Y0 = CY - HALF, Y1 = CY + HALF;   // hopper bottom and top (1.0, 2.2)
-const MESH = 7;                         // grille: a 7 × 7 mesh of short bars per face, border left to the frame
+const MESH = 7;                         // grille: a 7 × 7 mesh of short bars per face, border left to the frame; 84 per face, 336 over four faces, 379 parts in all
 const LEVER_LEN = 0.6;
 
 /** 12 frame edges plus 4 legs to the bench. */
