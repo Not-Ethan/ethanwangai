@@ -56,8 +56,11 @@ a:hover, button.link:hover { color: var(--hot); }
 :focus-visible { outline: 2px solid var(--hot); outline-offset: 3px; }
 
 /* sticky copy: every section but the hero wraps its copy in one of these; it holds on screen
-   for its section and hands off to the next section's block at the boundary */
-.copy-col { max-width: 34ch; padding-bottom: 6vh; }
+   for its section and hands off to the next section's block at the boundary. The wrapper carries
+   no measure: a max-width here resolves `ch` in the 16px body default (312px) and squeezes the h2
+   to 7-11 lines. `.body` keeps the 34ch (spec §9, body max 34ch) and the heading keeps the column,
+   the widths the Task 2.9 camera clearance was tuned against. */
+.copy-col { padding-bottom: 6vh; }
 
 /* section rail: one rotated line up the left edge, desktop only. It occupies x < 28px; copy starts
    at 48px (md:px-12). About a `left center` origin, rotate(-90deg) swings the line upward from

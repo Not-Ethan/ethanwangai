@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { createElement, type ComponentType } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ScrollProvider } from '@/scroll/ScrollProvider';
@@ -106,6 +107,31 @@ describe('section copy', () => {
       expect(grid, s.id).toMatch(/\bpx-4\b/);
       expect(grid, s.id).toMatch(/\bmd:px-12\b/);
       expect(grid, s.id).not.toMatch(/\bmd:px-8\b/);
+    }
+  });
+});
+
+describe('copy measure', () => {
+  // A measure on the wrapper resolves `ch` in the 16px body default (312px at 1440) and squeezes
+  // every h2 to 7-11 lines, pushing four sections past their min-height. The 34ch belongs to the
+  // body paragraphs (spec §9: body max 34ch); the heading keeps the grid column.
+  const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8');
+  const declarationsOf = (selector: string): string | null =>
+    new RegExp(`(?:^|\\n)${selector.replace(/\./g, '\\.')}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? null;
+
+  it('puts the 34ch measure on .body and none on the .copy-col wrapper', () => {
+    const copyCol = declarationsOf('.copy-col');
+    expect(copyCol).not.toBeNull();
+    expect(copyCol).not.toMatch(/max-width/);
+    expect(copyCol).toMatch(/padding-bottom:\s*6vh/);
+    expect(declarationsOf('.body')).toMatch(/max-width:\s*34ch/);
+  });
+
+  it('gives every heading the whole column: no width utility on any h2', () => {
+    for (const s of SECTIONS.slice(1)) {
+      const h2s = render(s.id).match(/<h2\b[^>]*>/g) ?? [];
+      expect(h2s.length, `${s.id} has one h2`).toBe(1);
+      expect(h2s[0], s.id).not.toMatch(/max-w/);
     }
   });
 });
