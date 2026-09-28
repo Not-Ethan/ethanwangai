@@ -12,7 +12,7 @@ export function Sentence() {
   const [before, after] = c.headline.split(c.inkFrom);
   return (
     <section id="sentence" style={{ minHeight: `${SECTIONS[0].vh[tier]}vh` }} className="relative">
-      <div className="sticky top-0 grid min-h-[40vh] grid-cols-12 gap-4 px-4 pt-24 md:px-8">
+      <div className="sticky top-0 grid min-h-[40vh] grid-cols-12 gap-4 px-4 pt-24 md:px-12">
         <div className="col-span-12 md:col-span-7" data-ink-source="sentence">
           <h1 className="display">
             {before}<span data-ink-words>{c.inkFrom}</span>{after}

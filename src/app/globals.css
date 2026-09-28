@@ -54,3 +54,21 @@ a { text-underline-offset: 0.18em; }
 a:hover, button.link:hover { color: var(--hot); }
 ::selection { background: var(--hot); color: var(--paper); }
 :focus-visible { outline: 2px solid var(--hot); outline-offset: 3px; }
+
+/* sticky copy: every section but the hero wraps its copy in one of these; it holds on screen
+   for its section and hands off to the next section's block at the boundary */
+.copy-col { max-width: 34ch; padding-bottom: 6vh; }
+
+/* section rail: one rotated line up the left edge, desktop only. It occupies x < 28px; copy starts
+   at 48px (md:px-12). About a `left center` origin, rotate(-90deg) swings the line upward from
+   top: 50%, so the last translateX(-50%) runs back along the rotated line to centre it on the
+   viewport midline; translateY(-50%) only cancels the origin's half-line-height offset.
+   Sits after .mono so its 10px wins at equal specificity. */
+.section-rail {
+  position: fixed; left: 12px; top: 50%;
+  transform: translateY(-50%) rotate(-90deg) translateX(-50%);
+  transform-origin: left center;
+  white-space: nowrap; font-size: 10px; color: var(--pencil);
+}
+.section-rail li { display: inline; }
+.section-rail .is-current { color: var(--ink); }

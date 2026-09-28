@@ -10,12 +10,14 @@ export function Heron() {
   const c = copy.heron;
   return (
     <section id="heron" style={{ minHeight: `${SECTIONS[4].vh[tier]}vh` }} className="relative">
-      <div className="grid grid-cols-12 gap-4 px-4 pt-24 md:px-8">
+      <div className="grid min-h-[inherit] grid-cols-12 gap-4 px-4 pt-24 md:px-12">
         <div className="col-span-12 md:col-span-5">
-          <h2 className="h2" data-ink-source="heron" data-reveal>{c.heading}</h2>
-          <p className="body mt-5" data-reveal>{c.body}</p>
-          <p className="mono pencil mt-4">{c.mono}</p>
-          <Plate machine={MACHINE.balance}>{c.plate}</Plate>
+          <div className="copy-col sticky top-24 md:top-28">
+            <h2 className="h2" data-ink-source="heron" data-reveal>{c.heading}</h2>
+            <p className="body mt-5" data-reveal>{c.body}</p>
+            <p className="mono pencil mt-4">{c.mono}</p>
+            <Plate machine={MACHINE.balance}>{c.plate}</Plate>
+          </div>
         </div>
       </div>
     </section>
