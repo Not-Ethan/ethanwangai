@@ -18,6 +18,6 @@ describe('small configs', () => {
     const p = SLOT.build(ctx);
     expect(p).toHaveLength(5);
     expect(p.filter((x) => x.kind === KIND.scan)).toHaveLength(1);
-    expect(p.find((x) => x.kind === KIND.scan)!.param).toEqual([1.6, 3.0, 0, 1]);
+    expect(p.find((x) => x.kind === KIND.scan)!.param).toEqual([1.6, 3.0, 0, -1]);   // w = -1 marks a scan rail
   });
 });

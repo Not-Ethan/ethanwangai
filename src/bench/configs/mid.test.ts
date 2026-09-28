@@ -174,7 +174,7 @@ describe('watch', () => {
     expect(WATCH.name).toBe('watch');
   });
 
-  it('desktop: 768 scan cells that rise, ordered by column, hashed baseline, then one rail and one lever = 770', () => {
+  it('desktop: 768 scan cells that rise, ordered by column, hashed baseline, w = 48 columns, then one rail (w = -1) and one lever = 770', () => {
     const parts = WATCH.build(desktop);
     expect(parts).toHaveLength(48 * 16 + 2);
     const cells = parts.filter((p) => p.primitive === PRIMITIVE.cell);
@@ -188,7 +188,7 @@ describe('watch', () => {
       expect(p.group).toBe(0);
       expect(p.module).toBe('field');
       expect(p.col).toBe(c);
-      expect(p.param).toEqual([c, r, hash2(c, r), 0]);
+      expect(p.param).toEqual([c, r, hash2(c, r), 48]);
       expect(p.param[2]).toBeGreaterThanOrEqual(0);
       expect(p.param[2]).toBeLessThan(1);
       near(p.position, [-w / 2 + (c + 0.5) * 0.07, 0, -d / 2 + (r + 0.5) * 0.07]);
@@ -201,12 +201,12 @@ describe('watch', () => {
     expect(rail.group).toBe(0);
     expect(rail.explodeMode).toBe('module');
     spans(rail, [-w / 2, 0.2, -d / 2], [-w / 2, 0.2, d / 2]);
-    near(rail.param, [w, 4.0, 0, 1]);
+    near(rail.param, [w, 4.0, 0, -1]);
 
     expectLever(parts, [-w / 2, 0.35, -d / 2 - 0.1], [-w / 2 + 0.4, 0.35, -d / 2 - 0.1]);
   });
 
-  it('phone: halves each field axis and doubles pitch and cell scale, keeping the footprint = 194', () => {
+  it('phone: halves each field axis and doubles pitch and cell scale, keeping the footprint = 194; cells carry w = 24', () => {
     const parts = WATCH.build(phone);
     expect(parts).toHaveLength(24 * 8 + 2);
     const cells = parts.filter((p) => p.primitive === PRIMITIVE.cell);
@@ -215,13 +215,13 @@ describe('watch', () => {
     expect(w).toBeCloseTo(48 * 0.07, 6);
     cells.forEach((p, k) => {
       const c = Math.floor(k / 8), r = k % 8;
-      expect(p.param).toEqual([c, r, hash2(c, r), 0]);
+      expect(p.param).toEqual([c, r, hash2(c, r), 24]);
       near(p.position, [-w / 2 + (c + 0.5) * 0.14, 0, -d / 2 + (r + 0.5) * 0.14]);
       near(p.scale, [0.1, 0.24, 0.1]);
     });
     const rail = parts.find((p) => p.kind === KIND.scan && p.primitive === PRIMITIVE.bar)!;
     spans(rail, [-w / 2, 0.2, -d / 2], [-w / 2, 0.2, d / 2]);
-    near(rail.param, [w, 4.0, 0, 1]);
+    near(rail.param, [w, 4.0, 0, -1]);
     expectLever(parts, [-w / 2, 0.35, -d / 2 - 0.1], [-w / 2 + 0.4, 0.35, -d / 2 - 0.1]);
   });
 });

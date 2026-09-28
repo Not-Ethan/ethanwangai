@@ -3,7 +3,8 @@ import { IDENTITY_Q, rotX, rotY } from '@/bench/math';
 import { bar, ring, spoke, tile } from './helpers';
 
 // Darch: one job in along the in-rail, split at the block into twelve, out along the fan.
-// The lane shader hardcodes the in-rail length (SPLIT_D1 1.6) and the fan end points; keep them exact.
+// The lane shader hardcodes the tiles' straight run from REST to the fan start (SPLIT_D1 2.2 = FAN_FROM.x − REST.x) and the
+// fan end points; keep them exact (src/gl/shaders/assemble.test.ts checks them against this config).
 const RAIL_Y = 0.3;
 const IN_FROM: Vec3 = [-2.0, RAIL_Y, 0], IN_TO: Vec3 = [-0.4, RAIL_Y, 0];
 const BLOCK_C: Vec3 = [0, RAIL_Y, 0];

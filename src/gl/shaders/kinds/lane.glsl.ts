@@ -1,7 +1,9 @@
 // Tiles on a rail. aParam = [rate, phase, segLen, j]; j = 0 is the intake chute, j ≥ 1 splitter out-lane j.
-// SPLIT_D1 and the fan end points mirror src/bench/configs/splitter.ts (in-rail 1.6 long; out-rail j from [0.3, 0.3, 0] to [2.2, 0.3, −1.1 + j·0.2]).
+// SPLIT_D1 and the fan end points mirror src/bench/configs/splitter.ts: SPLIT_D1 is the straight run along x from the tile
+// rest (REST.x = −1.9) along the in-rail and through the block to the fan start (FAN_FROM.x = 0.3), so 0.3 − (−1.9) = 2.2;
+// out-rail j then runs from [0.3, 0.3, 0] to [2.2, 0.3, −1.1 + j·0.2]. assemble.test.ts checks both against the built config.
 export const KIND_LANE = /* glsl */`
-#define SPLIT_D1 1.6
+#define SPLIT_D1 2.2
 void kind_lane(inout vec3 p, inout vec3 n, inout vec3 world, float a, float mt, int m) {
   float speed = aParam.x * (1.0 + 2.0 * abs(uVel));
   float prog = fract(mt * speed / 4.0 + aParam.y);
