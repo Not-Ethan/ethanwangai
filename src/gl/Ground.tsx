@@ -2,12 +2,18 @@
 // The paper ground (design §6, Ground): a 200 × 200 plane that shows only the shadows cast onto it, at 0.22 (light) /
 // 0.5 (dark) opacity, plus a radial contact darkening under each machine so the bench sits on the paper even on
 // phone, where there is no shadow map. A 1-bit dither keeps the soft falloffs from banding. No distance fade.
-// uContact is built once from the layout and never written again: it is not on BenchUniforms and nothing per frame reads it.
+// Both are drawn in the palette's shadow tone (design §7: shadow = ground shadow tone): the material's color IS the
+// registry's uShadow Color object, so the 300 ms palette lerp (applyPalette, in place) reaches the ground with no
+// per-frame copy of ours; three copies material.color into the program's color uniform on each draw.
+// uContact is built once from the layout and never written again: it is not on BenchUniforms and nothing per frame
+// reads it. Scene.tsx mounts <Ground uniforms={u} tier={tier} result={result} />.
 import { useEffect, useMemo } from 'react';
 import type {} from '@react-three/fiber';
 import * as THREE from 'three';
 import { MACHINE_COUNT, type LayoutResult, type MachineSummary, type Tier } from '@/bench/types';
 import type { ThemeName } from '@/theme/palettes';
+import { splice, spliceAfter } from '@/gl/shaders/splice';
+import type { BenchUniforms } from './material/uniforms';
 
 export const GROUND_SIZE = 200;
 export const GROUND_OPACITY: Record<ThemeName, number> = { light: 0.22, dark: 0.5 };
@@ -38,20 +44,13 @@ export function contactFromMachines(machines: MachineSummary[]): THREE.Vector4[]
   });
 }
 
-/** Replaces the first `chunk` in `src`; throws if three's shader no longer carries it, rather than silently shipping an unpatched program. */
-function splice(src: string, chunk: string, replacement: string): string {
-  if (!src.includes(chunk)) throw new Error(`dbso ground: ${chunk} is not in three's shader`);
-  return src.replace(chunk, () => replacement);
-}
-
-/** Keeps `chunk` and appends `piece` after it. */
-function spliceAfter(src: string, chunk: string, piece: string): string {
-  return splice(src, chunk, `${chunk}\n${piece}`);
-}
-
-/** A ShadowMaterial patched with contact darkening and the dither. `contact` is held by reference and read on every draw. */
-export function createGroundMaterial(contact: THREE.Vector4[]): THREE.ShadowMaterial {
+/**
+ * A ShadowMaterial in the palette's shadow tone, patched with contact darkening and the dither. `shadow` is uShadow's
+ * own Color and `contact` the layout's vec4s; both are held by reference and read on every draw.
+ */
+export function createGroundMaterial(contact: THREE.Vector4[], shadow: THREE.Color): THREE.ShadowMaterial {
   const mat = new THREE.ShadowMaterial();
+  mat.color = shadow;   // the object itself, not color.set(): the palette lerp writes this Color in place
   mat.customProgramCacheKey = () => 'dbso-ground-v1';
   mat.onBeforeCompile = (shader) => {
     const vert = spliceAfter(shader.vertexShader, '#include <common>', GROUND_VERTEX_DECL);
@@ -75,8 +74,11 @@ export function followTheme(material: THREE.Material): () => void {
   return () => window.removeEventListener('themechange', apply);
 }
 
-export function Ground({ tier, result }: { tier: Tier; result: LayoutResult }) {
-  const material = useMemo(() => createGroundMaterial(contactFromMachines(result.machines)), [result]);
+export function Ground({ uniforms, tier, result }: { uniforms: BenchUniforms; tier: Tier; result: LayoutResult }) {
+  const material = useMemo(
+    () => createGroundMaterial(contactFromMachines(result.machines), uniforms.uShadow.value),
+    [result, uniforms],
+  );
   useEffect(() => () => material.dispose(), [material]);
   useEffect(() => followTheme(material), [material]);
 

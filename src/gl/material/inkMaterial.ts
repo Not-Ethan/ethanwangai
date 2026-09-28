@@ -4,21 +4,11 @@
 // pass does and both programs read the same BenchUniforms objects; Clocks.ts writes the registry once per frame.
 import * as THREE from 'three';
 import { assembleVertex, assembleFragment, type VertexPieces } from '@/gl/shaders/assemble';
+import { splice, spliceAfter } from '@/gl/shaders/splice';
 import type { BenchUniforms } from './uniforms';
 
 const INK_ROUGHNESS = 0.55;
 const INK_METALNESS = 0.08;
-
-/** Replaces the first `chunk` in `src`; throws if three's shader no longer carries it, rather than silently shipping an unpatched program. */
-function splice(src: string, chunk: string, replacement: string): string {
-  if (!src.includes(chunk)) throw new Error(`dbso material: ${chunk} is not in three's shader`);
-  return src.replace(chunk, () => replacement);
-}
-
-/** Keeps `chunk` and appends `piece` after it. */
-function spliceAfter(src: string, chunk: string, piece: string): string {
-  return splice(src, chunk, `${chunk}\n${piece}`);
-}
 
 /** The vertex patch both materials share: declarations after <common>, localTransform after <begin_vertex>, project in place of <project_vertex>. */
 export function spliceVertex(src: string, v: VertexPieces): string {
