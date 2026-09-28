@@ -177,3 +177,46 @@ describe('copy lead and tail (Step 3 gate: u = 0.7 of #heron)', () => {
     expect(base).toMatch(/min-height:\s*100%/);
   });
 });
+
+describe('the visitor echo (#yours-echo)', () => {
+  // Stage 5 (Task 4.6) writes the submitted sentence into this span so the ink sampler has glyph pixels to read
+  // (an <input> has none). It must render in the input's own face at the input's own place, and never be seen:
+  // laid out (opacity, not display:none, so Range.getClientRects() still works) but invisible, out of flow so the
+  // copy column keeps the height the camera clearance was tuned against, and inert so it never sits between the
+  // pointer and the input it covers.
+  const html = render('yours');
+  const openTag = (tag: string, id: string): string => new RegExp(`<${tag}\\b[^>]*\\bid="${id}"[^>]*>`).exec(html)?.[0] ?? '';
+  const classes = (tag: string): string[] => (/\bclass="([^"]*)"/.exec(tag)?.[1] ?? '').split(/\s+/).filter(Boolean);
+  const echo = openTag('span', 'yours-echo');
+  const input = openTag('input', 'yours-input');
+
+  it('is rendered in the input\'s own face, not the mono readout', () => {
+    expect(echo).not.toBe('');
+    expect(classes(input)).toContain('body');
+    expect(classes(echo)).toContain('body');
+    expect(classes(echo)).not.toContain('mono');
+  });
+
+  it('is laid out but invisible, out of flow, inert, and hidden from assistive tech', () => {
+    const cls = classes(echo);
+    expect(cls).toContain('opacity-0');
+    expect(cls).not.toContain('hidden');
+    expect(cls).not.toContain('sr-only');
+    expect(cls).toContain('absolute');
+    expect(cls).toContain('pointer-events-none');
+    expect(echo).toContain('aria-hidden="true"');
+  });
+
+  it('overlays the input row, whose box it takes, so ink lifts from where the typed words are', () => {
+    const at = html.indexOf('id="yours-echo"');
+    const row = elementAt(html, at, 'div');
+    expect(classes(/^<div\b[^>]*>/.exec(row)?.[0] ?? '')).toContain('relative');
+    expect(row).toContain('id="yours-input"');
+    expect(classes(echo)).toContain('inset-0');
+    expect(classes(echo)).toContain('py-2');   // the input's own vertical padding, so the baselines meet
+  });
+
+  it('starts empty: nothing is mirrored before a sentence is submitted', () => {
+    expect(html).toMatch(/<span\b[^>]*\bid="yours-echo"[^>]*><\/span>/);
+  });
+});

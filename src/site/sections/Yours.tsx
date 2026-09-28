@@ -1,5 +1,4 @@
 'use client';
-import { useRef } from 'react';
 import { copy } from '@/site/copy';
 import { facts } from '@/site/facts';
 import { SECTIONS } from '@/bench/sections';
@@ -10,9 +9,6 @@ import { Plate } from '@/site/Plate';
 export function Yours() {
   const { tier } = useScroll();
   const c = copy.yours;
-  // #yours-echo mirrors the input's value as text content only: an <input> has no glyph pixels the ink sampler can
-  // read, so the visitor partition (Stage 5) samples this visible mono echo instead. Never HTML, never stored.
-  const echo = useRef<HTMLSpanElement>(null);
   // Stage 5 rewrites the subject live from the typed sentence; empty means 'hi ethan'.
   const mailto = `mailto:${facts.links.email}?subject=${encodeURIComponent(c.mailSubject(''))}`;
   return (
@@ -25,7 +21,7 @@ export function Yours() {
               {/* Enter never submits: the sentence is only ever text content, never in a URL (spec §3.1 · 09). Stage 5 owns Enter/Escape. */}
               <form id="yours-form" className="mt-8" onSubmit={(e) => e.preventDefault()}>
                 <label htmlFor="yours-input" className="mono pencil block">{c.label}</label>
-                <div className="mt-2 flex items-baseline gap-4 border-b border-pencil">
+                <div className="relative mt-2 flex items-baseline gap-4 border-b border-pencil">
                   <input
                     id="yours-input"
                     type="text"
@@ -34,11 +30,15 @@ export function Yours() {
                     autoComplete="off"
                     spellCheck={false}
                     className="body w-full bg-transparent py-2 placeholder:text-pencil"
-                    onChange={(e) => { if (echo.current) echo.current.textContent = e.currentTarget.value; }}
                   />
                   <button type="button" id="yours-clear" className="mono link">{c.clear}</button>
+                  {/* The ink sampler's source for the visitor partition: an <input> has no glyph pixels it can read, so on
+                      Enter Stage 5 (Task 4.6) writes the submitted sentence here as textContent (never HTML, never stored)
+                      and Ink samples it. Same face and padding as the input and laid over its row, so the ink lifts from
+                      where the visitor sees their words; opacity, not display:none, so it is laid out and Range rects
+                      exist; out of flow so the column keeps its height; inert so the input under it stays clickable. */}
+                  <span id="yours-echo" className="body absolute inset-0 py-2 opacity-0 pointer-events-none select-none break-words" aria-hidden="true" />
                 </div>
-                <span id="yours-echo" ref={echo} className="mono mt-2 block min-h-[1.5em] break-words" aria-hidden="true" />
               </form>
               <Plate machine={MACHINE.visitor}><span id="yours-plate">{c.plateEmpty}</span></Plate>
               <p className="mono pencil mt-2">{c.note}</p>
