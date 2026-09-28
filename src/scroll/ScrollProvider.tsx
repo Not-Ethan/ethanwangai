@@ -35,9 +35,29 @@ function useReducedMotion() {
   return useSyncExternalStore(subscribeRM, () => window.matchMedia('(prefers-reduced-motion: reduce)').matches, () => false);
 }
 
+// detectTier() reads matchMedia/innerWidth/hardwareConcurrency, which only exist on the client.
+// useSyncExternalStore renders the SSR-safe `getServerSnapshot` ('desktop') on the server AND on
+// the client's first (hydration-matching) render, then corrects to the real detectTier() value in
+// a post-commit effect -- so the server-rendered HTML and the client's hydration pass agree, and
+// only the follow-up frame (if the device is actually 'phone') repaints. This mirrors useReducedMotion
+// above and avoids the render-time `useMemo(() => detectTier(), [])` hydration mismatch for phone/coarse-pointer visitors.
+function subscribeTier(cb: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  const mq = window.matchMedia('(pointer: coarse)');
+  mq.addEventListener('change', cb);
+  window.addEventListener('resize', cb);
+  return () => {
+    mq.removeEventListener('change', cb);
+    window.removeEventListener('resize', cb);
+  };
+}
+function useTier(): Tier {
+  return useSyncExternalStore(subscribeTier, detectTier, () => 'desktop');
+}
+
 export function ScrollProvider({ children }: { children: ReactNode }) {
   const reducedMotion = useReducedMotion();
-  const tier = useMemo(() => detectTier(), []);
+  const tier = useTier();
   const state = useRef<ScrollState>({ g: 0, scrollY: 0, velocity: 0, maxScroll: 1, vh: 900, vw: 1440, ranges: [], tops: [] });
   const lenisRef = useRef<Lenis | null>(null);
 
