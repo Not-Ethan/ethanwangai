@@ -37,7 +37,9 @@ const D: CameraKey[] = [
 
 // Phone, fov 38, portrait: the frame is 2.7× narrower than desktop's, so each section's machine is framed whole
 // inside the width and in the lower 55%, under the copy. The quoter sections are far front shots; the small
-// machines are closer, each from its own side.
+// machines are closer, each from its own side. Far and near alternate, so the transits are long (40 units where
+// desktop moves 3); each one spans its section's travel window, and a section that opens with a lead-in key
+// (u ≤ 0.10) holds the previous station across it, as on desktop, so no section starts with a cut.
 const P: CameraKey[] = [
   { section: 0, u: 0.00, pose: { position: [-11.0, 13.0, 39.0], lookAt: [1.5, 3.8, -6.0], fov: 38 } },   // hero: the whole quoter low in the frame, the bot at its near corner
   { section: 0, u: 0.15, pose: { position: [-11.0, 13.0, 39.0], lookAt: [1.5, 3.8, -6.0], fov: 38 } },
@@ -47,11 +49,11 @@ const P: CameraKey[] = [
   { section: 2, u: 0.30, pose: { position: [-6.4, 1.9, 4.5], lookAt: [-5.0, 0.3, 2.1], fov: 38 } },      // macro on the bot
   { section: 2, u: 0.70, pose: { position: [-5.7, 1.8, 5.0], lookAt: [-5.1, -1.3, -2.0], fov: 38 } },    // bot and quoter share the frame
   { section: 2, u: 1.00, pose: { position: [-5.7, 1.8, 5.0], lookAt: [-5.1, -1.3, -2.0], fov: 38 } },
-  { section: 3, u: 0.08, pose: { position: [-8.0, 20.0, 40.0], lookAt: [1.5, 3.0, -4.5], fov: 38 } },    // dolly start
-  { section: 3, u: 0.30, pose: { position: [-4.0, 20.0, 40.0], lookAt: [1.5, 3.0, -4.5], fov: 38 } },    // dolly end
-  { section: 3, u: 1.00, pose: { position: [-4.0, 20.0, 40.0], lookAt: [1.5, 3.0, -4.5], fov: 38 } },
-  { section: 4, u: 0.15, pose: { position: [-7.3, 9.2, 12.5], lookAt: [-3.4, 2.1, 3.0], fov: 38 } },     // on the balance
-  { section: 4, u: 1.00, pose: { position: [-7.3, 9.2, 12.5], lookAt: [-3.4, 2.1, 3.0], fov: 38 } },
+  { section: 3, u: 0.08, pose: { position: [-5.7, 1.8, 5.0], lookAt: [-4.7, -1.0, -2.4], fov: 38 } },     // lead-in at the pull-back station: a small tilt toward the bed, the bot still in frame (no cut)
+  { section: 3, u: 0.30, pose: { position: [-6.0, 20.0, 43.0], lookAt: [-0.6, 3.0, -4.5], fov: 38 } },   // one eased pull up and back over 0.08→0.30: the whole quoter and the intake it builds inside the width
+  { section: 3, u: 1.00, pose: { position: [-6.0, 20.0, 43.0], lookAt: [-0.6, 3.0, -4.5], fov: 38 } },
+  { section: 4, u: 0.15, pose: { position: [-7.2, 10.2, 15.3], lookAt: [-3.4, 2.3, 3.0], fov: 38 } },    // on the balance, from the kalshi station's side so the drop stays one eased transit
+  { section: 4, u: 1.00, pose: { position: [-7.2, 10.2, 15.3], lookAt: [-3.4, 2.3, 3.0], fov: 38 } },
   { section: 5, u: 0.15, pose: { position: [0.5, 5.9, 19.6], lookAt: [-0.1, 3.3, 5.4], fov: 38 } },      // along the splitter
   { section: 5, u: 1.00, pose: { position: [0.5, 5.9, 19.6], lookAt: [-0.1, 3.3, 5.4], fov: 38 } },
   { section: 6, u: 0.15, pose: { position: [3.5, 11.2, 21.1], lookAt: [3.8, 3.8, 4.7], fov: 38 } },      // high on the watch

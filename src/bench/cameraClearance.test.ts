@@ -174,3 +174,45 @@ describe('phone clearance at the dwells (aspect 390/844)', () => {
     expect(width(at(0, 0, [quoter], 'phone'))).toBeGreaterThanOrEqual(1.2);
   });
 });
+
+describe('no section starts with a cut', () => {
+  /** Scroll distance in vh between two keys, from the tier's section heights. */
+  function windowVh(a: { section: number; u: number }, b: { section: number; u: number }, tier: Tier): number {
+    if (a.section === b.section) return (b.u - a.u) * SECTIONS[a.section].vh[tier];
+    let vh = (1 - a.u) * SECTIONS[a.section].vh[tier];
+    for (let s = a.section + 1; s < b.section; s++) vh += SECTIONS[s].vh[tier];
+    return vh + b.u * SECTIONS[b.section].vh[tier];
+  }
+  const travel = (a: Pose, b: Pose) => Math.hypot(a.position[0] - b.position[0], a.position[1] - b.position[1], a.position[2] - b.position[2]);
+
+  it('a lead-in key (u ≤ 0.10) holds the previous section\'s station on both tiers: it may tilt, not travel', () => {
+    for (const tier of ['desktop', 'phone'] as const) {
+      const keys = CAMERA_KEYS[tier];
+      let found = 0;
+      for (let i = 1; i < keys.length; i++) {
+        const prev = keys[i - 1], key = keys[i];
+        if (key.section === prev.section || key.u > 0.10) continue;
+        found++;
+        expect(prev.u, `${tier} (${prev.section}, ${prev.u}) ends its section`).toBe(1);
+        expect(travel(prev.pose, key.pose), `${tier} key (${key.section}, ${key.u}) travels`).toBe(0);
+      }
+      expect(found, `${tier} has lead-in keys`).toBeGreaterThan(0);
+    }
+  });
+
+  it('no key-to-key transit is faster than 2.5 units per vh of scroll on either tier', () => {
+    // Desktop's steepest leg is 0.92 (the descent to the bot macro). Phone's far quoter shots and near small-machine
+    // shots alternate, so its forced legs (far → near over a section's 13.5–18 vh travel window) sit near 2.2; the
+    // ceiling is just above them. The kalshi entry once moved 39.5 units in 8 vh (4.9): a whip-pan, not a transit.
+    for (const tier of ['desktop', 'phone'] as const) {
+      const keys = CAMERA_KEYS[tier];
+      for (let i = 1; i < keys.length; i++) {
+        const a = keys[i - 1], b = keys[i];
+        const d = travel(a.pose, b.pose);
+        if (d === 0) continue;
+        const rate = d / windowVh(a, b, tier);
+        expect(rate, `${tier} (${a.section}, ${a.u}) → (${b.section}, ${b.u}): ${d.toFixed(1)} units over ${windowVh(a, b, tier).toFixed(1)} vh`).toBeLessThanOrEqual(2.5);
+      }
+    }
+  });
+});
