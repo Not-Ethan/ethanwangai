@@ -4,35 +4,45 @@
 // clip-space rects with pure arithmetic. Pure TS: no React, no three, no DOM types at runtime —
 // elements are accepted duck-typed so tests can mock them with plain objects.
 //
-// The hero's copy block sits inside `#sentence` under `position: sticky`, whose offsetTop reflects
-// its *unstuck* flow position, not where it is actually pinned on screen — so its rect is computed
-// analytically from the section's page rect instead of trusted directly (design doc §"Registration").
+// Every source but 08's sits in a `position: sticky` block: the hero's copy in `#sentence`'s grid
+// (top 0), every other section's in its `.copy-col` (top-24/28) inside a `.copy-track`. A stuck
+// block's offsetTop is not its flow position: Chromium reports it where it is pinned, so a measure
+// taken mid-page (a reload with its scroll restored, a resize) would bake the pin in. Its flow top
+// is derived from its containing block instead, which is never sticky itself: container top plus
+// the container's padding-top (the block is its first child). Where the block is on screen is then
+// analytic from the scroll offset (design doc §"Registration").
 
-/** Duck-typed element: only the offset chain this module walks, so tests can mock it plainly. */
+/** Duck-typed element: only the offset chain this module walks, so tests can mock it plainly. The lib types an
+ *  HTMLElement's offsetParent as `Element | null`; CSSOM only ever returns a positioned HTMLElement (or null). */
 export interface OffsetElement {
   offsetTop: number;
   offsetLeft: number;
   offsetWidth: number;
   offsetHeight: number;
-  offsetParent: OffsetElement | null;
+  offsetParent: OffsetElement | Element | null;
 }
 
-/** The hero source: a sticky block whose height is its own, but whose travel range comes from
- *  the section it sits in (`#sentence`) — a second, distinct element, not an ancestor walk. */
-export interface StickyElementSource { element: OffsetElement; section: OffsetElement }
+/** A source inside a sticky block: the block pins at `top` while its container scrolls past. */
+export interface StickyElementSource {
+  element: OffsetElement;     // the source; its own box, and its offset inside the block
+  block: OffsetElement;       // the sticky block: its height, and the x of the chain
+  container: OffsetElement;   // the block's containing block, which bounds its travel
+  top: number;                // the block's CSS `top`, px
+  lead: number;               // the block's flow offset below the container's top: the container's padding-top, px
+}
 
 /** One measured source, in page coordinates (before scroll is applied). */
 export interface SourceRect {
-  pageTop: number;
+  pageTop: number;    // flow position: where the source sits with its block unstuck
   pageLeft: number;
   width: number;
   height: number;
-  /** Present only for a sticky source: the containing section's page top/height it is clamped to. */
-  sticky?: { sectionTop: number; sectionHeight: number };
+  /** Present only for a source in a sticky block: the block's flow top and height, its pin, and its container's range. */
+  sticky?: { top: number; blockTop: number; blockHeight: number; containerTop: number; containerHeight: number };
 }
 
 function isStickyElementSource(v: OffsetElement | StickyElementSource): v is StickyElementSource {
-  return 'element' in v && 'section' in v;
+  return 'element' in v && 'block' in v;
 }
 
 /** Sums offsetTop/offsetLeft up the offsetParent chain, including `el` itself, to get the
@@ -43,17 +53,19 @@ function pagePosition(el: OffsetElement): { top: number; left: number } {
   while (node) {
     top += node.offsetTop;
     left += node.offsetLeft;
-    node = node.offsetParent;
+    node = node.offsetParent as OffsetElement | null;
   }
   return { top, left };
 }
 
-/** The rect's current top in the viewport: analytic for a sticky source (clamped to its section's
- *  travel range), otherwise just the page top minus how far the page has scrolled. */
+/** The rect's current top in the viewport: for a source in a sticky block, the block's analytic
+ *  top (pinned at `top` between its flow position and its container's end) plus the source's offset
+ *  inside it; otherwise just the page top minus how far the page has scrolled. */
 export function viewportTop(r: SourceRect, scrollY: number): number {
   if (r.sticky) {
-    const { sectionTop, sectionHeight } = r.sticky;
-    return Math.min(Math.max(sectionTop - scrollY, 0), sectionTop + sectionHeight - r.height - scrollY);
+    const { top, blockTop, blockHeight, containerTop, containerHeight } = r.sticky;
+    const block = Math.min(Math.max(blockTop - scrollY, top), containerTop + containerHeight - blockHeight - scrollY);
+    return block + (r.pageTop - blockTop);
   }
   return r.pageTop - scrollY;
 }
@@ -77,14 +89,21 @@ export class RectTracker {
       const index = Number(key);
       const source = sources[index];
       if (isStickyElementSource(source)) {
-        const { left: pageLeft } = pagePosition(source.element); // pageTop unused: sticky ignores it
-        const { top: sectionTop } = pagePosition(source.section);
+        // The source's offset inside the block is the difference of two chains that share the block's
+        // (possibly stuck) position, so it holds whether or not the block is pinned right now.
+        const el = pagePosition(source.element);
+        const block = pagePosition(source.block);
+        const container = pagePosition(source.container);
+        const blockTop = container.top + source.lead;
         this.rects.set(index, {
-          pageTop: 0,
-          pageLeft,
+          pageTop: blockTop + (el.top - block.top),
+          pageLeft: el.left,
           width: source.element.offsetWidth,
           height: source.element.offsetHeight,
-          sticky: { sectionTop, sectionHeight: source.section.offsetHeight },
+          sticky: {
+            top: source.top, blockTop, blockHeight: source.block.offsetHeight,
+            containerTop: container.top, containerHeight: source.container.offsetHeight,
+          },
         });
       } else {
         const { top, left } = pagePosition(source);

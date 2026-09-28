@@ -1,7 +1,7 @@
 'use client';
 // The GL layer's root (design §6, §13): one fixed R3F Canvas behind the DOM at z-index 0 (main sits at 10), aria-hidden
 // and pointer-events: none. Builds the bench once per tier, owns the uniform registry's scene constants and the OU
-// texture, and mounts the light rig, the paper ground, the kits, the clocks driver and the camera rig. The canvas is
+// texture, and mounts the light rig, the paper ground, the kits, the ink points, the clocks driver and the camera rig. The canvas is
 // `flat` (no tone mapping): the palette uniforms must reach the screen as the palette's own sRGB values, so the paper,
 // pencil and ink match the DOM's CSS tokens and the SVG plate they cross-fade with (§11). Warm-up and the cross-fade
 // arrive in Stage 5.
@@ -19,6 +19,7 @@ import { createUniforms, type BenchUniforms } from './material/uniforms';
 import { KEY_LIGHT, Lights } from './Lights';
 import { Ground } from './Ground';
 import { Kits } from './Kits';
+import { Ink } from './Ink';
 import { Clocks } from './Clocks';
 import { CameraRig } from './CameraRig';
 import { useTier } from './useTier';
@@ -112,6 +113,7 @@ export function Scene() {
             <Lights uniforms={u} tier={tier} />
             <Ground uniforms={u} tier={tier} result={result} />
             <Kits result={result} uniforms={u} />
+            <Ink result={result} uniforms={u} tier={tier} />
             <Clocks result={result} uniforms={u} tier={tier} />
             <CameraRig />
           </PerformanceMonitor>

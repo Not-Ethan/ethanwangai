@@ -3,7 +3,7 @@ import { SECTIONS, sectionRanges } from './sections';
 import { MACHINE, type Tier } from './types';
 import { power2InOut } from './math';
 import { CAMERA_KEYS, evaluatePose } from './camera';
-import { createSceneState, sceneState } from './sceneState';
+import { createSceneState, sceneState, mergeBurst } from './sceneState';
 
 // Desktop ranges built the same way as sections.test.ts.
 const vh = 900;
@@ -171,5 +171,21 @@ describe('camera', () => {
       expect(k.pose.fov).toBe(38);
     });
     expect(P[1].pose).toEqual(P[0].pose);
+  });
+});
+
+describe('mergeBurst', () => {
+  it('is 0 through the clicks and the hold, then runs 0..1 over the last 22% of section 02, and 0 in any other section', () => {
+    expect(mergeBurst(1, 0)).toBe(0);
+    expect(mergeBurst(1, 0.5)).toBe(0);
+    expect(mergeBurst(1, 0.78)).toBe(0);
+    expect(mergeBurst(1, 0.89)).toBeCloseTo(0.5, 6);
+    expect(mergeBurst(1, 1)).toBe(1);
+    expect(mergeBurst(0, 0.9)).toBe(0);
+    expect(mergeBurst(7, 0.9)).toBe(0);
+  });
+
+  it('is the burst sceneState reports', () => {
+    for (const u of [0.3, 0.7, 0.8, 0.9, 0.99]) expect(mergeBurst(1, u)).toBeCloseTo(at(1, u).burst, 6);
   });
 });

@@ -4,11 +4,12 @@ import { PALETTES, type Palette } from '@/theme/palettes';
 import { OU } from '@/bench/ou';
 import { QUOTER_BED } from '@/bench/configs/quoter';
 import { TIMING } from '@/bench/timing';
+import { BAND_ROWS } from '@/gl/inkGeometry';
 import { createUniforms, applyPalette, hexToColor, type BenchUniforms } from './uniforms';
 
-/** Palette key → uniform name, the seven colors the shaders consume (`ink` is DOM-only). */
+/** Palette key → uniform name, the eight colors the shaders consume (`ink` is the type color and the ink dots'). */
 const COLOR_KEYS = [
-  ['paper', 'uPaper'], ['inkTop', 'uInkTop'], ['inkKey', 'uInkKey'], ['inkShade', 'uInkShade'],
+  ['paper', 'uPaper'], ['ink', 'uInk'], ['inkTop', 'uInkTop'], ['inkKey', 'uInkKey'], ['inkShade', 'uInkShade'],
   ['pencil', 'uPencil'], ['hot', 'uHot'], ['shadow', 'uShadow'],
 ] as const;
 
@@ -53,6 +54,24 @@ describe('createUniforms', () => {
 
   it('starts on the light palette', () => {
     for (const [key, name] of COLOR_KEYS) expect(hexOf(u[name].value), name).toBe(PALETTES.light[key]);
+  });
+
+  it('carries the ink points\' entries: eight empty rects and centroids, the band rows, and the trickle on', () => {
+    expect(u.uRect.value).toBeInstanceOf(Float32Array);
+    expect(u.uRect.value.length).toBe(32);
+    expect(Array.from(u.uRect.value)).toEqual(new Array(32).fill(0));
+    expect(u.uCentroid.value).toBeInstanceOf(Float32Array);
+    expect(u.uCentroid.value.length).toBe(24);
+    expect(u.uBandRows.value).toBeInstanceOf(Float32Array);
+    expect(Array.from(u.uBandRows.value)).toEqual([...BAND_ROWS, 0]);
+    expect(Array.from(u.uBandRows.value)).toEqual([40, 8, 8, 8, 8, 8, 8, 0]);
+    expect(u.uActiveRect.value).toBe(0);
+    expect(u.uTrickle.value).toBe(1);
+    expect(u.uBurst.value).toBe(0);
+    expect(u.uCurl.value).toBeNull();
+    expect(u.uPixelRatio.value).toBe(1);
+    expect(u.uBandPitch.value).toBe(0);
+    expect(u.uInk.value).toBeInstanceOf(THREE.Color);
   });
 
   it('returns an independent registry per call', () => {

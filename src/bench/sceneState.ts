@@ -22,6 +22,11 @@ const MERGE = { levels: 6, start: 0.10, end: 0.65, holdEnd: 0.78, clickWindow: 0
 const MORE = SECTION_INDEX.more;
 const ALIVE = SECTION_INDEX.alive;
 
+/** Section 02's burst-back progress at local `u`: 0 through the clicks and the hold, then 0..1 to the section's end. The merge ink partition's clock. */
+export function mergeBurst(section: number, u: number): number {
+  return section === MORE && u >= MERGE.holdEnd ? clamp01((u - MERGE.holdEnd) / (1 - MERGE.holdEnd)) : 0;
+}
+
 export function createSceneState(): SceneState {
   return {
     section: 0, u: 0,
@@ -54,7 +59,7 @@ export function sceneState(g: number, ranges: SectionRange[], tier: Tier, out: S
   let merge = 0, burst = 0, lean = 0;
   if (section === MORE) {
     if (u >= MERGE.holdEnd) {
-      burst = clamp01((u - MERGE.holdEnd) / (1 - MERGE.holdEnd));
+      burst = mergeBurst(section, u);
       merge = MERGE.levels * (1 - burst);
       lean = Math.sin(Math.PI * burst);
     } else if (u >= MERGE.end) {

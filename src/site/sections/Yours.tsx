@@ -1,4 +1,5 @@
 'use client';
+import { useRef } from 'react';
 import { copy } from '@/site/copy';
 import { facts } from '@/site/facts';
 import { SECTIONS } from '@/bench/sections';
@@ -9,6 +10,9 @@ import { Plate } from '@/site/Plate';
 export function Yours() {
   const { tier } = useScroll();
   const c = copy.yours;
+  // #yours-echo mirrors the input's value as text content only: an <input> has no glyph pixels the ink sampler can
+  // read, so the visitor partition (Stage 5) samples this visible mono echo instead. Never HTML, never stored.
+  const echo = useRef<HTMLSpanElement>(null);
   // Stage 5 rewrites the subject live from the typed sentence; empty means 'hi ethan'.
   const mailto = `mailto:${facts.links.email}?subject=${encodeURIComponent(c.mailSubject(''))}`;
   return (
@@ -30,9 +34,11 @@ export function Yours() {
                     autoComplete="off"
                     spellCheck={false}
                     className="body w-full bg-transparent py-2 placeholder:text-pencil"
+                    onChange={(e) => { if (echo.current) echo.current.textContent = e.currentTarget.value; }}
                   />
                   <button type="button" id="yours-clear" className="mono link">{c.clear}</button>
                 </div>
+                <span id="yours-echo" ref={echo} className="mono mt-2 block min-h-[1.5em] break-words" aria-hidden="true" />
               </form>
               <Plate machine={MACHINE.visitor}><span id="yours-plate">{c.plateEmpty}</span></Plate>
               <p className="mono pencil mt-2">{c.note}</p>

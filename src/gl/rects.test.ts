@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { viewportTop, ndcRect, RectTracker, type SourceRect, type OffsetElement } from './rects';
 
 describe('viewportTop: sticky (Review Focus #1)', () => {
-  // Sticky block of height 360 in a section at top 0, height 1260.
-  const r: SourceRect = { pageTop: 0, pageLeft: 0, width: 0, height: 360, sticky: { sectionTop: 0, sectionHeight: 1260 } };
+  // The hero: the source is the whole sticky block, height 360, top 0, in a section at top 0, height 1260.
+  const r: SourceRect = {
+    pageTop: 0, pageLeft: 0, width: 0, height: 360,
+    sticky: { top: 0, blockTop: 0, blockHeight: 360, containerTop: 0, containerHeight: 1260 },
+  };
 
   it.each([
     [0, 0],
@@ -13,6 +16,35 @@ describe('viewportTop: sticky (Review Focus #1)', () => {
     [1300, -400],
   ])('scroll %d -> %d', (scrollY, expected) => {
     expect(viewportTop(r, scrollY)).toBeCloseTo(expected, 6);
+  });
+});
+
+describe('viewportTop: a source inside a copy-col (top 96) whose track leads it by 300', () => {
+  // Measured in Chromium: a block of height 200 pinned at top 96 inside a track at page top 0 with
+  // padding-top 300 and offsetHeight 1700 sits at 300 unscrolled, at 96 from scroll 204 to 1404,
+  // then leaves with the track (-100 at scroll 1600). The h2 is the block's first child (offset 0).
+  const h2: SourceRect = {
+    pageTop: 300, pageLeft: 48, width: 400, height: 80,
+    sticky: { top: 96, blockTop: 300, blockHeight: 200, containerTop: 0, containerHeight: 1700 },
+  };
+
+  it.each([
+    [0, 300],
+    [100, 200],
+    [204, 96],
+    [800, 96],
+    [1404, 96],
+    [1500, 0],
+    [1600, -100],
+  ])('scroll %d -> %d', (scrollY, expected) => {
+    expect(viewportTop(h2, scrollY)).toBeCloseTo(expected, 6);
+  });
+
+  it('carries a source lower in the block by its offset inside it', () => {
+    const p: SourceRect = { ...h2, pageTop: 300 + 120, height: 40 };   // a paragraph 120 below the block's top
+    expect(viewportTop(p, 0)).toBe(420);
+    expect(viewportTop(p, 800)).toBe(216);
+    expect(viewportTop(p, 1600)).toBe(20);
   });
 });
 
@@ -44,7 +76,10 @@ describe('ndcRect', () => {
   });
 
   it('a sticky rect uses viewportTop for its y placement', () => {
-    const r: SourceRect = { pageTop: 999999, pageLeft: 0, width: 100, height: 360, sticky: { sectionTop: 0, sectionHeight: 1260 } };
+    const r: SourceRect = {
+      pageTop: 0, pageLeft: 0, width: 100, height: 360,
+      sticky: { top: 0, blockTop: 0, blockHeight: 360, containerTop: 0, containerHeight: 1260 },
+    };
     const out = new Float32Array(4);
     ndcRect(r, 950, 200, 800, out, 0);
     // viewportTop(r, 950) = -50 (from the sticky table above)
@@ -101,23 +136,51 @@ describe('RectTracker: measure + write (Review Focus #1)', () => {
     expect(out[3 * 4 + 1]).toBeCloseTo(expected[1], 6);
   });
 
-  it('measures a sticky source from a distinct {element, section} pair (the hero, section 0)', () => {
+  it('measures a sticky source from its block and container (the hero, section 0)', () => {
     const tracker = new RectTracker();
-    // Section (#sentence): page top 0, height 1260. Sticky block (the tracked element): height 360.
+    // Section (#sentence): page top 0, height 1260. Sticky grid (top 0): height 360. The tracked source is
+    // the copy column inside it, 96 down (the grid's pt-24), 48 in.
     const section = el({ offsetTop: 0, offsetHeight: 1260 });
-    const stickyBlock = el({ offsetLeft: 40, offsetWidth: 320, offsetHeight: 360 });
+    const grid = el({ offsetWidth: 1000, offsetHeight: 360, offsetParent: section });
+    const column = el({ offsetTop: 96, offsetLeft: 48, offsetWidth: 320, offsetHeight: 240, offsetParent: grid });
 
-    tracker.measure({ 0: { element: stickyBlock, section } });
+    tracker.measure({ 0: { element: column, block: grid, container: section, top: 0, lead: 0 } });
 
     const out = new Float32Array(32);
     tracker.write(950, 1000, 1000, out);
-    // viewportTop at scroll 950 is -50 per the sticky table; x/w come from the block itself.
+    // The grid's top at scroll 950 is -50 per the sticky table; the column sits 96 below it, 48 in.
     const expected = new Float32Array(4);
     ndcRect(
-      { pageTop: 0, pageLeft: 40, width: 320, height: 360, sticky: { sectionTop: 0, sectionHeight: 1260 } },
+      { pageTop: 96, pageLeft: 48, width: 320, height: 240, sticky: { top: 0, blockTop: 0, blockHeight: 360, containerTop: 0, containerHeight: 1260 } },
       950, 1000, 1000, expected, 0,
     );
     expect(Array.from(out.subarray(0, 4))).toEqual(Array.from(expected));
+    expect(out[1]).toBeCloseTo(1 - ((-50 + 96) / 1000) * 2, 6);
+  });
+
+  it('derives a copy-col\'s flow top from its track, so a measure taken while it is pinned is not baked in', () => {
+    // Chromium at scroll 800: the block (flow top 300 = track top 0 + padding 300) reports offsetTop 896, pinned at 96.
+    const section = el({ offsetTop: 1000, offsetHeight: 1700 });
+    const track = el({ offsetTop: 0, offsetHeight: 1700, offsetParent: section });
+    const stuckBlock = el({ offsetTop: 896, offsetLeft: 48, offsetWidth: 400, offsetHeight: 200, offsetParent: section });
+    const h2 = el({ offsetTop: 0, offsetLeft: 0, offsetWidth: 400, offsetHeight: 80, offsetParent: stuckBlock });
+    const p = el({ offsetTop: 120, offsetLeft: 0, offsetWidth: 400, offsetHeight: 40, offsetParent: stuckBlock });
+    const tracker = new RectTracker();
+    tracker.measure({ 1: { element: h2, block: stuckBlock, container: track, top: 96, lead: 300 }, 2: { element: p, block: stuckBlock, container: track, top: 96, lead: 300 } });
+
+    const out = new Float32Array(32);
+    const vh = 1000;
+    // page top 1000 + flow 300: unscrolled the h2 is at 1300, at scroll 1800 it is pinned at 96, at 2600 it has left with the track (-100)
+    tracker.write(0, 1000, vh, out);
+    expect(out[1 * 4 + 1]).toBeCloseTo(1 - (1300 / vh) * 2, 6);
+    tracker.write(1800, 1000, vh, out);
+    expect(out[1 * 4 + 1]).toBeCloseTo(1 - (96 / vh) * 2, 6);
+    expect(out[2 * 4 + 1]).toBeCloseTo(1 - (216 / vh) * 2, 6);
+    tracker.write(2600, 1000, vh, out);
+    expect(out[1 * 4 + 1]).toBeCloseTo(1 - (-100 / vh) * 2, 6);
+    expect(out[1 * 4 + 0]).toBeCloseTo((48 / 1000) * 2 - 1, 6);   // x: the block's 48, the section's offsetTop is vertical
+    expect(out[1 * 4 + 2]).toBeCloseTo((400 / 1000) * 2, 6);
+    expect(out[1 * 4 + 3]).toBeCloseTo((80 / vh) * 2, 6);
   });
 
   it('leaves unmeasured slots untouched by write', () => {

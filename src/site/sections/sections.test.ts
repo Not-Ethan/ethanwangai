@@ -33,7 +33,7 @@ const COPY_HOOKS: Record<string, string[]> = {
   summers: ['data-ink-source="summers"', `data-plate="${MACHINE.watch}"`],
   alive: ['id="uptime"'],
   yours: [
-    'data-ink-source="yours"', 'id="yours-form"', 'id="yours-input"', 'id="yours-clear"', 'id="yours-plate"',
+    'data-ink-source="yours"', 'id="yours-form"', 'id="yours-input"', 'id="yours-clear"', 'id="yours-echo"', 'id="yours-plate"',
     'id="mailto"', 'id="footer-total"', `data-plate="${MACHINE.visitor}"`,
   ],
 };
