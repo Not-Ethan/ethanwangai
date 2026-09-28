@@ -8,6 +8,7 @@ import { smoothstep } from '@/bench/math';
 import { BAND_ROWS, PARTITION } from '@/gl/inkGeometry';
 import { hud } from '@/gl/hud';
 import { copy } from '@/site/copy';
+import { createReadoutSync } from '@/site/Readout';
 import { inkedTotal, ladderParts, type LockEnds } from './inkedCount';
 
 export interface HudSyncOptions {
@@ -41,6 +42,7 @@ export function startHudSync({ lockEnds, wordCount }: HudSyncOptions): () => voi
   const lines = byId('ladder-lines'), parts = byId('ladder-parts'), footer = byId('footer-total');
   const clocks = [byId('ladder-running'), byId('uptime')];
   const strips = all('[data-strip]'), rungs = all('[data-rung]'), clicks = all('[data-click]');
+  const syncReadout = createReadoutSync(byId('readout'));   // the bed's hover readout (task 4.3)
 
   setText(byId('ladder-words'), String(wordCount));
 
@@ -81,6 +83,8 @@ export function startHudSync({ lockEnds, wordCount }: HudSyncOptions): () => voi
       lastClick = hud.click;
       for (const el of clicks) el.classList.toggle(CLASS.revealed, Number(el.dataset.click) <= hud.click);
     }
+
+    syncReadout(hud.hover);
   };
   let raf = requestAnimationFrame(frame);
   return () => cancelAnimationFrame(raf);

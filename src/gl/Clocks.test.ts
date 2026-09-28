@@ -103,7 +103,7 @@ describe('hud', () => {
     expect(hud.pose.lookAt).toEqual([...hero.lookAt]);
     expect(hud.pose.fov).toBe(hero.fov);
     expect(hud.pose.position).not.toBe(hero.position);   // its own array: Clocks writes into it
-    expect(hud.hover).toEqual({ machine: -1, col: -1, x: 0, y: 0 });
+    expect(hud.hover).toEqual({ machine: -1, col: -1, x: 0, y: 0, mid: 0, bid: 0, ask: 0, fills: 0 });
   });
 });
 

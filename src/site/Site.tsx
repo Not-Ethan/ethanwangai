@@ -8,6 +8,7 @@ import { startHudSync } from './chrome/hudSync';
 import { copy } from './copy';
 import { Nav } from './chrome/Nav';
 import { SectionStrip } from './chrome/SectionStrip';
+import { Readout } from './Readout';
 import { Sentence } from './sections/Sentence';
 import { More } from './sections/More';
 import { First } from './sections/First';
@@ -48,6 +49,7 @@ export function Site() {
       <HudSync />
       <Nav />
       <SectionStrip />
+      <Readout />
       <main className="relative z-10">
         <Sentence /><More /><First /><Kalshi /><Heron /><Darch /><Summers /><Alive /><Yours />
       </main>

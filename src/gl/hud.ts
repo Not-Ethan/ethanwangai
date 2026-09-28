@@ -6,6 +6,8 @@ import { CAMERA_KEYS } from '@/bench/camera';
 import { MACHINE_COUNT } from '@/bench/types';
 
 export interface HudPose { position: number[]; lookAt: number[]; fov: number }
+/** The hovered bed column and its quote (Hover.tsx writes it, hudSync's readout reads it). */
+export interface HudHover { machine: number; col: number; x: number; y: number; mid: number; bid: number; ask: number; fills: number }
 
 const hero = CAMERA_KEYS.desktop[0].pose;
 
@@ -20,6 +22,8 @@ export const hud = {
   runningSince: 0,   // `uptime` on the frame the quoter's lever last locked; the running clock is uptime − runningSince
   rung: -1,          // -1..5, section 02's lit ladder rung (sceneState's rung)
   click: -1,         // -1..3, section 02's last revealed copy line (sceneState's click)
-  hover: { machine: -1, col: -1, x: 0, y: 0 },
+  // the hovered (or, on phone, tapped) bed column, from Hover.tsx: machine −1 = none, x/y the pointer in CSS px,
+  // mid/bid/ask the market's price levels and fills its fills over the last 64 steps, all at the quoter's clock
+  hover: { machine: -1, col: -1, x: 0, y: 0, mid: 0, bid: 0, ask: 0, fills: 0 } as HudHover,
   pose: { position: [...hero.position], lookAt: [...hero.lookAt], fov: hero.fov } as HudPose,
 };
