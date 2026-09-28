@@ -2,14 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { layout } from './layout';
 import { evaluatePose, type Pose } from './camera';
 import { KIND, MACHINE, PRIMITIVE, type LayoutResult, type PartInstance } from './types';
-import { QUOTER } from './configs/quoter';
-import { INTAKE } from './configs/intake';
-import { BOT } from './configs/bot';
-import { SLOT } from './configs/slot';
+import { ALL_CONFIGS } from './counts';
 import { heroPlateSvg, inkPlateSvg, projectParts, UNIT_CENTRE, UNIT_EXTENT } from './svgPlate';
 
-// Task 1.4's BALANCE, SPLITTER and WATCH were not present when this was written; Task 1.10 swaps in ALL_CONFIGS.
-const CONFIGS = [QUOTER, INTAKE, BOT, SLOT];
 const ASPECT = 16 / 10;
 
 function heroPose(): Pose {
@@ -22,7 +17,7 @@ function heroPose(): Pose {
 const count = (s: string, needle: string) => s.split(needle).length - 1;
 
 describe('svgPlate', () => {
-  const result = layout({ tier: 'desktop', seed: 1, configs: CONFIGS });
+  const result = layout({ tier: 'desktop', seed: 1, configs: ALL_CONFIGS });
   const pose = heroPose();
   const opts = {
     inkMachines: [MACHINE.bot],
