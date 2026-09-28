@@ -503,3 +503,35 @@ The Canvas must be `position: fixed` with `z-index 0` and `main` at `z-index 10`
 - [ ] **Step 1:** With Playwright at 1440 × 900 take: `.playwright-mcp/gates/g1-hero-built-light.png` (`/?built=1`, top of page, after 3 s), the same in dark (toggle theme first), `g1-hero-pencil-light.png` (`/?built=0` which pins every compile to 0 so the exploded pencil state is visible), and `g1-kalshi-built-light.png` (scroll to `#kalshi` with `?built=1`).
 - [ ] **Step 2:** The orchestrator judges: does the assembled quoter read as a designed instrument (frame, bed as a relief, carriages, spoked rotors, lever) in both themes? Does the pencil state read as an exploded drawing? If not, re-author `quoter.ts` modules once (larger, fewer modules; taller frame; thicker rails via scale y/z 1.6) and retake. On a second failure, switch to the fallback archetype (spec §2) by editing only `quoter.ts`.
 - [ ] **Step 3:** Record the verdict and the still paths in the Stage 3 brief.
+
+---
+
+### Task 2.9: Camera clearance and light-theme form (added after gate G1)
+
+Gate G1 verdict: the quoter reads as a designed instrument in both themes and the pencil state reads as an exploded drawing, so the fallback archetype is not needed. What failed is composition: at the hero the machine fills the viewport and its rails cross the headline, the deck and ladder are hidden behind it; at kalshi the frame covers the figures; the light theme reads as a near-black mass. This task fixes the camera key tables with a numeric clearance test, and gives the light theme visible form.
+
+**Files:**
+- Create: `src/bench/cameraClearance.ts`, `src/bench/cameraClearance.test.ts`
+- Modify: `src/bench/camera.ts` (both key tables), `src/gl/Lights.tsx` (intensities), and only if needed `src/theme/palettes.ts` + `src/app/globals.css` (light `inkTop`/`inkKey` only; `ink` and `inkShade` stay) and `src/bench/bench.ts` (`PLACEMENT` of the small machines, last resort)
+
+**Interfaces:**
+- `projectBounds(result: LayoutResult, machines: MachineId[], pose: Pose, aspect: number): { left: number; right: number; top: number; bottom: number } | null` — NDC bounding box (x right, y up) of every rest position of the listed machines' parts projected through a `PerspectiveCamera(fov, aspect, 0.5, 120)` at `pose`; null if no part is in front of the camera. Uses three's math only (allowed in bench).
+- `DWELL: Array<{ section: number; u: number }>` — the poses the test checks: `(0,0) (0,1) (1,0.5) (2,0.30) (2,0.85) (3,0.6) (4,0.7) (5,0.7) (6,0.7) (7,0.8) (8,0.6)`.
+
+- [ ] **Step 1: Failing test `cameraClearance.test.ts`** (desktop `buildBench('desktop')`, aspect 1.6, `evaluatePose(section, u, 'desktop', out)` per dwell). The copy column is the left 42% of the viewport (NDC x < −0.16); the hero copy block is the left 58% down to 65% of the height (NDC x < 0.17, y > −0.3). Assert:
+  - hero (0, 0): quoter bbox `left ≥ −0.20`, `top ≤ 0.10`, `right ≤ 1.02` (whole machine in frame, tight to the right edge); bot bbox inside the frame; balance, splitter and watch union bbox `top ≤ −0.72` (cropped at the bottom edge) — they may be entirely below the frame.
+  - risen (0, 1): quoter bbox within `[−0.7, 1.02] × [−1.02, 0.6]`.
+  - more (1, 0.5): quoter bbox `left ≥ −0.12`, `right ≤ 1.02`, `top ≤ 0.9`, `bottom ≥ −1.02`.
+  - first (2, 0.30): bot bbox centre x ∈ [0.0, 0.7], bbox height ≥ 0.25; (2, 0.85): union of bot and quoter `left ≥ −0.12`, bot bbox height ≥ 0.05.
+  - kalshi (3, 0.6): quoter bbox `left ≥ −0.12`; the quoter's visible width `min(right, 1) − max(left, −1) ≥ 0.9`.
+  - heron (4, 0.7): balance bbox `left ≥ −0.12`, height ≥ 0.22; quoter bbox intersects the frame.
+  - darch (5, 0.7): splitter bbox `left ≥ −0.12`, width ≥ 0.45.
+  - summers (6, 0.7): watch bbox `left ≥ −0.12`, width ≥ 0.45.
+  - alive (7, 0.8): union of all machines `left ≥ −0.30`, inside the frame; union of balance, splitter, watch height ≥ 0.35.
+  - yours (8, 0.6): slot bbox `left ≥ −0.12`, width ≥ 0.2.
+  - Anti-journey: the camera path length over 400 samples of g (desktop ranges from the section vh table) is under 45 units; every key's lookAt is within the bench bounds ± 3.
+  - Phone (aspect 390/844, `evaluatePose(..., 'phone')`): at every dwell the active machine's bbox `top ≤ 0.10` (in the lower 55%) and `left ≥ −1.02`, `right ≤ 1.02`; at (0, 0) the bot is in frame and the quoter bbox width ≥ 1.2.
+- [ ] **Step 2: Implement `projectBounds`** and re-author the key tables until the test passes. Keep fov 30 (desktop) / 38 (phone). Move the camera back and shift `lookAt` left/up to push the machine lower-right; do not enlarge the bench. Keep hold-then-move keys so no section starts with a cut.
+- [ ] **Step 3: Light-theme form.** Start the dev server (port 3111), open `/?built=1` in the light theme and judge the hero still: the frame bars and cells must show three distinguishable tones (top, key side, shade). Tune in this order until they do: `Lights.tsx` hemisphere intensity 0.6 → up to 1.0, directional intensity 2.4 → up to 3.0; then, only if still a silhouette, light `inkTop` → `#44444C` and `inkKey` → `#2C2C32` in `palettes.ts` and the same hexes in `globals.css` (the palettes test enforces the match). The dark theme must keep reading well; check it after every change.
+- [ ] **Step 4: Stills** with Playwright at 1440 × 900 and `?built=1`, saved to `.playwright-mcp/gates/`: `g1b-hero-light.png`, `g1b-hero-dark.png`, `g1b-more.png` (u 0.5), `g1b-kalshi.png` (u 0.6), `g1b-heron.png` (u 0.7), `g1b-alive.png` (u 0.8), `g1b-phone-hero.png` (390 × 844 with `?built=1&tier=phone`; if `tier=phone` is not yet honoured by `useTier`, add that query override now, it is needed by Stage 5 anyway). Scroll with `window.scrollTo(0, top + u·height)` and wait 3 s. Stop the server after.
+- [ ] **Step 5: Verify** `npx vitest run src/bench` green, `npx tsc --noEmit` clean, lint clean. **Commit:** `git add -A && git commit -m "Tune camera keys for copy-column clearance; give the light theme form"`
