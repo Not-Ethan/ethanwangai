@@ -45,3 +45,17 @@ export function projectBounds(result: LayoutResult, machines: MachineId[], pose:
   }
   return left === Infinity ? null : { left, right, top, bottom };
 }
+
+/** Camera pitch above the bench plane in degrees: asin((position.y − lookAt.y) / |position − lookAt|). */
+export function elevationDeg(pose: Pose): number {
+  const dx = pose.position[0] - pose.lookAt[0], dy = pose.position[1] - pose.lookAt[1], dz = pose.position[2] - pose.lookAt[2];
+  return Math.asin(dy / Math.hypot(dx, dy, dz)) * 180 / Math.PI;
+}
+
+/**
+ * Heading of the horizontal view direction in degrees: 0 looks straight along −z toward the back of the bench, +90
+ * along +x, −90 along −x. The balance's rail runs along x, so a side-on view of it has an azimuth near 0.
+ */
+export function azimuthDeg(pose: Pose): number {
+  return Math.atan2(pose.lookAt[0] - pose.position[0], pose.position[2] - pose.lookAt[2]) * 180 / Math.PI;
+}

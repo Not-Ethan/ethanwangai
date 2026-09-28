@@ -1,38 +1,41 @@
 // Camera pose tables and the pure pose evaluator. Bench space. The tables were re-authored at gate G1 against
 // src/bench/cameraClearance.test.ts: every section's subject sits right of the DOM copy column (the left 42% on
-// desktop; the hero's copy block is the left 58% down to 65% of the height), framed by lookAt rather than by
-// moving the camera, so the whole desktop path stays under 45 units. Hold-then-move keys: no section starts with a cut.
+// desktop; the hero's copy block is the left 58% down to 65% of the height), each pose pitched and headed as the
+// test's elevation and azimuth bounds say, and the whole desktop path stays under 60 units. Hold-then-move keys: no
+// section starts with a cut.
 import type { Tier, Vec3 } from './types';
 import { clamp01, lerp, power2InOut } from './math';
 
 export interface Pose { position: Vec3; lookAt: Vec3; fov: number }
 export interface CameraKey { section: number; u: number; pose: Pose }
 
-// Desktop, fov 30. One far station front-left for the hero and `more` (the rise is a tilt: the small machines enter
-// from the bottom edge), a descent to the bot for the macro, one climb along the front row (the kalshi dolly, then the
-// balance, splitter and watch by lookAt), the poster from the front, and a drop to the slot.
+// Desktop, fov 30. The hero is a low 3/4 from front-left (25°) with the quoter filling the lower right, its top at
+// the deck; the rise is a real climb to a high 3/4 over the bed (41°) for `more`; a descent to the bot for the macro;
+// one climb along the front row (the kalshi dolly, the only lateral dolly); the balance side-on and low (13°, 22° off
+// its rail's normal), the splitter long and low from front-right (camera at y 2.1), the watch from high up (47°); the
+// poster from front-right with the small machines large in front of the quoter; a drop to the slot (18°). 59 units.
 const D: CameraKey[] = [
-  { section: 0, u: 0.00, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-4.1, 3.2, -8.1], fov: 30 } },   // hero: quoter lower-right, tight to the right edge; small machines cropped at the bottom edge
-  { section: 0, u: 0.15, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-4.1, 3.2, -8.1], fov: 30 } },   // hold while the copy is sticky
-  { section: 0, u: 1.00, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-4.5, 0.2, -1.1], fov: 30 } },   // risen: the tilt brings the bench in from the bottom edge
-  { section: 1, u: 0.10, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-5.2, -0.6, 3.2], fov: 30 } },   // whole quoter right of the copy column
-  { section: 1, u: 1.00, pose: { position: [-6.7, 11.6, 24.0], lookAt: [-5.2, -0.6, 3.2], fov: 30 } },
-  { section: 2, u: 0.30, pose: { position: [-4.4, 3.3, 9.9], lookAt: [-6.8, 0.8, 2.9], fov: 30 } },      // macro on the bot
-  { section: 2, u: 0.70, pose: { position: [-4.1, 3.6, 10.7], lookAt: [-7.6, 1.5, 1.5], fov: 30 } },     // bot and quoter share the frame
-  { section: 2, u: 1.00, pose: { position: [-4.1, 3.6, 10.7], lookAt: [-7.6, 1.5, 1.5], fov: 30 } },
-  { section: 3, u: 0.08, pose: { position: [-4.1, 3.6, 10.7], lookAt: [-7.2, 0.6, 0.0], fov: 30 } },     // dolly start
+  { section: 0, u: 0.00, pose: { position: [-7.2, 15.0, 20.6], lookAt: [-3.9, 3.2, -4.0], fov: 30 } },   // hero: quoter lower-right, its top at the deck, tight to the right edge; small machines cropped at the bottom edge
+  { section: 0, u: 0.15, pose: { position: [-7.2, 15.0, 20.6], lookAt: [-3.9, 3.2, -4.0], fov: 30 } },   // hold while the copy is sticky
+  { section: 0, u: 1.00, pose: { position: [-6.4, 18.4, 20.3], lookAt: [-5.1, -1.2, -2.2], fov: 30 } },  // risen: the climb to the high 3/4, the whole quoter right of the copy column
+  { section: 1, u: 0.10, pose: { position: [-6.4, 18.4, 20.3], lookAt: [-5.1, -1.2, -2.2], fov: 30 } },
+  { section: 1, u: 1.00, pose: { position: [-6.4, 18.4, 20.3], lookAt: [-5.1, -1.2, -2.2], fov: 30 } },
+  { section: 2, u: 0.30, pose: { position: [-4.6, 3.9, 9.2], lookAt: [-7.4, 1.4, 1.8], fov: 30 } },      // macro on the bot
+  { section: 2, u: 0.70, pose: { position: [-4.3, 4.3, 10.0], lookAt: [-7.5, 1.5, 1.6], fov: 30 } },     // bot and quoter share the frame
+  { section: 2, u: 1.00, pose: { position: [-4.3, 4.3, 10.0], lookAt: [-7.5, 1.5, 1.6], fov: 30 } },
+  { section: 3, u: 0.08, pose: { position: [-4.3, 4.3, 10.0], lookAt: [-7.2, 0.6, 0.0], fov: 30 } },     // dolly start
   { section: 3, u: 0.30, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.8, -0.6, -1.8], fov: 30 } },   // dolly end (the one lateral dolly): low oblique along the bed
   { section: 3, u: 1.00, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.8, -0.6, -1.8], fov: 30 } },
-  { section: 4, u: 0.15, pose: { position: [-1.6, 4.8, 13.7], lookAt: [-5.2, 2.7, 7.2], fov: 30 } },     // on the balance, quoter behind
-  { section: 4, u: 1.00, pose: { position: [-1.6, 4.8, 13.7], lookAt: [-5.2, 2.7, 7.2], fov: 30 } },
-  { section: 5, u: 0.15, pose: { position: [-1.3, 4.9, 14.0], lookAt: [-1.3, 3.2, 8.2], fov: 30 } },     // low along the splitter
-  { section: 5, u: 1.00, pose: { position: [-1.3, 4.9, 14.0], lookAt: [-1.3, 3.2, 8.2], fov: 30 } },
-  { section: 6, u: 0.15, pose: { position: [1.4, 7.2, 16.7], lookAt: [0.9, -0.1, 6.0], fov: 30 } },      // high calm on the watch
-  { section: 6, u: 1.00, pose: { position: [1.4, 7.2, 16.7], lookAt: [0.9, -0.1, 6.0], fov: 30 } },
-  { section: 7, u: 0.60, pose: { position: [6.0, 8.5, 23.8], lookAt: [-2.0, 2.8, 6.0], fov: 30 } },      // poster: whole bench, small machines large in front
-  { section: 7, u: 1.00, pose: { position: [6.0, 8.5, 23.8], lookAt: [-2.0, 2.8, 6.0], fov: 30 } },
-  { section: 8, u: 0.25, pose: { position: [6.0, 4.4, 15.4], lookAt: [2.6, 0.3, 5.5], fov: 30 } },       // low on the slot
-  { section: 8, u: 1.00, pose: { position: [6.0, 4.4, 15.4], lookAt: [2.6, 0.3, 5.5], fov: 30 } },
+  { section: 4, u: 0.15, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.4, 1.9, 2.6], fov: 30 } },     // side-on and low on the balance, quoter behind: a tilt from the dolly's end station
+  { section: 4, u: 1.00, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.4, 1.9, 2.6], fov: 30 } },
+  { section: 5, u: 0.15, pose: { position: [1.8, 2.1, 12.8], lookAt: [-1.4, 0.4, 4.6], fov: 30 } },      // long and low along the splitter from front-right: the fan opens toward the camera
+  { section: 5, u: 1.00, pose: { position: [1.8, 2.1, 12.8], lookAt: [-1.4, 0.4, 4.6], fov: 30 } },
+  { section: 6, u: 0.15, pose: { position: [2.2, 9.5, 13.6], lookAt: [2.4, -0.1, 4.7], fov: 30 } },      // high calm on the watch, centred, the quoter's front above it
+  { section: 6, u: 1.00, pose: { position: [2.2, 9.5, 13.6], lookAt: [2.4, -0.1, 4.7], fov: 30 } },
+  { section: 7, u: 0.60, pose: { position: [5.6, 9.8, 23.6], lookAt: [-1.8, 2.6, 6.4], fov: 30 } },      // poster: whole bench, small machines large in front
+  { section: 7, u: 1.00, pose: { position: [5.6, 9.8, 23.6], lookAt: [-1.8, 2.6, 6.4], fov: 30 } },
+  { section: 8, u: 0.25, pose: { position: [6.5, 4.4, 15.6], lookAt: [2.6, 0.9, 5.8], fov: 30 } },       // low on the slot
+  { section: 8, u: 1.00, pose: { position: [6.5, 4.4, 15.6], lookAt: [2.6, 0.9, 5.8], fov: 30 } },
 ];
 
 // Phone, fov 38, portrait: the frame is 2.7× narrower than desktop's, so each section's machine is framed whole

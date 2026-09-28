@@ -3,7 +3,7 @@ import { MACHINE, type MachineId, type Tier, type Vec3 } from './types';
 import { buildBench } from './counts';
 import { CAMERA_KEYS, evaluatePose, type Pose } from './camera';
 import { SECTIONS, sectionRanges, locate } from './sections';
-import { DWELL, projectBounds, type NdcBounds } from './cameraClearance';
+import { DWELL, projectBounds, elevationDeg, azimuthDeg, type NdcBounds } from './cameraClearance';
 
 // The DOM's copy columns in NDC: every section's copy is the left 42% (x < −0.16); the hero's copy block is the left 58%
 // down to 65% of the height (x < 0.17, y > −0.3). The bounds below keep each section's subject clear of them.
@@ -45,11 +45,24 @@ describe('projectBounds', () => {
   });
 });
 
+describe('elevationDeg and azimuthDeg', () => {
+  it('measure the pitch above the bench and the heading from −z, in degrees', () => {
+    const s = Math.sqrt(3);
+    expect(elevationDeg({ position: [0, 1, s], lookAt: [0, 0, 0], fov: 30 })).toBeCloseTo(30, 6);   // 2 units away, 1 up
+    expect(elevationDeg({ position: [4, 2, 0], lookAt: [4, 2, -9], fov: 30 })).toBeCloseTo(0, 6);   // level
+    expect(azimuthDeg({ position: [0, 5, 10], lookAt: [0, 0, -2], fov: 30 })).toBeCloseTo(0, 6);     // straight along −z
+    expect(azimuthDeg({ position: [-8, 5, 4], lookAt: [3, 0, 4], fov: 30 })).toBeCloseTo(90, 6);     // along +x
+    expect(azimuthDeg({ position: [8, 5, 4], lookAt: [-3, 0, 4], fov: 30 })).toBeCloseTo(-90, 6);    // along −x
+    expect(azimuthDeg({ position: [10, 5, 12], lookAt: [0, 0, 2], fov: 30 })).toBeCloseTo(-45, 6);   // front-right 3/4
+  });
+});
+
 describe('desktop clearance at the dwells (aspect 1.6)', () => {
-  it('hero (0, 0): the whole quoter below the headline and right of the plate, tight to the right edge; bot in frame; small machines cropped at the bottom edge', () => {
+  it('hero (0, 0): the whole quoter below the headline and right of the plate, its top near the deck, tight to the right edge; bot in frame; small machines cropped at the bottom edge', () => {
     const q = at(0, 0, [quoter]);
     expect(q.left, 'quoter left').toBeGreaterThanOrEqual(-0.20);
-    expect(q.top, 'quoter top').toBeLessThanOrEqual(0.10);
+    expect(q.top, 'quoter top').toBeGreaterThanOrEqual(-0.12);
+    expect(q.top, 'quoter top').toBeLessThanOrEqual(0.05);
     expect(q.right, 'quoter right').toBeLessThanOrEqual(1.02);
     expect(inFrame(at(0, 0, [bot])), 'bot in frame').toBe(true);
     expect(at(0, 0, SMALL).top, 'small machines top').toBeLessThanOrEqual(-0.72);
@@ -63,12 +76,14 @@ describe('desktop clearance at the dwells (aspect 1.6)', () => {
     expect(q.top).toBeLessThanOrEqual(0.6);
   });
 
-  it('more (1, 0.5): the whole quoter in frame, right of the copy column', () => {
+  it('more (1, 0.5): the whole quoter in frame, right of the copy column, from a high 3/4 (40–58°)', () => {
     const q = at(1, 0.5, [quoter]);
     expect(q.left).toBeGreaterThanOrEqual(-0.12);
     expect(q.right).toBeLessThanOrEqual(1.02);
     expect(q.top).toBeLessThanOrEqual(0.9);
     expect(q.bottom).toBeGreaterThanOrEqual(-1.02);
+    expect(elevationDeg(poseAt(1, 0.5, 'desktop')), 'elevation').toBeGreaterThanOrEqual(40);
+    expect(elevationDeg(poseAt(1, 0.5, 'desktop')), 'elevation').toBeLessThanOrEqual(58);
   });
 
   it('first (2, 0.30): a macro on the bot right of centre; (2, 0.85): bot and quoter share the frame, clear of the copy column', () => {
@@ -86,41 +101,50 @@ describe('desktop clearance at the dwells (aspect 1.6)', () => {
     expect(Math.min(q.right, 1) - Math.max(q.left, -1), 'visible width').toBeGreaterThanOrEqual(0.9);
   });
 
-  it('heron (4, 0.7): the balance clear of the copy column and tall enough; the quoter behind it in frame', () => {
+  it('heron (4, 0.7): the balance side-on (low, within 25° of its rail\'s normal), clear of the copy column and tall; the quoter behind it in frame', () => {
     const b = at(4, 0.7, [balance]);
+    const pose = poseAt(4, 0.7, 'desktop');
     expect(b.left).toBeGreaterThanOrEqual(-0.12);
-    expect(height(b)).toBeGreaterThanOrEqual(0.22);
+    expect(height(b)).toBeGreaterThanOrEqual(0.28);
     expect(intersectsFrame(at(4, 0.7, [quoter])), 'quoter intersects the frame').toBe(true);
+    expect(elevationDeg(pose), 'elevation').toBeLessThanOrEqual(22);
+    expect(Math.abs(azimuthDeg(pose)), '|azimuth|').toBeLessThanOrEqual(25);
   });
 
-  it('darch (5, 0.7): the splitter clear of the copy column and wide', () => {
+  it('darch (5, 0.7): the splitter long and low (camera under y 2.2, pitched under 16°), clear of the copy column and wide', () => {
     const s = at(5, 0.7, [splitter]);
+    const pose = poseAt(5, 0.7, 'desktop');
     expect(s.left).toBeGreaterThanOrEqual(-0.12);
-    expect(width(s)).toBeGreaterThanOrEqual(0.45);
+    expect(width(s)).toBeGreaterThanOrEqual(0.5);
+    expect(elevationDeg(pose), 'elevation').toBeLessThanOrEqual(16);
+    expect(pose.position[1], 'camera height').toBeLessThanOrEqual(2.2);
   });
 
-  it('summers (6, 0.7): the watch clear of the copy column and wide', () => {
+  it('summers (6, 0.7): the watch from high up (45° or more), clear of the copy column and wide', () => {
     const w = at(6, 0.7, [watch]);
     expect(w.left).toBeGreaterThanOrEqual(-0.12);
     expect(width(w)).toBeGreaterThanOrEqual(0.45);
+    expect(elevationDeg(poseAt(6, 0.7, 'desktop')), 'elevation').toBeGreaterThanOrEqual(45);
   });
 
-  it('alive (7, 0.8): the whole bench in frame, mostly right of the copy column, the small machines large in front', () => {
+  it('alive (7, 0.8): the whole bench in frame, mostly right of the copy column, the small machines large in front of the quoter', () => {
     const all = at(7, 0.8, ALL);
     expect(all.left).toBeGreaterThanOrEqual(-0.30);
     expect(inFrame(all), 'bench in frame').toBe(true);
-    expect(height(at(7, 0.8, SMALL)), 'small machines height').toBeGreaterThanOrEqual(0.35);
+    expect(height(at(7, 0.8, SMALL)), 'small machines height').toBeGreaterThanOrEqual(0.45);
+    expect(intersectsFrame(at(7, 0.8, [quoter])), 'quoter intersects the frame').toBe(true);
   });
 
-  it('yours (8, 0.6): the slot clear of the copy column and legible', () => {
+  it('yours (8, 0.6): the slot from low down (under 20°), clear of the copy column and legible', () => {
     const s = at(8, 0.6, [slot]);
     expect(s.left).toBeGreaterThanOrEqual(-0.12);
     expect(width(s)).toBeGreaterThanOrEqual(0.2);
+    expect(elevationDeg(poseAt(8, 0.6, 'desktop')), 'elevation').toBeLessThanOrEqual(20);
   });
 });
 
 describe('anti-journey', () => {
-  it('the desktop camera travels under 45 units over the whole page', () => {
+  it('the desktop camera travels under 60 units over the whole page', () => {
     const vh = 900;
     const tops = SECTIONS.reduce<number[]>((acc, s, i) => {
       acc.push(i === 0 ? 0 : acc[i - 1] + SECTIONS[i - 1].vh.desktop * vh / 100);
@@ -138,7 +162,7 @@ describe('anti-journey', () => {
       if (i > 0) length += Math.hypot(out.position[0] - prev[0], out.position[1] - prev[1], out.position[2] - prev[2]);
       for (let k = 0; k < 3; k++) prev[k] = out.position[k];
     }
-    expect(length).toBeLessThan(45);
+    expect(length).toBeLessThan(60);
   });
 
   it('every key looks at the bench: lookAt within the bench bounds ± 3, on both tiers', () => {
