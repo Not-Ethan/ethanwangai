@@ -73,10 +73,11 @@ describe('stepClocks: lever lock drives run and mt (Review Focus #3a)', () => {
     }
     expect(s.run[MACHINE.balance]).toBeGreaterThan(0.95);
     // Exact solution of the exponential relaxation (tau = RUN_TAU) integrated over 1s
-    // from run(0) = 0 to locked = 1 is mt(1) = 1 - RUN_TAU * (1 - e^-4) ≈ 0.7627.
+    // from run(0) = 0 to locked = 1 is mt(1) = 1 - RUN_TAU * (1 - e^-4) ≈ 0.7627, i.e.
+    // mt[balance] ≈ 0.76 ± 0.1 per the (corrected) brief's Step 1(a).
     const mtAfterPhase1 = s.mt[MACHINE.balance];
-    expect(mtAfterPhase1).toBeGreaterThan(0.6);
-    expect(mtAfterPhase1).toBeLessThan(0.9);
+    expect(mtAfterPhase1).toBeGreaterThan(0.66);
+    expect(mtAfterPhase1).toBeLessThan(0.86);
 
     // Phase 2: compileTarget[balance] = 0 (unlocked) for 0.5s of 30 steps.
     for (let n = 0; n < 30; n++) {
@@ -88,10 +89,11 @@ describe('stepClocks: lever lock drives run and mt (Review Focus #3a)', () => {
     }
     expect(s.run[MACHINE.balance]).toBeLessThan(0.15);
     const mtIncreasePhase2 = s.mt[MACHINE.balance] - mtAfterPhase1;
-    // run decays from ~0.98 towards 0 over 0.5s (2 time constants); its integral is a bounded,
-    // strictly positive amount — well short of another full second of motion.
+    // run decays from ~0.98 towards 0 over 0.5s (2 time constants); its integral works out to
+    // ≈0.205, i.e. "less than 0.25" per the (corrected) brief's Step 1(a) — well short of
+    // another full second of motion, and strictly positive.
     expect(mtIncreasePhase2).toBeGreaterThan(0);
-    expect(mtIncreasePhase2).toBeLessThan(0.3);
+    expect(mtIncreasePhase2).toBeLessThan(0.25);
   });
 });
 
