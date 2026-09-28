@@ -14,8 +14,7 @@ const tops = SECTIONS.reduce<number[]>((acc, s, i) => {
 const docHeight = tops[8] + SECTIONS[8].vh.desktop * vh / 100;
 const ranges = sectionRanges(tops, docHeight, vh);
 const gAt = (i: number, u: number) => ranges[i].start + u * (ranges[i].end - ranges[i].start);
-const at = (i: number, u: number, tier: Tier = 'desktop', reducedMotion = false) =>
-  sceneState(gAt(i, u), ranges, tier, reducedMotion, createSceneState());
+const at = (i: number, u: number, tier: Tier = 'desktop') => sceneState(gAt(i, u), ranges, tier, createSceneState());
 
 describe('sceneState', () => {
   it('at g 0: section 0, hero pose, machines at rest, merge 0, trickle on', () => {
@@ -112,19 +111,12 @@ describe('sceneState', () => {
     expect(s.compileTarget[MACHINE.intake]).toBe(1);
   });
 
-  it('reduced motion keeps the clicks but drops the lean kick and the trickle', () => {
-    const s = at(1, 0.9, 'desktop', true);
-    expect(s.merge).toBeCloseTo(at(1, 0.9).merge, 9);
-    expect(s.lean).toBe(0);
-    expect(s.trickle).toBe(false);
-  });
-
   it('writes into the given out object and keeps its arrays', () => {
     const out = createSceneState();
     const ct = out.compileTarget;
     const pos = out.pose.position;
     const look = out.pose.lookAt;
-    const r = sceneState(gAt(4, 0.3), ranges, 'phone', false, out);
+    const r = sceneState(gAt(4, 0.3), ranges, 'phone', out);
     expect(r).toBe(out);
     expect(out.compileTarget).toBe(ct);
     expect(out.pose.position).toBe(pos);

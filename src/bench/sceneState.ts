@@ -31,7 +31,7 @@ export function createSceneState(): SceneState {
   };
 }
 
-export function sceneState(g: number, ranges: SectionRange[], tier: Tier, reducedMotion: boolean, out: SceneState): SceneState {
+export function sceneState(g: number, ranges: SectionRange[], tier: Tier, out: SceneState): SceneState {
   const { index: section, u } = locate(g, ranges);
   out.section = section;
   out.u = u;
@@ -56,7 +56,7 @@ export function sceneState(g: number, ranges: SectionRange[], tier: Tier, reduce
     if (u >= MERGE.holdEnd) {
       burst = clamp01((u - MERGE.holdEnd) / (1 - MERGE.holdEnd));
       merge = MERGE.levels * (1 - burst);
-      lean = reducedMotion ? 0 : Math.sin(Math.PI * burst);
+      lean = Math.sin(Math.PI * burst);
     } else if (u >= MERGE.end) {
       merge = MERGE.levels;
     } else if (u > MERGE.start) {
@@ -72,6 +72,6 @@ export function sceneState(g: number, ranges: SectionRange[], tier: Tier, reduce
   out.click = burst > 0.5 ? 3 : burst > 0 ? 2 : merge >= 3 ? 1 : merge >= 1 ? 0 : -1;
 
   out.active = SECTIONS[section].machine;
-  out.trickle = !reducedMotion && section !== ALIVE;
+  out.trickle = section !== ALIVE;
   return out;
 }
