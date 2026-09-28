@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { TIMING } from '@/bench/timing';
+import { TIMING, inkDepart, inkLand } from '@/bench/timing';
+import { buildBench } from '@/bench/counts';
+import { BENCH_SEED_TEXT } from '@/bench/bench';
+import { hashString } from '@/bench/hash';
+import { BAND_ROWS, PARTITION, buildInkGeometry } from '../inkGeometry';
 import { INK_VERTEX } from './ink.vert';
 
 // GLSL does not run in node, so these pin the rows band's constants and the statements that decide its shape.
@@ -51,5 +55,66 @@ describe('the ink rows band (design §3.1: T0 + 0.35 → 0.95 s)', () => {
 
   it('never lets a trickle point into the band', () => {
     expect(code.replace(/\s+/g, '')).toContain('if(aTrickle>0.5){band=0.0;}');
+  });
+});
+
+/** GLSL's smoothstep. */
+function smooth(e0: number, e1: number, x: number): number {
+  const k = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
+  return k * k * (3 - 2 * k);
+}
+
+describe('the rows dissolving toward the parts at T0 + 0.8 s (Step 3), with the band window unchanged', () => {
+  // The quoter's compile points as the page builds them, stepped through the shader's own statements for t, bt,
+  // release, ownFade, the in-leg and band at a ?freeze=<s> frame (uCompile = s / heroCompileS).
+  const d = buildInkGeometry(buildBench('desktop'), 'desktop', hashString(BENCH_SEED_TEXT));
+  const rows = BAND_ROWS[PARTITION.quoter];
+  const at = (s: number) => {
+    const u = s / TIMING.heroCompileS;
+    const [b0, b1, leave, lateLeg] = ['BAND_T0', 'BAND_T1', 'ROW_LEAVE', 'LATE_LEG'].map(glslConst);
+    const bt = Math.min(1, Math.max(0, (u - b0) / (b1 - b0)));
+    const release = smooth(0.75, 1, bt);
+    const inRow = new Array<number>(rows).fill(0);
+    let departed = 0, leaving = 0;
+    for (let i = d.offsets[PARTITION.quoter]; i < d.offsets[PARTITION.quoter + 1]; i++) {
+      if (d.trickle[i] > 0.5) continue;
+      const depart = inkDepart(d.targetBirth[i]), land = inkLand(d.targetBirth[i]);
+      const t = Math.min(1, Math.max(0, (u - depart) / Math.max(1e-4, land - depart)));
+      if (t < 0.001 || t >= 1) continue;   // on its glyph, or landed: hidden either way
+      departed++;
+      const aRow = d.row[i];
+      const ownFade = 1 - smooth(leave, 1, t);
+      const front = smooth(aRow / rows * 0.22, aRow / rows * 0.22 + 0.03, bt);
+      const seated = b0 + (aRow / rows * 0.22 + 0.03) * (b1 - b0);
+      const seat = front * Math.min(1, Math.max(0, (u - depart) / Math.max(lateLeg, seated - depart)));
+      // band ≥ 0.97 keeps a dot within a few px of its row; ownFade < 0.97 has it on its way to its part
+      if ((1 - release) * ownFade * seat >= 0.97) inRow[aRow]++;
+      if (ownFade < 0.97) leaving++;
+    }
+    return { release, inRow, departed, leaving };
+  };
+
+  it("leaves each row on the point's own clock, from t = ROW_LEAVE, not on a moved band window", () => {
+    expect(assigned('ownFade')).toEqual(['step(0.001,t)*(1.0-smoothstep(ROW_LEAVE,1.0,t))']);
+    expect(assigned('release')).toEqual(['smoothstep(0.75,1.0,bt)']);
+  });
+
+  it('holds every row intact through T0 + 0.7 s', () => {
+    for (const s of [0.6, 0.7]) {
+      const f = at(s);
+      expect(f.release).toBeLessThan(1e-6);
+      expect(f.leaving / f.departed).toBeLessThan(0.01);
+    }
+  });
+
+  it('at T0 + 0.8 s the band has not begun its release, yet the rows thin toward the parts and all still read', () => {
+    const held = at(0.6), f = at(0.8);
+    expect(f.release).toBeLessThan(1e-6);   // bt is 0.75: the dissolve comes from the points, not the window
+    expect(f.leaving / f.departed).toBeGreaterThan(0.1);
+    // every one of the 40 rows keeps at least 60% of the dots it held at 0.6 s, so at least 20 distinct rows remain,
+    // and every row has lost at least a tenth of them to the parts
+    const kept = f.inRow.map((n, row) => n / held.inRow[row]);
+    expect(Math.min(...kept)).toBeGreaterThanOrEqual(0.6);
+    expect(Math.max(...kept)).toBeLessThan(0.9);
   });
 });

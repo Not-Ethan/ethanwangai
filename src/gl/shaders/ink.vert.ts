@@ -4,8 +4,9 @@
 // source rect (NDC); the target and its partition's centroid go through the real camera; flight blends the two in
 // NDC along a bezier. The rows band (design §3.1) is one screen-aligned grid per partition. A compile point streams
 // off its glyph into its row, holds, and is released to its part, all on the machine's own uCompile in one window
-// shared by the whole partition, so every row prints in the same frame for every point; the merge burst keeps its
-// band on its own staggered clock, and the trickle never enters it. three declares projectionMatrix and
+// shared by the whole partition, so every row prints in the same frame for every point; a point whose part locks
+// early peels off its row on its own clock before that release, so the rows thin toward the parts. The merge burst
+// keeps its band on its own staggered clock, and the trickle never enters it. three declares projectionMatrix and
 // modelViewMatrix (and the sampler3D precision) for a ShaderMaterial, so this file must not.
 export const INK_VERTEX = /* glsl */`
 precision highp float; precision highp sampler3D;
@@ -24,6 +25,9 @@ const float BAND_BLEND = 0.33;
 const float BAND_MARGIN = 0.32, LINE_MIN = 0.14, LINE_RAG = 0.46;
 // A point that departs after its row has printed still flies into it, over this much uCompile.
 const float LATE_LEG = 0.03;
+// A compile point leaves its row on its own clock from t = ROW_LEAVE, ahead of the band's release, so the ink bound
+// for the parts that lock from T0 + 0.75 s (design §3.1) streams off the rows toward them while the rows still hold.
+const float ROW_LEAVE = 0.7;
 float expoOut(float t) { return t >= 1.0 ? 1.0 : 1.0 - pow(2.0, -10.0 * t); }
 float hash1(float n) { return fract(sin(n * 12.9898 + 78.233) * 43758.5453); }
 void main() {
@@ -77,8 +81,8 @@ void main() {
     float bt = clamp((uCompile[m] - BAND_T0) / (BAND_T1 - BAND_T0), 0.0, 1.0);
     float front = smoothstep(aRow / rows * 0.22, aRow / rows * 0.22 + 0.03, bt);   // printing front, top row first
     float release = smoothstep(0.75, 1.0, bt);
-    // not yet departed (t == 0): on its glyph and hidden; landing (t → 1): leaves its row for its part
-    float ownFade = step(0.001, t) * (1.0 - smoothstep(0.85, 1.0, t));
+    // not yet departed (t == 0): on its glyph and hidden; from t = ROW_LEAVE: leaves its row for its part
+    float ownFade = step(0.001, t) * (1.0 - smoothstep(ROW_LEAVE, 1.0, t));
     float via = (1.0 - release) * ownFade;   // routed through its row rather than straight at its part
     // in-leg: eases off its glyph and reaches its row as the front seats it, so the stream heads for the band
     float seated = BAND_T0 + (aRow / rows * 0.22 + 0.03) * (BAND_T1 - BAND_T0);
