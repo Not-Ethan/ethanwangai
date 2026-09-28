@@ -3,23 +3,38 @@ import { PerspectiveCamera, Quaternion, Vector3 } from 'three';
 import { KIND, PRIMITIVE, type LayoutResult, type LeaderLine, type MachineId, type PartInstance, type PrimitiveId, type Vec3 } from './types';
 import type { Pose } from './camera';
 
-/** One part on screen: centre (x, y) in NDC (y up), size (w, h) in NDC, NDC depth, and for bars and rods the angle of the long axis in degrees (0 otherwise). */
+/** One part on screen: geometry centre (x, y) in NDC (y up), size (w, h) in NDC, NDC depth, and for bars and rods the angle of the long axis in degrees (0 otherwise). */
 export interface ProjectedPart { part: PartInstance; x: number; y: number; w: number; h: number; depth: number; angle: number }
 export interface HeroPlateOptions { inkMachines: MachineId[]; pencilMachines: MachineId[]; cropMachines: MachineId[] }
 
 /**
- * Extent of each primitive's unit geometry along its local axes, before the instance scale.
- * Conventions follow src/bench/configs/helpers.ts: a bar of length L is scale [L, 1, 1]; a rod runs along +y;
- * a ring is a torus of diameter 1 in the XY plane; a cell is a unit box; caps and tiles are thin plates.
- * The kits in src/gl must match these.
+ * Extent of each primitive's unit geometry along its local axes, before the instance scale, copied from the kit
+ * geometry pinned in docs/plans/2026-09-28-dbso-plan-03-gl-core.md (Task 2.4, createKitGeometries):
+ * cell Box(0.8,1,0.8).translate(0,0.5,0); cap Box(0.8,0.03,0.8); bar Box(1,0.12,0.12); rod Cylinder(0.05,0.05,1,8);
+ * ring Torus(0.5,0.06,8,24); tile Box(0.2,0.02,0.2).translate(0,0.01,0). The plan is the source of truth: if it
+ * changes the kits, change this table and UNIT_CENTRE to match, or the plate-to-GL cross-fades will jump.
  */
 export const UNIT_EXTENT: Record<PrimitiveId, Vec3> = {
-  [PRIMITIVE.cell]: [1, 1, 1],
-  [PRIMITIVE.cap]: [1, 0.03, 1],
-  [PRIMITIVE.bar]: [1, 0.08, 0.08],
-  [PRIMITIVE.rod]: [0.08, 1, 0.08],
-  [PRIMITIVE.ring]: [1, 1, 0.12],
-  [PRIMITIVE.tile]: [0.2, 0.03, 0.2],
+  [PRIMITIVE.cell]: [0.8, 1, 0.8],
+  [PRIMITIVE.cap]: [0.8, 0.03, 0.8],
+  [PRIMITIVE.bar]: [1, 0.12, 0.12],
+  [PRIMITIVE.rod]: [0.1, 1, 0.1],
+  [PRIMITIVE.ring]: [1.12, 1.12, 0.12],
+  [PRIMITIVE.tile]: [0.2, 0.02, 0.2],
+};
+
+/**
+ * Where each primitive's geometry centre sits relative to the instance origin, in local units before the instance
+ * scale (the translate() in the plan's kit geometry): a cell stands on its origin, a tile sits on it, the rest are
+ * centred. Scaled and rotated with the instance and added to its position before projection.
+ */
+export const UNIT_CENTRE: Record<PrimitiveId, Vec3> = {
+  [PRIMITIVE.cell]: [0, 0.5, 0],
+  [PRIMITIVE.cap]: [0, 0, 0],
+  [PRIMITIVE.bar]: [0, 0, 0],
+  [PRIMITIVE.rod]: [0, 0, 0],
+  [PRIMITIVE.ring]: [0, 0, 0],
+  [PRIMITIVE.tile]: [0, 0.01, 0],
 };
 
 const NEAR = 0.1, FAR = 100;
@@ -53,8 +68,9 @@ function f(n: number): string {
 }
 
 /**
- * Projects every part's rest pose to NDC (y up). Each local axis contributes its projected half-extent
- * (scale × UNIT_EXTENT, rotated by the rest quaternion). A bar or rod becomes a rect along its projected long
+ * Projects every part's rest pose to NDC (y up). The centre is the instance position plus the scaled, rotated
+ * UNIT_CENTRE offset, so a cell is drawn standing on its origin as the GL kit draws it. Each local axis contributes
+ * its projected half-extent (scale × UNIT_EXTENT, rotated by the rest quaternion). A bar or rod becomes a rect along its projected long
  * axis: width is its projected length, height its projected thickness, angle its on-screen direction. Every
  * other primitive is the axis-aligned box of the three half-extents, so a cell keeps its footprint and nothing
  * collapses to a zero-size rect.
@@ -71,10 +87,11 @@ function projectAll(parts: PartInstance[], cam: PerspectiveCamera): ProjectedPar
   const d: [number, number][] = [[0, 0], [0, 0], [0, 0]];
   const out: ProjectedPart[] = [];
   for (const part of parts) {
-    const [px, py, pz] = part.position;
-    c.set(px, py, pz).project(cam);
     q.set(part.quaternion[0], part.quaternion[1], part.quaternion[2], part.quaternion[3]);
-    const unit = UNIT_EXTENT[part.primitive];
+    const unit = UNIT_EXTENT[part.primitive], centre = UNIT_CENTRE[part.primitive];
+    axis.set(part.scale[0] * centre[0], part.scale[1] * centre[1], part.scale[2] * centre[2]).applyQuaternion(q);
+    const px = part.position[0] + axis.x, py = part.position[1] + axis.y, pz = part.position[2] + axis.z;
+    c.set(px, py, pz).project(cam);
     const ext = [part.scale[0] * unit[0], part.scale[1] * unit[1], part.scale[2] * unit[2]];
     for (let k = 0; k < 3; k++) {
       const half = ext[k] / 2;

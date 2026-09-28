@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { layout } from './layout';
 import { evaluatePose, type Pose } from './camera';
-import { KIND, MACHINE } from './types';
+import { KIND, MACHINE, PRIMITIVE, type LayoutResult, type PartInstance } from './types';
 import { QUOTER } from './configs/quoter';
 import { INTAKE } from './configs/intake';
 import { BOT } from './configs/bot';
 import { SLOT } from './configs/slot';
-import { heroPlateSvg, inkPlateSvg, projectParts } from './svgPlate';
+import { heroPlateSvg, inkPlateSvg, projectParts, UNIT_CENTRE, UNIT_EXTENT } from './svgPlate';
 
 // Task 1.4's BALANCE, SPLITTER and WATCH were not present when this was written; Task 1.10 swaps in ALL_CONFIGS.
 const CONFIGS = [QUOTER, INTAKE, BOT, SLOT];
@@ -81,6 +81,38 @@ describe('svgPlate', () => {
     expect(cell.angle).toBe(0);
     expect(cell.w).toBeLessThan(rail.w / 20);
     expect(cell.h).toBeGreaterThan(cell.w);
+  });
+
+  it('copies the kit geometry pinned in plan-03 Task 2.4', () => {
+    // cell Box(0.8,1,0.8).translate(0,0.5,0); cap Box(0.8,0.03,0.8); bar Box(1,0.12,0.12);
+    // rod Cylinder(0.05,0.05,1,8); ring Torus(0.5,0.06,8,24); tile Box(0.2,0.02,0.2).translate(0,0.01,0).
+    expect(UNIT_EXTENT[PRIMITIVE.cell]).toEqual([0.8, 1, 0.8]);
+    expect(UNIT_EXTENT[PRIMITIVE.cap]).toEqual([0.8, 0.03, 0.8]);
+    expect(UNIT_EXTENT[PRIMITIVE.bar]).toEqual([1, 0.12, 0.12]);
+    expect(UNIT_EXTENT[PRIMITIVE.rod]).toEqual([2 * 0.05, 1, 2 * 0.05]);
+    expect(UNIT_EXTENT[PRIMITIVE.ring]).toEqual([2 * (0.5 + 0.06), 2 * (0.5 + 0.06), 2 * 0.06]);
+    expect(UNIT_EXTENT[PRIMITIVE.tile]).toEqual([0.2, 0.02, 0.2]);
+    expect(UNIT_CENTRE[PRIMITIVE.cell]).toEqual([0, 0.5, 0]);
+    expect(UNIT_CENTRE[PRIMITIVE.tile]).toEqual([0, 0.01, 0]);
+    for (const p of [PRIMITIVE.cap, PRIMITIVE.bar, PRIMITIVE.rod, PRIMITIVE.ring]) expect(UNIT_CENTRE[p]).toEqual([0, 0, 0]);
+  });
+
+  it('projects a cell and a tile about their geometry centre, not their origin', () => {
+    const at = (primitive: PartInstance['primitive'], position: PartInstance['position'], scale: PartInstance['scale']): PartInstance => ({
+      primitive, kind: KIND.static, position, quaternion: [0, 0, 0, 1], scale, param: [0, 0, 0, 0], col: -1, module: 'probe', group: 0, explodeMode: 'module', machine: MACHINE.quoter, explode: [0, 0, 0], birth: 0,
+    });
+    const bedCell = result.parts.find((p) => p.machine === MACHINE.quoter && p.kind === KIND.cell)!;
+    expect(bedCell.position[1]).toBe(0);
+    const [px, , pz] = bedCell.position, sy = bedCell.scale[1];
+    // A rod's origin is its centre. A cell stands on its origin, so its centre is 0.5 * scale.y above it; a tile sits 0.01 * scale.y above.
+    const probe: PartInstance['scale'] = [1, 0.01, 1];
+    const parts = [bedCell, at(PRIMITIVE.rod, [px, sy / 2, pz], probe), at(PRIMITIVE.rod, [px, 0, pz], probe), at(PRIMITIVE.tile, [px, 0, pz], [1, 1, 1]), at(PRIMITIVE.rod, [px, 0.01, pz], probe)];
+    const [cell, raised, base, tile, tileCentre] = projectParts({ parts } as LayoutResult, pose, ASPECT);
+    expect(cell.x).toBeCloseTo(raised.x, 6);
+    expect(cell.y).toBeCloseTo(raised.y, 6);
+    expect(cell.y).toBeGreaterThan(base.y + 0.001);
+    expect(tile.x).toBeCloseTo(tileCentre.x, 6);
+    expect(tile.y).toBeCloseTo(tileCentre.y, 6);
   });
 
   it('caps the quoter ink plate at 2,500 rects, largest first, over a flat shadow', () => {
