@@ -3,10 +3,11 @@
 // and pointer-events: none. Builds the bench once per tier, owns the uniform registry's scene constants and the OU
 // texture, and mounts the light rig, the paper ground, the kits, the ink points, the clocks driver and the camera rig. The canvas is
 // `flat` (no tone mapping): the palette uniforms must reach the screen as the palette's own sRGB values, so the paper,
-// pencil and ink match the DOM's CSS tokens and the SVG plate they cross-fade with (§11). Warm-up and the cross-fade
-// arrive in Stage 5.
-import { Component, useEffect, useLayoutEffect, useMemo, type ReactNode } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+// pencil and ink match the DOM's CSS tokens and the SVG plate they cross-fade with (§11). The wrapper mounts at
+// opacity 0: the warm-up (§11) waits for the fonts, compiles every program, draws one frame, and only then fades the
+// canvas in over 200 ms; the end of that fade is T0, when Clocks starts the hero compile.
+import { Component, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
+import { Canvas, useThree, type RootState } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 import { MACHINE, type LayoutResult, type Tier, type Vec3 } from '@/bench/types';
@@ -20,13 +21,15 @@ import { KEY_LIGHT, Lights } from './Lights';
 import { Ground } from './Ground';
 import { Kits } from './Kits';
 import { Ink } from './Ink';
-import { Clocks } from './Clocks';
+import { Clocks, startIntro } from './Clocks';
 import { CameraRig } from './CameraRig';
 import { useTier } from './useTier';
 import { hud } from './hud';
 
 export const CAMERA = { fov: 30, near: 0.5, far: 120 } as const;
 export const BENCH_CENTER: Vec3 = [0, 0, 1];
+/** The cross-fade from paper to canvas; its end is T0. */
+export const FADE_MS = 200;
 
 // Canvas options, hoisted so a re-render of Scene (a theme change re-renders the whole tree under ThemeProvider) hands
 // R3F the same objects and it reconfigures nothing. r185 retired PCFSoftShadowMap (it warns and falls back to PCF), so
@@ -34,6 +37,8 @@ export const BENCH_CENTER: Vec3 = [0, 0, 1];
 const GL_OPTIONS = { antialias: true, powerPreference: 'high-performance', alpha: false } as const;
 const SHADOW_MAP = { type: THREE.PCFShadowMap } as const;
 const CAMERA_OPTIONS = { ...CAMERA, position: hud.pose.position as [number, number, number] };
+// The wrapper's rendered style never changes, so React never writes it again and the opacity warmUp sets stays.
+const HIDDEN = { opacity: 0 } as const;
 /** POST_H in src/bench/configs/balance.ts: the rail's centre line, which the balance tilts about. */
 export const BALANCE_PIVOT_Y = 0.9;
 
@@ -83,6 +88,24 @@ export function PaperBackground({ uniforms }: { uniforms: BenchUniforms }) {
   return null;
 }
 
+/**
+ * The warm-up (§11), from R3F's onCreated, which fires once the scene graph exists and before anything has rendered:
+ * wait for the fonts (the ink samples them too), compile every program off the first visible frame, draw one frame so
+ * the shadow map and the uploads are done, then fade the wrapper in over FADE_MS and declare T0 when the fade ends.
+ * The frame loop has been running underneath at opacity 0 the whole time (the bot has been pinging since load).
+ */
+export async function warmUp({ gl, scene, camera }: Pick<RootState, 'gl' | 'scene' | 'camera'>, wrapper: HTMLElement | null): Promise<void> {
+  await document.fonts.ready;
+  await gl.compileAsync(scene, camera);
+  gl.render(scene, camera);
+  if (wrapper) {
+    wrapper.style.transition = `opacity ${FADE_MS}ms`;
+    wrapper.style.opacity = '1';
+  }
+  await new Promise<void>((resolve) => setTimeout(resolve, FADE_MS));
+  startIntro();
+}
+
 /** Keeps a renderer failure (no WebGL2, context creation refused) from taking the DOM down with it; the DOM is the site on its own. */
 export class GLErrorBoundary extends Component<{ fallback: ReactNode; children?: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -96,9 +119,10 @@ export function Scene() {
   const ou = useMemo(() => createOUTexture(), []);
   const u = useMemo(() => configureUniforms(createUniforms(), tier, result, ou), [tier, result, ou]);
   useEffect(() => () => ou.dispose(), [ou]);
+  const wrapper = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-0" aria-hidden>
+    <div ref={wrapper} className="pointer-events-none fixed inset-0 z-0" style={HIDDEN} aria-hidden>
       <GLErrorBoundary fallback={null}>
         <Canvas
           dpr={dpr}
@@ -107,6 +131,7 @@ export function Scene() {
           camera={CAMERA_OPTIONS}
           frameloop="always"
           flat
+          onCreated={(state) => { void warmUp(state, wrapper.current); }}
         >
           <PaperBackground uniforms={u} />
           <PerformanceMonitor onDecline={onDecline}>

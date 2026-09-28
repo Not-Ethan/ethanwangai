@@ -12,7 +12,77 @@ import { TIMING } from '@/bench/timing';
 import { PALETTES } from '@/theme/palettes';
 import { applyPalette, createUniforms, hexToColor, type BenchUniforms } from './material/uniforms';
 import { KEY_LIGHT } from './Lights';
-import { bedPitch, createOUTexture, configureUniforms, GLErrorBoundary, PaperBackground, bindPaper, CAMERA, BENCH_CENTER, BALANCE_PIVOT_Y } from './Scene';
+import { intro } from './Clocks';
+import { bedPitch, createOUTexture, configureUniforms, GLErrorBoundary, PaperBackground, bindPaper, warmUp, CAMERA, BENCH_CENTER, BALANCE_PIVOT_Y, FADE_MS } from './Scene';
+
+// The warm-up (design §11): nothing shows until the fonts are in and every program is compiled; the fade is 200 ms; T0 is its end.
+describe('warmUp', () => {
+  const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
+
+  function stubs() {
+    const log: string[] = [];
+    const wrapper = { style: { opacity: '0', transition: '' } } as unknown as HTMLElement;
+    const gl = {
+      compileAsync: vi.fn(async (scene: THREE.Object3D, camera: THREE.Camera) => { log.push(`compile ${scene.name} ${camera.name}`); return scene; }),
+      render: vi.fn(() => { log.push(`render at opacity ${wrapper.style.opacity}`); }),
+    } as unknown as THREE.WebGLRenderer;
+    const scene = new THREE.Scene();
+    scene.name = 'bench';
+    const camera = new THREE.PerspectiveCamera();
+    camera.name = 'lens';
+    return { log, wrapper, gl, scene, camera };
+  }
+
+  it('waits for the fonts, compiles the scene, draws one frame still hidden, fades in over 200 ms and only then declares T0', async () => {
+    vi.useFakeTimers();
+    let fontsReady!: () => void;
+    vi.stubGlobal('document', { fonts: { ready: new Promise<void>((resolve) => { fontsReady = resolve; }) } });
+    const { log, wrapper, gl, scene, camera } = stubs();
+    intro.pending = false;
+    try {
+      const done = warmUp({ gl, scene, camera }, wrapper);
+      await flush();
+      expect(log).toEqual([]);                                   // nothing before the fonts
+      expect(wrapper.style.opacity).toBe('0');
+      fontsReady();
+      await flush();
+      expect(log).toEqual(['compile bench lens', 'render at opacity 0']);
+      expect(gl.render).toHaveBeenCalledTimes(1);
+      expect(wrapper.style.transition).toBe(`opacity ${FADE_MS}ms`);
+      expect(wrapper.style.opacity).toBe('1');
+      expect(FADE_MS).toBe(200);
+      expect(intro.pending).toBe(false);
+      await vi.advanceTimersByTimeAsync(FADE_MS - 1);
+      expect(intro.pending).toBe(false);                         // T0 is the end of the fade, not its start
+      await vi.advanceTimersByTimeAsync(1);
+      expect(intro.pending).toBe(true);
+      await done;
+      expect(gl.render).toHaveBeenCalledTimes(1);
+    } finally {
+      intro.pending = false;
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('tolerates a missing wrapper (the error boundary never mounted the canvas div) and still reaches T0', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('document', { fonts: { ready: Promise.resolve() } });
+    const { gl, scene, camera } = stubs();
+    intro.pending = false;
+    try {
+      const done = warmUp({ gl, scene, camera }, null);
+      await flush();
+      await vi.advanceTimersByTimeAsync(FADE_MS);
+      await done;
+      expect(intro.pending).toBe(true);
+    } finally {
+      intro.pending = false;
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+});
 
 describe('bedPitch', () => {
   it('is the quoter bed pitch on desktop and double it on phone, matching the columns the config actually laid out', () => {

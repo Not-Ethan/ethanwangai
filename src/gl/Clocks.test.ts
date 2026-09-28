@@ -15,9 +15,11 @@ import { createUniforms, hexToColor, type BenchUniforms } from './material/unifo
 import { KEY_LIGHT, configureKeyLight } from './Lights';
 import { lightRef, setLightRef, cameraRef } from './registry';
 import { hud } from './hud';
+import { dbso, type DbsoDebug } from './debug';
 import { CameraRig } from './CameraRig';
 import {
-  Clocks, createClocksDriver, stepFrame, isBuilt,
+  Clocks, createClocksDriver, stepFrame, isBuilt, builtOverride, freezeOverride, pinnedCompile,
+  createIntro, intro, startIntro,
   createPaletteLerp, retargetPalette, stepPalette, PALETTE_LERP_S,
   travelAxis, fitShadowCamera, createShadowFit, SHADOW_MARGIN, SHADOW_FIT_TAU, SHADOW_DISTANCE,
   sortedBirths, inkedCount, INK_T, INK_THRESHOLD,
@@ -73,12 +75,16 @@ function expectColorClose(actual: THREE.Color, expected: THREE.Color, tol: numbe
 
 const desktop = buildBench('desktop');
 
-function driver(opts: { tier?: Tier; g?: number; velocity?: number; built?: boolean; reducedMotion?: boolean; theme?: ThemeName } = {}) {
+function driver(opts: { tier?: Tier; g?: number; velocity?: number; built?: boolean; pinned?: number | null; reducedMotion?: boolean; theme?: ThemeName } = {}) {
   const tier = opts.tier ?? 'desktop';
   const result = tier === 'desktop' ? desktop : buildBench(tier);
   const uniforms = createUniforms();
   const scroll = scrollRef(tier, opts.g ?? 0, opts.velocity ?? 0);
-  const d = createClocksDriver({ result, uniforms, tier, scroll, reducedMotion: opts.reducedMotion ?? false, built: opts.built ?? false, theme: opts.theme ?? 'light' });
+  // its own intro, so a test's T0 never leaks into the next; the component shares the module's
+  const d = createClocksDriver({
+    result, uniforms, tier, scroll, reducedMotion: opts.reducedMotion ?? false, built: opts.built ?? false, pinned: opts.pinned ?? null,
+    theme: opts.theme ?? 'light', intro: createIntro(),
+  });
   return { d, result, uniforms, scroll };
 }
 function frames(d: ReturnType<typeof createClocksDriver>, n: number, dt = DT, t0 = 0): number {
@@ -107,6 +113,41 @@ describe('isBuilt', () => {
     expect(isBuilt('')).toBe(false);
     expect(isBuilt('?built=0')).toBe(false);
     expect(isBuilt('?rebuilt=1')).toBe(false);
+  });
+});
+
+describe('query pins', () => {
+  it('builtOverride: ?built=1 and ?built=0 are the two pins; anything else is none', () => {
+    expect(builtOverride('?built=1')).toBe(1);
+    expect(builtOverride('?built=0')).toBe(0);
+    expect(builtOverride('')).toBeNull();
+    expect(builtOverride('?built=2')).toBeNull();
+    expect(builtOverride('?built=')).toBeNull();
+  });
+
+  it('freezeOverride: ?freeze=<s> is seconds after T0, or null when absent, empty, negative or not a number', () => {
+    expect(freezeOverride('?freeze=0.6')).toBe(0.6);
+    expect(freezeOverride('?freeze=0')).toBe(0);
+    expect(freezeOverride('?freeze=3')).toBe(3);
+    expect(freezeOverride('?tier=phone&freeze=1.2')).toBe(1.2);
+    expect(freezeOverride('')).toBeNull();
+    expect(freezeOverride('?freeze=')).toBeNull();
+    expect(freezeOverride('?freeze=-1')).toBeNull();
+    expect(freezeOverride('?freeze=soon')).toBeNull();
+  });
+
+  it('pinnedCompile: built pins first, then the freeze at s / 2.2 clamped to 1, then reduced motion at 1; otherwise the tween runs', () => {
+    expect(pinnedCompile('', false)).toBeNull();
+    expect(pinnedCompile('?built=1', false)).toBe(1);
+    expect(pinnedCompile('?built=0', false)).toBe(0);
+    expect(pinnedCompile('?freeze=0.6', false)).toBeCloseTo(0.6 / TIMING.heroCompileS, 12);
+    expect(pinnedCompile('?freeze=2.2', false)).toBe(1);
+    expect(pinnedCompile('?freeze=3', false)).toBe(1);
+    expect(pinnedCompile('?freeze=0', false)).toBe(0);
+    expect(pinnedCompile('', true)).toBe(1);
+    expect(pinnedCompile('?built=0', true)).toBe(0);         // the query outranks the motion setting
+    expect(pinnedCompile('?freeze=1.1', true)).toBeCloseTo(0.5, 12);
+    expect(pinnedCompile('?built=1&freeze=0.3', false)).toBe(1);
   });
 });
 
@@ -421,8 +462,117 @@ describe('stepFrame', () => {
   });
 });
 
+// The intro (design §3.1): T0 is the frame after startIntro; the quoter's compile is the 2.2 s tween from there, the lever
+// (birth 1) starts dropping at lockStart(1) · 2.2 ≈ 2.05 s and locks at ≈ 2.18 s, which switches the machine on.
+describe('the intro', () => {
+  const LEVER_DROP_S = lockStart(1) * TIMING.heroCompileS;
+  const LOCK_S = (lockStart(1) + TIMING.lockW) * TIMING.heroCompileS;
+
+  beforeEach(() => { dbso.t0 = null; });
+
+  it('starts the hero tween on the frame after startIntro, from 0 on the renderer clock, and records T0 on the wall clock', () => {
+    const { d, uniforms } = driver();
+    frames(d, 30);                                                   // 0.5 s behind the fade: bot pinging, quoter pencil
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);
+    d.intro.pending = true;
+    const before = performance.now();
+    stepFrame(d, DT, 1);                                             // T0 = 1 on the renderer clock
+    expect(d.intro.pending).toBe(false);
+    expect(dbso.t0).not.toBeNull();
+    expect(dbso.t0 as number).toBeGreaterThanOrEqual(before);
+    expect(dbso.t0 as number).toBeLessThanOrEqual(performance.now());
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);
+    stepFrame(d, DT, 2.1);                                           // T0 + 1.1
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBeCloseTo(0.5, 6);
+    expect(hud.compile).toBeCloseTo(0.5, 6);
+    expect(hud.running).toBe(false);
+    expect(uniforms.uMachineTime.value[MACHINE.quoter]).toBe(0);     // assembling still
+    expect(hud.parts).toBeGreaterThan(0);                            // and the ladder ticking
+    expect(hud.parts).toBeLessThan(desktop.counts.byMachine[MACHINE.quoter]);
+  });
+
+  it('the lever drops at ≈ 2.05 s and its lock at ≈ 2.18 s switches the quoter on: impulse, rate spike, run', () => {
+    const { d, uniforms, result } = driver();
+    d.intro.pending = true;
+    stepFrame(d, DT, 0);                                             // T0 = 0
+    const full = result.counts.byMachine[MACHINE.quoter];
+    stepFrame(d, DT, LEVER_DROP_S - 0.01);
+    expect(hud.running).toBe(false);
+    expect(hud.parts).toBeGreaterThan(0.99 * full);                  // the tail of birth order is still turning to ink
+    expect(hud.parts).toBeLessThan(full);
+    stepFrame(d, DT, LOCK_S - 0.01);
+    expect(hud.running).toBe(false);                                 // dropping, already ink, not yet locked
+    expect(hud.parts).toBe(full);
+    stepFrame(d, DT, LOCK_S);
+    expect(hud.running).toBe(true);
+    expect(uniforms.uVel.value).toBeCloseTo(TIMING.impulse, 6);      // the 0.6 impulse on the crossing
+    expect(uniforms.uFillRate.value[MACHINE.quoter]).toBe(3);
+    stepFrame(d, DT, TIMING.heroCompileS);
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(1);
+    expect(hud.parts).toBe(result.counts.byMachine[MACHINE.quoter]);
+    frames(d, 60, DT, TIMING.heroCompileS);
+    expect(uniforms.uMachineTime.value[MACHINE.quoter]).toBeGreaterThan(0.5);   // carriages leave the rail end
+    expect(uniforms.uRun.value[MACHINE.quoter]).toBeGreaterThan(0.9);
+  });
+
+  it('a rebuild sends the quoter back to pencil from wherever it is: run drops as the compile falls below the lock, and it re-locks when the lever lands again', () => {
+    const { d, uniforms } = driver();
+    d.intro.pending = true;
+    const t = frames(d, 240);                                        // 4 s: built and running
+    expect(hud.running).toBe(true);
+    expect(uniforms.uRun.value[MACHINE.quoter]).toBeCloseTo(1, 2);
+    const mtBefore = uniforms.uMachineTime.value[MACHINE.quoter];
+    d.intro.pending = true;                                          // what the dbso:rebuild listener does
+    stepFrame(d, DT, t + DT);
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);
+    expect(hud.running).toBe(false);
+    expect(hud.parts).toBe(0);
+    const t2 = frames(d, 15, DT, t + DT);                            // 0.25 s = one run τ
+    expect(uniforms.uRun.value[MACHINE.quoter]).toBeGreaterThan(0.3);
+    expect(uniforms.uRun.value[MACHINE.quoter]).toBeLessThan(0.4);
+    expect(uniforms.uMachineTime.value[MACHINE.quoter]).toBeGreaterThan(mtBefore);   // decelerates; never rewinds
+    frames(d, Math.ceil((TIMING.heroCompileS - 0.25) / DT) + 2, DT, t2);
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(1);
+    expect(hud.running).toBe(true);                                  // re-locked
+    expect(uniforms.uVel.value).toBeGreaterThan(0.3);                // and the impulse fired again
+  });
+
+  it('?freeze=<s>: the compile holds at s / 2.2 through T0 and every frame after, so a still can be taken there', () => {
+    const { d, uniforms } = driver({ pinned: pinnedCompile('?freeze=0.6', false) });
+    d.intro.pending = true;
+    frames(d, 200);
+    expect(d.intro.pending).toBe(false);
+    expect(dbso.t0).not.toBeNull();
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBeCloseTo(0.6 / TIMING.heroCompileS, 6);
+    expect(hud.running).toBe(false);
+  });
+
+  it('?built=0 pins the hero at 0 whatever startIntro says; reduced motion pins it at 1, built and running from the first frame', () => {
+    const zero = driver({ pinned: 0 });
+    zero.d.intro.pending = true;
+    frames(zero.d, 200);
+    expect(zero.uniforms.uCompile.value[MACHINE.quoter]).toBe(0);
+    const rm = driver({ pinned: 1, reducedMotion: true });
+    stepFrame(rm.d, DT, DT);
+    expect(rm.uniforms.uCompile.value[MACHINE.quoter]).toBe(1);
+    expect(hud.running).toBe(true);
+    expect(rm.uniforms.uCompile.value[MACHINE.intake]).toBe(0);     // only the hero is pinned; the intake still scrubs
+  });
+
+  it('the shared intro is what the component drives, and startIntro only marks it for the next frame', () => {
+    const before = intro.pending;
+    startIntro();
+    expect(intro.pending).toBe(true);
+    intro.pending = before;
+    const { d } = driver();
+    expect(d.intro).not.toBe(intro);
+    expect(createClocksDriver({ result: desktop, uniforms: createUniforms(), tier: 'desktop', scroll: scrollRef('desktop'), reducedMotion: false, built: false, pinned: null, theme: 'light' }).intro).toBe(intro);
+  });
+});
+
 // The component wiring, through R3F's reconciler against a renderer stub: useScroll inside the canvas, the themechange
-// listener, useFrame at −1 before CameraRig at 0, and the debug switch read from location.search.
+// listener, useFrame at −1 before CameraRig at 0, the debug switch read from location.search, window.__dbso and the
+// dbso:rebuild listener.
 describe('<Clocks result uniforms tier /> and <CameraRig /> mounted through R3F', () => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   extend({ Group: THREE.Group });
@@ -444,6 +594,8 @@ describe('<Clocks result uniforms tier /> and <CameraRig /> mounted through R3F'
     mockScroll.state = scrollRef('desktop');
     mockScroll.reducedMotion = false;
     mockScroll.tier = 'desktop';
+    Object.assign(intro, createIntro());   // the module's intro is shared: no T0 from an earlier mount
+    dbso.t0 = null;
   });
 
   async function mount(query: string, uniforms: BenchUniforms = createUniforms()) {
@@ -468,10 +620,48 @@ describe('<Clocks result uniforms tier /> and <CameraRig /> mounted through R3F'
     expect(hud.pose.position).toEqual(expected.position);
     // CameraRig ran after Clocks in the same frame; its orbit round-trips through the lookAt, so compare within an ulp
     camera.position.toArray().forEach((v, k) => expect(v).toBeCloseTo(expected.position[k], 12));
-    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);       // no ?built=1: no intro in Stage 2
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);       // no startIntro yet: the fade has not ended
     expect(uniforms.uTime.value).toBeCloseTo(DT, 9);
     await act(async () => root.unmount());
     expect(cameraRef.current).toBeNull();
+  });
+
+  it('installs window.__dbso with the query pins, and pins the hero where ?freeze says', async () => {
+    const { root, uniforms, advance } = await mount('?freeze=0.6');
+    expect((window as unknown as { __dbso?: DbsoDebug }).__dbso).toBe(dbso);
+    expect(dbso.freeze).toBe(0.6);
+    expect(dbso.built).toBe(false);
+    expect(dbso.t0).toBeNull();
+    startIntro();
+    await advance(DT);
+    expect(dbso.t0).not.toBeNull();
+    await advance(3);
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBeCloseTo(0.6 / TIMING.heroCompileS, 6);
+    await act(async () => root.unmount());
+  });
+
+  it('runs the hero tween from the frame after startIntro, restarts it on dbso:rebuild, and lets go of the listener on unmount', async () => {
+    const { root, uniforms, advance } = await mount('');
+    await advance(DT);
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);
+    startIntro();                                                    // Scene, at the end of the fade
+    await advance(1);                                                // T0 = 1
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);
+    await advance(2.1);
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBeCloseTo(0.5, 6);
+    await advance(4);
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(1);
+    expect(hud.running).toBe(true);
+    win.dispatchEvent(new CustomEvent('dbso:rebuild'));              // the h1 or #rebuild
+    expect(intro.pending).toBe(true);
+    await advance(5);                                                // T0' = 5
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);
+    expect(hud.running).toBe(false);
+    await advance(6.1);
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBeCloseTo(0.5, 6);
+    await act(async () => root.unmount());
+    win.dispatchEvent(new CustomEvent('dbso:rebuild'));
+    expect(intro.pending).toBe(false);                               // unsubscribed
   });
 
   it('?built=1 builds and runs everything from the first frame', async () => {

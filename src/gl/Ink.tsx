@@ -24,6 +24,7 @@ import { createCurlTexture } from './curl';
 import { sampleTextPoints } from './textSampler';
 import { RectTracker, type OffsetElement, type StickyElementSource } from './rects';
 import { hud } from './hud';
+import { dbso } from './debug';
 
 /** Drawn after the kits, never sorted among them. */
 export const INK_RENDER_ORDER = 10;
@@ -98,6 +99,7 @@ export function registerSources(points: InkPoints, tracker: RectTracker): void {
     sources[slot] = stickySource(el);
     if (slot >= PARTITION_COUNT) continue;
     const text = sampleTextPoints(el, words ? el.querySelector<HTMLElement>(words) : null);
+    dbso.samples[slot] = text.count;
     if (text.count === 0) continue;
     writeSpawnUV(spawn.array as Float32Array, points.data.offsets[slot], sizes[slot], text.uv, text.count);
     sampled = true;

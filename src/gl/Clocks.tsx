@@ -1,9 +1,10 @@
 'use client';
 // The per-frame driver (design §8): useFrame at priority −1, before CameraRig. Each frame it reads the scroll refs,
 // evaluates sceneState(g), steps the pure clocks (clocksLogic.ts), and writes every uniform, the pose CameraRig
-// applies, the shadow-camera fit, the 300 ms palette lerp and the hud. No React state is set on this path; every
-// write lands in an object allocated once. stepFrame is the whole frame as a function of (driver, dt, elapsed),
-// so the tests drive it without a renderer.
+// applies, the shadow-camera fit, the 300 ms palette lerp and the hud. It also owns the intro (§3.1): the hero
+// compile is a 2.2 s tween Scene starts at T0, the end of the cross-fade, and the rebuild control restarts. No React
+// state is set on this path; every write lands in an object allocated once. stepFrame is the whole frame as a
+// function of (driver, dt, elapsed), so the tests drive it without a renderer.
 import { useEffect, useMemo, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -14,9 +15,11 @@ import { PALETTES, type Palette, type ThemeName } from '@/theme/palettes';
 import { useScroll, type ScrollState } from '@/scroll/ScrollProvider';
 import { createClockState, stepClocks, type ClockInputs, type ClockState } from './clocksLogic';
 import { applyPalette, type BenchUniforms } from './material/uniforms';
+import { createTween, type Tween } from './tween';
 import { KEY_LIGHT } from './Lights';
 import { lightRef } from './registry';
 import { hud } from './hud';
+import { dbso, exposeDebug } from './debug';
 
 // ---- palette: the 300 ms theme lerp, in linear space through applyPalette ----------------------------------------
 
@@ -137,17 +140,57 @@ export function inkedCount(births: Float64Array, compile: number): number {
   return lo;
 }
 
-// ---- the frame ------------------------------------------------------------------------------------------------------
+// ---- the intro: T0 and the hero compile tween (design §3.1, §8 clock 2) ---------------------------------------------
 
+/** `?built=<0|1>`: 1 pins every compile to 1, 0 pins the hero to 0 so the intro never runs; null when absent or anything else. */
+export function builtOverride(search: string): 0 | 1 | null {
+  const v = new URLSearchParams(search).get('built');
+  return v === '1' ? 1 : v === '0' ? 0 : null;
+}
 /** `?built=1`: every machine built and running from the first frame, so gate stills can be taken at any section. */
 export function isBuilt(search: string): boolean {
-  return new URLSearchParams(search).get('built') === '1';
+  return builtOverride(search) === 1;
 }
+/** `?freeze=<s>`: seconds after T0 to hold the intro at, for the gate stills; null when absent or not a number ≥ 0. */
+export function freezeOverride(search: string): number | null {
+  const v = new URLSearchParams(search).get('freeze');
+  if (v === null || v.trim() === '') return null;
+  const s = Number(v);
+  return Number.isFinite(s) && s >= 0 ? s : null;
+}
+/**
+ * The hero compile the query or the visitor's motion setting pins, or null when the tween runs: `?built=1` → 1,
+ * `?built=0` → 0, `?freeze=<s>` → min(1, s / heroCompileS), reduced motion → 1 (§11: intro skipped, the quoter built).
+ */
+export function pinnedCompile(search: string, reducedMotion: boolean): number | null {
+  const built = builtOverride(search);
+  if (built !== null) return built;
+  const freeze = freezeOverride(search);
+  if (freeze !== null) return Math.min(1, freeze / TIMING.heroCompileS);
+  return reducedMotion ? 1 : null;
+}
+
+export interface Intro { tween: Tween; pending: boolean }
+export function createIntro(): Intro {
+  return { tween: createTween(TIMING.heroCompileS), pending: false };
+}
+/** The page's one intro. It outlives a driver rebuild (a tier change), so a resize mid-visit never sends the quoter back to pencil. */
+export const intro: Intro = createIntro();
+/**
+ * T0: Scene calls this at the end of the cross-fade, and the `dbso:rebuild` listener on every rebuild. The next frame
+ * starts the hero tween from 0 on the renderer's clock and records T0, so the tween's origin is a frame the scene drew.
+ */
+export function startIntro(): void {
+  intro.pending = true;
+}
+
+// ---- the frame ------------------------------------------------------------------------------------------------------
+
 const BUILT: (number | null)[] = new Array<number>(MACHINE_COUNT).fill(1);
 
 export interface ClocksDriver {
   result: LayoutResult; uniforms: BenchUniforms; tier: Tier;
-  scroll: RefObject<ScrollState | null>; reducedMotion: boolean; built: boolean;
+  scroll: RefObject<ScrollState | null>; reducedMotion: boolean; built: boolean; pinned: number | null; intro: Intro;
   clocks: ClockState; scene: SceneState; inputs: ClockInputs; births: Float64Array[];
   fit: ShadowFit; palette: PaletteLerp;
   pos: THREE.Vector3; prevPos: THREE.Vector3; hasPrev: boolean;
@@ -155,10 +198,11 @@ export interface ClocksDriver {
 
 export function createClocksDriver(o: {
   result: LayoutResult; uniforms: BenchUniforms; tier: Tier; scroll: RefObject<ScrollState | null>;
-  reducedMotion: boolean; built: boolean; theme: ThemeName;
+  reducedMotion: boolean; built: boolean; pinned: number | null; theme: ThemeName; intro?: Intro;
 }): ClocksDriver {
   return {
     result: o.result, uniforms: o.uniforms, tier: o.tier, scroll: o.scroll, reducedMotion: o.reducedMotion, built: o.built,
+    pinned: o.pinned, intro: o.intro ?? intro,
     clocks: createClockState(), scene: createSceneState(),
     inputs: { dt: 0, compileTarget: BUILT, heroCompile: 0, visitorCompile: 0, velocity: 0, reducedMotion: o.reducedMotion },
     births: sortedBirths(o.result), fit: createShadowFit(), palette: createPaletteLerp(o.uniforms, o.theme),
@@ -173,10 +217,17 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
   const dt = Math.min(0.05, Math.max(0, delta));
   const s = sceneState(sc.g, sc.ranges, d.tier, d.scene);
 
+  const it = d.intro;
+  if (it.pending) {
+    it.pending = false;
+    it.tween.start(elapsed, 0, 1);
+    dbso.t0 = performance.now();
+  }
+
   const i = d.inputs;
   i.dt = dt;
   i.compileTarget = d.built ? BUILT : s.compileTarget;
-  i.heroCompile = d.built ? 1 : 0;
+  i.heroCompile = d.pinned ?? it.tween.value(elapsed);
   i.visitorCompile = 0;
   i.velocity = sc.velocity;
   i.reducedMotion = d.reducedMotion;
@@ -217,10 +268,12 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
 
 export function Clocks({ result, uniforms, tier }: { result: LayoutResult; uniforms: BenchUniforms; tier: Tier }) {
   const { state: scroll, reducedMotion } = useScroll();
-  const driver = useMemo(
-    () => createClocksDriver({ result, uniforms, tier, scroll, reducedMotion, built: isBuilt(window.location.search), theme: readTheme() }),
-    [result, uniforms, tier, scroll, reducedMotion],
-  );
+  const driver = useMemo(() => {
+    const search = window.location.search;
+    return createClocksDriver({
+      result, uniforms, tier, scroll, reducedMotion, built: isBuilt(search), pinned: pinnedCompile(search, reducedMotion), theme: readTheme(),
+    });
+  }, [result, uniforms, tier, scroll, reducedMotion]);
 
   // ThemeProvider sets data-theme, then dispatches `themechange`; the attribute is the one source both layers read.
   useEffect(() => {
@@ -228,6 +281,19 @@ export function Clocks({ result, uniforms, tier }: { result: LayoutResult; unifo
     window.addEventListener('themechange', onTheme);
     return () => window.removeEventListener('themechange', onTheme);
   }, [driver]);
+
+  // The debug record (debug.ts) and the rebuild control: Sentence dispatches `dbso:rebuild` from the h1 and #rebuild,
+  // and the next frame restarts the hero tween from 0; the quoter's run drops as its compile falls below the lock and
+  // re-locks when the lever lands again.
+  useEffect(() => {
+    const search = window.location.search;
+    dbso.built = isBuilt(search);
+    dbso.freeze = freezeOverride(search);
+    exposeDebug();
+    const onRebuild = () => startIntro();
+    window.addEventListener('dbso:rebuild', onRebuild);
+    return () => window.removeEventListener('dbso:rebuild', onRebuild);
+  }, []);
 
   useFrame((state, delta) => stepFrame(driver, delta, state.clock.elapsedTime), -1);
   return null;
