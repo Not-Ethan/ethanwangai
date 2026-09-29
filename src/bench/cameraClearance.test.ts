@@ -137,12 +137,26 @@ describe('desktop clearance at the dwells (aspect 1.6)', () => {
     expect(elevationDeg(poseAt(6, 0.7, 'desktop')), 'elevation').toBeGreaterThanOrEqual(45);
   });
 
-  it('alive (7, 0.8): the whole bench in frame, mostly right of the copy column, the small machines large in front of the quoter', () => {
-    const all = at(7, 0.8, ALL);
-    expect(all.left).toBeGreaterThanOrEqual(-0.30);
-    expect(inFrame(all), 'bench in frame').toBe(true);
-    expect(height(at(7, 0.8, SMALL)), 'small machines height').toBeGreaterThanOrEqual(0.45);
-    expect(intersectsFrame(at(7, 0.8, [quoter])), 'quoter intersects the frame').toBe(true);
+  it('alive (7, 0.8): pulled back and around to a front-right 3/4; the small machines large in front, every machine clear of the copy column; the quoter the wall behind', () => {
+    // Gate G4 (spec §3.1 · 08). With the whole bench in frame the front row (balance to slot, 13 units along x) had to
+    // span the right 58% of the width, which held the small machines to 0.72 of the height and let the balance and the
+    // intake reach under the h2. From 45–65° round the row recedes toward the copy column instead: every machine but
+    // the quoter is whole in frame and right of the column (08's copy is pinned through this dwell), the small
+    // machines span most of the height, and the quoter rises behind the front row and runs out of the right edge.
+    const pose = poseAt(7, 0.8, 'desktop');
+    const names: Record<number, string> = { [intake]: 'intake', [balance]: 'balance', [splitter]: 'splitter', [watch]: 'watch', [bot]: 'bot', [slot]: 'slot' };
+    for (const m of [intake, balance, splitter, watch, bot, slot]) expect(inFrame(at(7, 0.8, [m])), `${names[m]} in frame`).toBe(true);
+    expect(at(7, 0.8, ALL).left, 'bench left').toBeGreaterThanOrEqual(-0.16);
+    expect(height(at(7, 0.8, SMALL)), 'small machines height').toBeGreaterThanOrEqual(1.1);
+    for (const m of SMALL) expect(height(at(7, 0.8, [m])), `${names[m]} height`).toBeGreaterThanOrEqual(0.2);
+    const q = at(7, 0.8, [quoter]);
+    expect(q.right, 'quoter runs out of the right edge').toBeGreaterThan(1);
+    expect(Math.min(q.right, 1) - Math.max(q.left, -1), 'quoter visible width').toBeGreaterThanOrEqual(0.9);
+    expect(q.top - at(7, 0.8, [splitter, watch]).top, 'quoter above the front row').toBeGreaterThanOrEqual(0.3);
+    expect(azimuthDeg(pose), 'azimuth').toBeGreaterThanOrEqual(-65);
+    expect(azimuthDeg(pose), 'azimuth').toBeLessThanOrEqual(-45);
+    expect(elevationDeg(pose), 'elevation').toBeGreaterThanOrEqual(15);
+    expect(elevationDeg(pose), 'elevation').toBeLessThanOrEqual(30);
   });
 
   it('yours (8, 0.6): the slot from low down (under 20°), clear of the copy column and legible', () => {
