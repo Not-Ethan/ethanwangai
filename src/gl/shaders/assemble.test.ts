@@ -153,9 +153,17 @@ describe('shader constants match the configs', () => {
   it('the slot bar (machine 6) scans on uSlotPhase, the phase Clocks integrates, never on mt / uSlotPeriod', () => {
     // The slot has no lever, so its mt runs from load; dividing it by a period that changes per keystroke jumps the bar.
     expect(KIND_SCAN).toContain('float phase = (m == 6) ? uSlotPhase : mt / aParam.y;');
-    expect(KIND_SCAN).toContain('float tri = abs(fract(phase) * 2.0 - 1.0);');
+    expect(KIND_SCAN).toContain('float tri = 1.0 - abs(fract(phase) * 2.0 - 1.0);');
     expect(KIND_SCAN).not.toMatch(/mt\s*\/\s*uSlotPeriod/);
     expect(KIND_SCAN).not.toMatch(/\?\s*uSlotPeriod/);
+  });
+
+  it('a rail parks at its −x end (tri 0 at phase 0), next to the watch\'s lever, and the hot ring follows the same wave', () => {
+    // Task 5.0: abs(fract(x) * 2 − 1) is 1 at x = 0, so a watch whose clock had not started parked its rail at the +x end,
+    // away from the lever. Both triangle waves start at 0: the rail's offset and the column the hot ring reads.
+    expect(KIND_SCAN).toContain('float tri = 1.0 - abs(fract(phase) * 2.0 - 1.0);');
+    expect(KIND_SCAN).toContain('float tri = 1.0 - abs(fract(mt / period) * 2.0 - 1.0);');
+    expect(KIND_SCAN.match(/float tri = /g)).toHaveLength(2);
   });
 
   it('the field cells\' hot-ring period is the watch rail\'s sweep period on both tiers', () => {
