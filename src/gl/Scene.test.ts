@@ -2,10 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { act, createElement } from 'react';
 import * as THREE from 'three';
 import { createRoot, extend } from '@react-three/fiber';
-import { KIND, MACHINE, type Tier } from '@/bench/types';
+import { KIND, MACHINE } from '@/bench/types';
 import { buildBench } from '@/bench/counts';
 import { hashString } from '@/bench/hash';
-import { BENCH_SEED_TEXT } from '@/bench/bench';
+import { BENCH_SEED_TEXT, PLACEMENT } from '@/bench/bench';
+import { POST_H } from '@/bench/configs/balance';
 import { OU, generateOU } from '@/bench/ou';
 import { QUOTER_BED } from '@/bench/configs/quoter';
 import { TIMING } from '@/bench/timing';
@@ -13,7 +14,7 @@ import { PALETTES } from '@/theme/palettes';
 import { applyPalette, createUniforms, hexToColor, type BenchUniforms } from './material/uniforms';
 import { KEY_LIGHT } from './Lights';
 import { intro } from './Clocks';
-import { bedPitch, createOUTexture, configureUniforms, GLErrorBoundary, PaperBackground, bindPaper, warmUp, CAMERA, BENCH_CENTER, BALANCE_PIVOT_Y, FADE_MS } from './Scene';
+import { bedPitch, createOUTexture, configureUniforms, GLErrorBoundary, PaperBackground, bindPaper, warmUp, CAMERA, BENCH_CENTER, FADE_MS } from './Scene';
 
 // The warm-up (design §11): nothing shows until the fonts are in and every program is compiled; the fade is 200 ms; T0 is its end.
 describe('warmUp', () => {
@@ -136,10 +137,9 @@ describe('configureUniforms', () => {
   const desktop = buildBench('desktop');
   const ou = createOUTexture();
 
-  it('sets the tier\'s bed pitch, the unit key direction, the bench centre, the balance pivot and the OU texture', () => {
+  it('sets the tier\'s bed pitch, the unit key direction, the bench centre and the OU texture', () => {
     for (const tier of ['desktop', 'phone'] as const) {
-      const result = tier === 'desktop' ? desktop : buildBench(tier as Tier);
-      const u = configureUniforms(createUniforms(), tier, result, ou);
+      const u = configureUniforms(createUniforms(), tier, ou);
       expect(u.uPitch.value, tier).toBe(bedPitch(tier));
       const key = new THREE.Vector3(...KEY_LIGHT.position).normalize();
       expect(u.uKeyDir.value.length()).toBeCloseTo(1, 12);
@@ -150,23 +150,21 @@ describe('configureUniforms', () => {
     }
   });
 
-  it('puts the balance pivot at the machine centroid\'s x/z and the rail\'s height: (−4.2, 0.9, 4.6)', () => {
-    const u = configureUniforms(createUniforms(), 'desktop', desktop, ou);
-    const c = desktop.machines[MACHINE.balance].centroid;
-    expect(u.uBalancePivot.value.x).toBe(c[0]);
-    expect(u.uBalancePivot.value.z).toBe(c[2]);
-    expect(u.uBalancePivot.value.y).toBe(BALANCE_PIVOT_Y);
-    expect(u.uBalancePivot.value.x).toBeCloseTo(-4.2, 2);
-    expect(u.uBalancePivot.value.y).toBe(0.9);
-    expect(u.uBalancePivot.value.z).toBeCloseTo(4.6, 2);
+  it('leaves the balance pivot on the post top the registry starts with, (−4.2, 0.9, 4.6), not the machine\'s centroid', () => {
+    const u = configureUniforms(createUniforms(), 'desktop', ou);
+    const o = PLACEMENT[MACHINE.balance].origin;
+    expect(u.uBalancePivot.value.toArray()).toEqual([o[0], POST_H, o[2]]);
+    expect(u.uBalancePivot.value.toArray()).toEqual([-4.2, 0.9, 4.6]);
+    // the lever sits off the post, so the centroid is not the pivot
+    expect(desktop.machines[MACHINE.balance].centroid[0]).not.toBe(o[0]);
     // 0.9 is the config's post height: the tilting rail's centre line in bench space
     const rail = desktop.parts.find((p) => p.machine === MACHINE.balance && p.module === 'rail');
     expect(rail?.kind).toBe(KIND.tilt);
-    expect(rail?.position[1]).toBe(BALANCE_PIVOT_Y);
+    expect(rail?.position).toEqual([o[0], POST_H, o[2]]);
   });
 
   it('leaves the registry\'s own constants in place', () => {
-    const u = configureUniforms(createUniforms(), 'desktop', desktop, ou);
+    const u = configureUniforms(createUniforms(), 'desktop', ou);
     expect(u.uOUInfo.value.toArray()).toEqual([256, 2048, 48, 8]);
     expect(u.uLock.value.toArray()).toEqual([TIMING.lock0, TIMING.lockSpan, TIMING.lockW]);
     expect(u.uCellH.value).toBe(0.4);

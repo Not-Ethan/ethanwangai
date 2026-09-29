@@ -7,6 +7,7 @@ import { PALETTES, type Palette } from '@/theme/palettes';
 import { MACHINE_COUNT, MACHINE } from '@/bench/types';
 import { OU } from '@/bench/ou';
 import { QUOTER_BED } from '@/bench/configs/quoter';
+import { POST_H as BALANCE_POST_H } from '@/bench/configs/balance';
 import { TIMING } from '@/bench/timing';
 import { PLACEMENT } from '@/bench/bench';
 import { BAND_ROWS } from '@/gl/inkGeometry';
@@ -28,7 +29,7 @@ export interface BenchUniforms {
   uPitch: { value: number };                // quoter bed pitch (desktop; phone doubles it)
   uTravelAxis: { value: THREE.Vector3 };    // unit camera travel axis for velocity stretch
   uBenchCenter: { value: THREE.Vector3 };
-  uBalancePivot: { value: THREE.Vector3 };  // bench-space point the balance rail tilts about
+  uBalancePivot: { value: THREE.Vector3 };  // bench-space point the balance rail tilts about: the post top
   uSlotPeriod: { value: number };           // scanning-bar period, reseeded per keystroke
   uLock: { value: THREE.Vector3 };          // lock0, lockSpan, lockW
   uKeyDir: { value: THREE.Vector3 };        // unit light direction for three-tone key faces
@@ -103,7 +104,7 @@ function bandRows(): Float32Array {
 
 /** A fresh registry, parked and on the light palette. Clocks.ts, Kits.tsx, Ink.tsx and CameraRig.tsx write the rest. */
 export function createUniforms(): BenchUniforms {
-  const balance = PLACEMENT[MACHINE.balance].origin;   // the balance post stands at its local origin
+  const balance = PLACEMENT[MACHINE.balance].origin;   // the balance post stands at its local origin, the rail on its top
   const u: BenchUniforms = {
     uCompile: { value: new Float32Array(MACHINE_COUNT) },
     uMachineTime: { value: new Float32Array(MACHINE_COUNT) },
@@ -121,7 +122,7 @@ export function createUniforms(): BenchUniforms {
     uPitch: { value: QUOTER_BED.pitch },
     uTravelAxis: { value: new THREE.Vector3(1, 0, 0) },   // the bed axis, which the hero impulse stretches along
     uBenchCenter: { value: new THREE.Vector3() },
-    uBalancePivot: { value: new THREE.Vector3(balance[0], balance[1], balance[2]) },
+    uBalancePivot: { value: new THREE.Vector3(balance[0], balance[1] + BALANCE_POST_H, balance[2]) },
     uSlotPeriod: { value: SLOT_SCAN_PERIOD_S },
     uLock: { value: new THREE.Vector3(TIMING.lock0, TIMING.lockSpan, TIMING.lockW) },
     uKeyDir: { value: new THREE.Vector3(-1, 1, 1).normalize() },   // upper-left-front, matching the key light

@@ -410,6 +410,19 @@ describe('stepFrame', () => {
     expect(hud.pose.lookAt).toEqual(expectedPose.lookAt);
   });
 
+  it('writes the balance tilt from the clock spring every frame: level while parked, tipping left once it runs', () => {
+    const parked = driver();
+    frames(parked.d, 120);
+    expect(parked.uniforms.uTilt.value).toBe(0);
+    const { d, uniforms } = driver({ built: true });
+    let t = 0;
+    for (let i = 0; i < 180; i++) {
+      stepFrame(d, DT, (t += DT));
+      expect(uniforms.uTilt.value).toBe(d.clocks.tilt);
+    }
+    expect(uniforms.uTilt.value).toBeGreaterThan(0);   // 3 s into the game clock: liability tiles on the left, rail tipped left
+  });
+
   it('leaves the shadow camera alone when the light casts none (phone)', () => {
     const { d, scroll } = driver({ tier: 'phone' });
     scroll.current.g = gAt(scroll.current.ranges, 4, 0.5);

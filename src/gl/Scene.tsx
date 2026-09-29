@@ -10,7 +10,7 @@ import { Component, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode 
 import { Canvas, useThree, type RootState } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
-import { MACHINE, type LayoutResult, type Tier, type Vec3 } from '@/bench/types';
+import type { Tier, Vec3 } from '@/bench/types';
 import { buildBench } from '@/bench/counts';
 import { hashString } from '@/bench/hash';
 import { BENCH_SEED_TEXT } from '@/bench/bench';
@@ -40,8 +40,6 @@ const SHADOW_MAP = { type: THREE.PCFShadowMap } as const;
 const CAMERA_OPTIONS = { ...CAMERA, position: hud.pose.position as [number, number, number] };
 // The wrapper's rendered style never changes, so React never writes it again and the opacity warmUp sets stays.
 const HIDDEN = { opacity: 0 } as const;
-/** POST_H in src/bench/configs/balance.ts: the rail's centre line, which the balance tilts about. */
-export const BALANCE_PIVOT_Y = 0.9;
 
 /** The quoter bed pitch for the tier: quoter.ts halves the columns on phone, which doubles the pitch (0.15 → 0.30). */
 export function bedPitch(tier: Tier): number {
@@ -58,13 +56,14 @@ export function createOUTexture(seed: number = hashString(BENCH_SEED_TEXT)): THR
   return tex;
 }
 
-/** The registry entries Scene owns: the tier's bed pitch, the key direction, the bench centre, the balance pivot, the OU texture. */
-export function configureUniforms(u: BenchUniforms, tier: Tier, result: LayoutResult, ou: THREE.Texture): BenchUniforms {
+/**
+ * The registry entries Scene owns: the tier's bed pitch, the key direction, the bench centre, the OU texture. The balance
+ * pivot is the registry's own constant (the post top, uniforms.ts), not the machine's centroid, which the lever pulls off the post.
+ */
+export function configureUniforms(u: BenchUniforms, tier: Tier, ou: THREE.Texture): BenchUniforms {
   u.uPitch.value = bedPitch(tier);
   u.uKeyDir.value.set(...KEY_LIGHT.position).normalize();
   u.uBenchCenter.value.set(...BENCH_CENTER);
-  const c = result.machines[MACHINE.balance].centroid;
-  u.uBalancePivot.value.set(c[0], BALANCE_PIVOT_Y, c[2]);
   u.uOU.value = ou;
   return u;
 }
@@ -119,7 +118,7 @@ export function Scene() {
   const result = useMemo(() => buildBench(tier), [tier]);
   const ou = useMemo(() => createOUTexture(), []);
   const ouData = ou.image.data as Uint8Array;   // the tape the shader samples, which Hover's readout reads on the CPU
-  const u = useMemo(() => configureUniforms(createUniforms(), tier, result, ou), [tier, result, ou]);
+  const u = useMemo(() => configureUniforms(createUniforms(), tier, ou), [tier, ou]);
   useEffect(() => () => ou.dispose(), [ou]);
   const wrapper = useRef<HTMLDivElement>(null);
 

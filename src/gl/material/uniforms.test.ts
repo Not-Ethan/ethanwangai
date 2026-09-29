@@ -5,6 +5,9 @@ import { OU } from '@/bench/ou';
 import { QUOTER_BED } from '@/bench/configs/quoter';
 import { TIMING } from '@/bench/timing';
 import { BAND_ROWS } from '@/gl/inkGeometry';
+import { PLACEMENT } from '@/bench/bench';
+import { MACHINE } from '@/bench/types';
+import { buildBench } from '@/bench/counts';
 import { createUniforms, applyPalette, hexToColor, type BenchUniforms } from './uniforms';
 
 /** Palette key → uniform name, the eight colors the shaders consume (`ink` is the type color and the ink dots'). */
@@ -50,6 +53,17 @@ describe('createUniforms', () => {
     expect(u.uLock.value.toArray()).toEqual([TIMING.lock0, TIMING.lockSpan, TIMING.lockW]);
     expect(u.uTravelAxis.value.length()).toBeCloseTo(1);
     expect(u.uKeyDir.value.length()).toBeCloseTo(1);
+  });
+
+  it('pivots the balance at its post top: the placement origin\'s x/z at the rail\'s height, (−4.2, 0.9, 4.6)', () => {
+    const o = PLACEMENT[MACHINE.balance].origin;
+    const rail = buildBench('desktop').parts.find((p) => p.machine === MACHINE.balance && p.module === 'rail');
+    expect(u.uBalancePivot.value.toArray()).toEqual([o[0], rail?.position[1], o[2]]);
+    expect(u.uBalancePivot.value.toArray()).toEqual([-4.2, 0.9, 4.6]);
+  });
+
+  it('scans the slot every 3 s until a keystroke reseeds it', () => {
+    expect(u.uSlotPeriod.value).toBe(3);
   });
 
   it('starts on the light palette', () => {

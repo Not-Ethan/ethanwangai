@@ -3,7 +3,7 @@ import { bar, tile } from './helpers';
 
 // Heron: liability tiles stack on the left end, hedge tiles on the right until the rail re-levels.
 // The post stands at the local origin; the rail and everything on it tilt about the post (pivot x = 0).
-const POST_H = 0.9;                     // post top; the rail's centre line
+export const POST_H = 0.9;              // post top; the rail's centre line, which the rail and its tiles tilt about
 const RAIL_HALF = 1.4;                  // the rail runs x ±1.4
 const TRAY_X = 1.3;                     // stack and tray centre on each end
 const TRAY_HALF = 0.17;                 // tray square half-size: a lip just wider than a 0.2 tile

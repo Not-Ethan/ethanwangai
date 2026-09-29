@@ -1,12 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { ShaderChunk } from 'three';
+import { Matrix3, Matrix4, Quaternion, ShaderChunk, Vector3 } from 'three';
 import { assembleVertex, assembleFragment } from './assemble';
 import { KIND_LANE } from './kinds/lane.glsl';
 import { KIND_SCAN } from './kinds/scan.glsl';
+import { KIND_TILT } from './kinds/tilt.glsl';
+import { KIND_STACK } from './kinds/stack.glsl';
 import { SPLITTER } from '@/bench/configs/splitter';
 import { WATCH } from '@/bench/configs/watch';
 import { SLOT } from '@/bench/configs/slot';
+import { BALANCE, POST_H } from '@/bench/configs/balance';
 import { KIND, PRIMITIVE, type BuildContext, type PartSpec, type Vec3 } from '@/bench/types';
 import { mulberry32 } from '@/bench/hash';
 
@@ -152,6 +155,57 @@ describe('shader constants match the configs', () => {
     for (const ctx of [desktop, phone]) {
       const rail = WATCH.build(ctx).find((p) => p.kind === KIND.scan && p.primitive === PRIMITIVE.bar)!;
       expect(rail.param[1], ctx.tier).toBe(literals[0]);
+    }
+  });
+});
+
+// kind_tilt, mirrored line for line: M = mat3(instanceMatrix), s2 its squared column lengths, R = rotZ(uTilt).
+//   rel = instanceMatrix[3].xyz − uBalancePivot + M·p;  world += R·rel − rel;  n = transpose(M)·(R·(M·(n / s2)))
+// The lit program then takes the normal to bench space as M·(n / s2) (assemble.ts, LOCAL_TRANSFORM).
+describe('kind_tilt: the rail and its trays turn rigidly about the balance pivot, as the tiles riding them do', () => {
+  const ctx: BuildContext = { tier: 'desktop', rng: mulberry32(1), density: 1, caps: true };
+  const tilting = BALANCE.build(ctx).filter((p) => p.kind === KIND.tilt);
+  const pivot = new Vector3(0, POST_H, 0);   // machine space: the post top
+  const tilt = 0.12;
+  const R = new Matrix4().makeRotationZ(tilt);
+  const R3 = new Matrix3().setFromMatrix4(R);
+  // the bar primitive's box corners and face normals (kitGeometry.ts: 1 × 0.12 × 0.12)
+  const corners = [-1, 1].flatMap((x) => [-1, 1].flatMap((y) => [-1, 1].map((z) => new Vector3(0.5 * x, 0.06 * y, 0.06 * z))));
+  const normals = ([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]] as Vec3[]).map((n) => new Vector3(...n));
+
+  it('turns in bench space about uBalancePivot through the instance matrix, never in the part\'s own frame', () => {
+    const src = normalise(KIND_TILT);
+    expect(src).toContain('rotZ(uTilt)');
+    expect(src).toContain('vec3rel=instanceMatrix[3].xyz-uBalancePivot+M*p;');
+    expect(src).toContain('world+=R*rel-rel;');
+    expect(src).toContain('n=transpose(M)*(R*(M*(n/s2)));');
+    expect(src).not.toContain('p=R*p');
+    // the tiles ride the same pivot and the same angle
+    expect(normalise(KIND_STACK)).toContain('rest-uBalancePivot');
+    expect(normalise(KIND_STACK)).toContain('rotZ(uTilt)');
+  });
+
+  it('lands every corner of the rail and the eight tray bars on the rigid turn about the post top, with normals to match', () => {
+    expect(tilting.map((p) => p.module)).toEqual(['rail', ...Array(4).fill('tray-left'), ...Array(4).fill('tray-right')]);
+    for (const part of tilting) {
+      const inst = new Matrix4().compose(new Vector3(...part.position), new Quaternion(...part.quaternion), new Vector3(...part.scale));
+      const M = new Matrix3().setFromMatrix4(inst);
+      const e = M.elements;   // column-major: column i is e[3i..3i+2]
+      const s2 = new Vector3(e[0] ** 2 + e[1] ** 2 + e[2] ** 2, e[3] ** 2 + e[4] ** 2 + e[5] ** 2, e[6] ** 2 + e[7] ** 2 + e[8] ** 2);
+      const rest = new Vector3().setFromMatrixPosition(inst);
+      for (const p of corners) {
+        const rel = rest.clone().sub(pivot).add(p.clone().applyMatrix3(M));
+        const world = rel.clone().applyMatrix3(R3).sub(rel);
+        const got = p.clone().applyMatrix4(inst).add(world);
+        const want = p.clone().applyMatrix4(inst).sub(pivot).applyMatrix4(R).add(pivot);
+        expect(got.distanceTo(want), `${part.module} corner`).toBeLessThan(1e-9);
+      }
+      for (const n of normals) {
+        const nk = n.clone().divide(s2).applyMatrix3(M).applyMatrix3(R3).applyMatrix3(M.clone().transpose());
+        const got = nk.divide(s2).applyMatrix3(M).normalize();
+        const want = n.clone().divide(s2).applyMatrix3(M).normalize().applyMatrix3(R3);
+        expect(got.distanceTo(want), `${part.module} normal`).toBeLessThan(1e-9);
+      }
     }
   });
 });
