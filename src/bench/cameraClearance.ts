@@ -8,11 +8,11 @@ import type { Pose } from './camera';
 /** NDC box, x right and y up, of projected rest positions; the frame is [−1, 1] on both axes. */
 export interface NdcBounds { left: number; right: number; top: number; bottom: number }
 
-/** The poses the clearance test checks: the hero and its risen end, then one dwell per section. */
+/** The poses the clearance test checks: the hero and its risen end, then one dwell per section (two for 02 and 09). */
 export const DWELL: Array<{ section: number; u: number }> = [
   { section: 0, u: 0 }, { section: 0, u: 1 }, { section: 1, u: 0.5 }, { section: 2, u: 0.30 }, { section: 2, u: 0.85 },
   { section: 3, u: 0.6 }, { section: 4, u: 0.7 }, { section: 5, u: 0.7 }, { section: 6, u: 0.7 }, { section: 7, u: 0.8 },
-  { section: 8, u: 0.6 },
+  { section: 8, u: 0.25 }, { section: 8, u: 0.6 },
 ];
 
 /** The Scene canvas's clip planes (CAMERA in src/gl/Scene.tsx); the projection matrix needs them, the bounds barely do. */

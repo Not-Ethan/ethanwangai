@@ -158,7 +158,7 @@ describe('camera', () => {
     expect(out.fov).toBe(30);
     // after the last key
     evaluatePose(8, 1, 'desktop', out);
-    expect(out.position).toEqual([6.5, 4.4, 15.6]);
+    expect(out.position).toEqual([12.0, 2.5, 8.75]);
   });
 
   it('phone keys: fov 38, the same key times as desktop, the hero held while the copy is sticky', () => {

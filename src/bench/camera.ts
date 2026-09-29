@@ -19,7 +19,9 @@ export interface CameraKey { section: number; u: number; pose: Pose }
 // and around to a 3/4 from front-right (55° round, 24° up; re-authored at gate G4) so the front row recedes toward the
 // copy column instead of spanning the frame: splitter, watch and slot large in front, the balance and the bot past
 // them, every machine clear of the copy column, the quoter the wall behind running out of the right edge; a drop to
-// the slot (18°). 57 units.
+// the slot, low (13°) from its front-right and nearly along the front row (75° round; re-authored in Task 5.0), so the
+// slot is large in front and the rest of the bench recedes behind it to the right, the balance its left end, clear of
+// 09's copy column, and the quoter runs out of the right edge. 59 units.
 const D: CameraKey[] = [
   { section: 0, u: 0.00, pose: { position: [-9.9, 18.2, 20.5], lookAt: [-4.8, 4.3, -3.2], fov: 30 } },   // hero: quoter lower-right, its top at the deck, tight to the right edge; intake below the copy block; small machines cropped at the bottom edge
   { section: 0, u: 0.15, pose: { position: [-9.9, 18.2, 20.5], lookAt: [-4.8, 4.3, -3.2], fov: 30 } },   // hold while the copy is sticky
@@ -40,8 +42,8 @@ const D: CameraKey[] = [
   { section: 6, u: 1.00, pose: { position: [5.0, 9.3, 14.8], lookAt: [1.2, -1.5, 5.3], fov: 30 } },
   { section: 7, u: 0.60, pose: { position: [13.2, 8.0, 16.4], lookAt: [-0.9, 0.3, 6.4], fov: 30 } },     // poster: small machines large in front, the quoter the wall behind
   { section: 7, u: 1.00, pose: { position: [13.2, 8.0, 16.4], lookAt: [-0.9, 0.3, 6.4], fov: 30 } },
-  { section: 8, u: 0.25, pose: { position: [6.5, 4.4, 15.6], lookAt: [2.6, 0.9, 5.8], fov: 30 } },       // low on the slot
-  { section: 8, u: 1.00, pose: { position: [6.5, 4.4, 15.6], lookAt: [2.6, 0.9, 5.8], fov: 30 } },
+  { section: 8, u: 0.25, pose: { position: [12.0, 2.5, 8.75], lookAt: [-2.0, -0.8, 5.0], fov: 30 } },   // low at the slot's front-right: the slot large in front, the bench behind it to the right
+  { section: 8, u: 1.00, pose: { position: [12.0, 2.5, 8.75], lookAt: [-2.0, -0.8, 5.0], fov: 30 } },
 ];
 
 // Phone, fov 38, portrait: the frame is 2.7× narrower than desktop's, so each section's machine is framed whole

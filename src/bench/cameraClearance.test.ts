@@ -203,11 +203,14 @@ describe('desktop clearance at the dwells (aspect 1.6)', () => {
     expect(elevationDeg(pose), 'elevation').toBeLessThanOrEqual(30);
   });
 
-  it('yours (8, 0.6): the slot from low down (under 20°), clear of the copy column and legible', () => {
-    const s = at(8, 0.6, [slot]);
-    expect(s.left).toBeGreaterThanOrEqual(-0.12);
-    expect(width(s)).toBeGreaterThanOrEqual(0.2);
-    expect(elevationDeg(poseAt(8, 0.6, 'desktop')), 'elevation').toBeLessThanOrEqual(20);
+  it('yours (8, 0.25) and (8, 0.6): the slot from low down (under 20°) and legible, every machine clear of the copy column', () => {
+    // Task 5.0. From the old pose the quoter filled the frame behind 09's heading, which is pinned from the camera's
+    // arrival (0.25) through the dwell (0.6): clearing the slot alone left the rest of the bench under the copy.
+    for (const u of [0.25, 0.6]) {
+      expect(at(8, u, ALL).left, `(8, ${u}) bench left`).toBeGreaterThanOrEqual(-0.12);
+      expect(width(at(8, u, [slot])), `(8, ${u}) slot width`).toBeGreaterThanOrEqual(0.2);
+      expect(elevationDeg(poseAt(8, u, 'desktop')), `(8, ${u}) elevation`).toBeLessThanOrEqual(20);
+    }
   });
 });
 
