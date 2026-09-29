@@ -63,3 +63,19 @@ One decision for this stage: the og image is rendered by Next's `ImageResponse` 
 
 - [ ] **Step 1:** `npm run check:emit` passes (generated files are current); `npm run build` succeeds (the `prebuild` emit runs and produces no diff).
 - [ ] **Step 2:** The orchestrator judges the G6 stills: each tier reads as a complete site. **Commit** fixes.
+
+---
+
+### Task 5.0: Fixes from the G3/G4 stills (added after judging Stage 4) **[parallel-safe with 5.1 only]**
+
+G3 and G4 passed. These are the defects the stills and reviewers surfaced; one task, one commit per item is fine.
+
+**Files:** `src/bench/camera.ts`, `src/bench/cameraClearance.test.ts`, `src/site/chrome/Nav.tsx`, `src/app/globals.css`, `src/gl/shaders/kinds/scan.glsl.ts`, `src/gl/shaders/ink.vert.ts` (+ its test), `src/site/chrome/hudSync.ts`, `src/gl/Clocks.tsx`, `src/gl/hud.ts`
+
+- [ ] **Step 1: Yours pose clears the copy column.** At `(8, 0.6)` and `(8, 0.25)` the quoter fills the frame behind the heading. Extend `cameraClearance.test.ts`: at both `(8, 0.25)` and `(8, 0.6)` the union bbox of **all** machines has `left ≥ −0.12`, the slot bbox width ≥ 0.2, elevation ≤ 20°. Re-author the section-8 keys (low, front-right, the slot large, the quoter behind it to the right) until green; keep the 60-unit path budget and every other assertion green.
+- [ ] **Step 2: Nav background.** Give the fixed `<header>` a solid paper background the full width and its own height (`bg-paper`), no border, so copy scrolling under it is hidden instead of crossing the nav text. On phones the same.
+- [ ] **Step 3: Copy blocks fit the viewport.** With Playwright at 1440 × 900 and 1280 × 720, for every section's sticky block (`.copy-col`), `getBoundingClientRect().height ≤ innerHeight − 112` at its dwell. Where it fails (kalshi at least), shrink the oversized mono figures and the h2 with viewport-height-aware clamps in `globals.css` (`.mono-figure { font-size: clamp(2rem, min(5vw, 7vh), 4.5rem) }`, `.h2 { font-size: clamp(1.7rem, min(4.2vw, 5.6vh), 3.6rem) }`) and tighten the figure spacing; re-measure. Record the final heights per section in the report.
+- [ ] **Step 4: Watch rail parks by its lever.** In `scan.glsl.ts` the triangle wave is 1 at `mt = 0`, so the rail parks at the +x end; change both `tri` lines to `1.0 − abs(fract(mt / period) * 2.0 − 1.0)` so it parks at −x next to the lever. Keep the assemble test green (update its string match if it pins the expression).
+- [ ] **Step 5: Burst rows between the copy and the bed.** In `ink.vert.ts` the merge partition (part 2) inherits the hero's `BAND_MARGIN` and lands its eight rows on the bed. Give part 2 its own origin: `mix(rectCenter, centroidNdc, 0.5)` with margin 0, so the rows sit between the copy column and the bed. Still: `s02-burst-rows.png` at u ≈ 0.86 of `#more` showing eight rows on paper between copy and bed.
+- [ ] **Step 6: Footer adds the visitor's parts.** Clocks writes `hud.visitorParts` (the built visitor layout's count, 0 after clear); hudSync's footer total = inked bench total + `hud.visitorParts`.
+- [ ] **Step 7: Verify** `npx vitest run` green, tsc clean, lint clean, zero console errors; stills `s50-yours.png` (u 0.6), `s50-kalshi-fit-1280x720.png`, `s50-nav-handoff.png` (heron→darch boundary). **Commit** per item or as one: `git add -A && git commit -m "Fix yours pose clearance, nav background, copy fit, watch phase, burst rows, visitor footer"`
