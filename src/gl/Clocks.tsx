@@ -207,6 +207,7 @@ export interface VisitorClock {
   queued: { plan: VisitorPlan | null } | null;   // the next request: a plan builds, null clears; the latest wins
   compile: number;                               // the visitor's compile this frame, 0..1
   keystrokes: number;                            // since the last build or clear
+  parts: number;                                 // the built sentence's parts, its layout's count; 0 on the empty slot
   slotPeriod: number;                            // uSlotPeriod, s
   slotPhase: number;                             // uSlotPhase: the scan bar's phase in cycles, wrapped to [0, 1)
 }
@@ -214,7 +215,7 @@ export interface VisitorClock {
 export function createVisitorClock(): VisitorClock {
   return {
     build: createTween(TIMING.visitorCompileS), teardown: createTween(TIMING.visitorTeardownS),
-    built: false, tearing: false, queued: null, compile: 0, keystrokes: 0, slotPeriod: SLOT_PERIOD_REST_S, slotPhase: 0,
+    built: false, tearing: false, queued: null, compile: 0, keystrokes: 0, parts: 0, slotPeriod: SLOT_PERIOD_REST_S, slotPhase: 0,
   };
 }
 
@@ -238,9 +239,11 @@ function landVisitor(v: VisitorClock, nowS: number): void {
     uploadVisitor(plan);
     v.build.start(nowS, 0, 1);
     v.built = true;
+    v.parts = plan.result.counts.total;
   } else {
     clearVisitor();
     v.built = false;
+    v.parts = 0;
   }
 }
 
@@ -353,6 +356,7 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
   hud.compile = c.compile[MACHINE.quoter];
   hud.compilePerMachine.set(c.compile);
   hud.parts = inkedCount(d.births[MACHINE.quoter], c.compile[MACHINE.quoter]) + inkedCount(d.births[MACHINE.intake], c.compile[MACHINE.intake]);
+  hud.visitorParts = d.visitor.parts;
   hud.uptime = c.uptime;
   const quoterLocked = c.locked[MACHINE.quoter] === 1;
   if (quoterLocked && !d.wasQuoterLocked) hud.runningSince = c.uptime;
@@ -410,8 +414,9 @@ export function Clocks({ result, uniforms, tier }: { result: LayoutResult; unifo
   }, [driver]);
 
   // No frame writes hud.click after this unmounts (GLErrorBoundary caught the renderer failing), so the scene is no
-  // longer live: hudSync takes <html data-gl> off and section 02's copy shows whole.
-  useEffect(() => () => { hud.gl = false; }, []);
+  // longer live: hudSync takes <html data-gl> off and section 02's copy shows whole. The visitor's machine goes with
+  // the scene, so the footer stops counting its parts.
+  useEffect(() => () => { hud.gl = false; hud.visitorParts = 0; }, []);
 
   useFrame((state, delta) => stepFrame(driver, delta, state.clock.elapsedTime), -1);
   return null;

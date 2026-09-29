@@ -765,6 +765,27 @@ describe('the visitor', () => {
     expect(upload).toHaveBeenCalledTimes(2);
   });
 
+  it("writes hud.visitorParts, the footer's share: the built sentence's layout count from the frame it lands, through its teardown, and 0 once cleared", () => {
+    const { d } = driver();
+    hud.visitorParts = -1;
+    let t = frames(d, 2);
+    expect(hud.visitorParts).toBe(0);                                // the empty slot
+    requestVisitor(d.visitor, first);
+    stepFrame(d, DT, (t += DT));
+    expect(hud.visitorParts).toBe(first.result.counts.total);
+    expect(hud.visitorParts).toBe(12);
+    t = frames(d, 150, DT, t);
+    requestVisitor(d.visitor, second);
+    stepFrame(d, DT, (t += DT));                                     // the teardown starts: the sentence still stands
+    stepFrame(d, DT, t + 0.59);
+    expect(hud.visitorParts).toBe(first.result.counts.total);
+    stepFrame(d, DT, (t += 0.6));                                    // the next one lands
+    expect(hud.visitorParts).toBe(second.result.counts.total);
+    requestVisitor(d.visitor, null);
+    frames(d, 60, DT, t);                                            // a clear: 0.6 s down, then the reserve is zero-scaled
+    expect(hud.visitorParts).toBe(0);
+  });
+
   it('keystrokes reseed uSlotPeriod, which relaxes back to 3 s with τ 10 s; a build starts the count over', () => {
     const { d, uniforms } = driver();
     frames(d, 2);
@@ -956,6 +977,16 @@ describe('<Clocks result uniforms tier /> and <CameraRig /> mounted through R3F'
     expect(hud.gl).toBe(true);
     await act(async () => root.unmount());
     expect(hud.gl).toBe(false);
+  });
+
+  it('takes hud.visitorParts down on unmount: the visitor goes with the scene, so the footer stops counting it', async () => {
+    const { root, advance } = await mount('');
+    await advance(DT);
+    win.dispatchEvent(new CustomEvent('dbso:visitor:build', { detail: { text: 'build a thing that runs. then another.' } }));
+    await advance(1);
+    expect(hud.visitorParts).toBe(12);
+    await act(async () => root.unmount());
+    expect(hud.visitorParts).toBe(0);
   });
 
   it('?built=1 builds and runs everything from the first frame', async () => {

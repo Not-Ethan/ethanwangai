@@ -1,9 +1,10 @@
 // The chrome's per-frame sync (design §3.1, §9, task 3.6): a plain DOM rAF loop, outside R3F, that reads `hud`
 // (gl/hud.ts, which Clocks writes every frame) and writes only what changed: the hero ladder's lines, parts and
-// running clock, the alive section's uptime, the footer's total, the section rail's current item, section 02's lit
-// rungs (every one up to hud.rung, that one current), its revealed copy lines and <html data-gl>, the live-scene
-// marker those lines hide under (task 4.1). No React state and no layout reads: every node is looked up once, at
-// start, and the last value written to each is kept here, so a frame where nothing changed touches no DOM at all.
+// running clock, the alive section's uptime, the footer's total (the inked bench plus the visitor's built parts), the
+// section rail's current item, section 02's lit rungs (every one up to hud.rung, that one current), its revealed copy
+// lines and <html data-gl>, the live-scene marker those lines hide under (task 4.1). No React state and no layout
+// reads: every node is looked up once, at start, and the last value written to each is kept here, so a frame where
+// nothing changed touches no DOM at all.
 import { SECTIONS } from '@/bench/sections';
 import { smoothstep } from '@/bench/math';
 import { TIMING } from '@/bench/timing';
@@ -68,7 +69,7 @@ export function startHudSync({ lockEnds, wordCount }: HudSyncOptions): () => voi
     const p = ladderParts(lockEnds, hud.compilePerMachine);
     if (p !== lastParts) { lastParts = p; setText(parts, p.toLocaleString('en-US')); }
 
-    const total = inkedTotal(lockEnds, hud.compilePerMachine);
+    const total = inkedTotal(lockEnds, hud.compilePerMachine) + hud.visitorParts;
     if (total !== lastTotal) { lastTotal = total; setText(footer, copy.yours.footer(total)); }
 
     const second = hud.running ? Math.max(0, Math.floor(hud.uptime - hud.runningSince)) : -1;

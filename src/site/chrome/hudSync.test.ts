@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { SECTIONS } from '@/bench/sections';
-import { MACHINE_COUNT } from '@/bench/types';
+import { MACHINE, MACHINE_COUNT } from '@/bench/types';
 import { BAND_ROWS, PARTITION } from '@/gl/inkGeometry';
 import { INK_VERTEX } from '@/gl/shaders/ink.vert';
 import { hud } from '@/gl/hud';
+import { copy } from '@/site/copy';
 import type { LockEnds } from './inkedCount';
 import { startHudSync } from './hudSync';
 
@@ -59,7 +60,7 @@ beforeEach(() => {
   vi.stubGlobal('document', { documentElement: root, getElementById: (id: string) => ids[id] ?? null, querySelectorAll: (s: string) => bySelector[s] ?? [] });
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { pending = cb; return 1; });
   vi.stubGlobal('cancelAnimationFrame', () => { pending = null; });
-  Object.assign(hud, { gl: false, section: 0, compile: 0, rung: -1, click: -1, running: false, uptime: 0, runningSince: 0 });
+  Object.assign(hud, { gl: false, section: 0, compile: 0, rung: -1, click: -1, running: false, uptime: 0, runningSince: 0, visitorParts: 0 });
   hud.compilePerMachine.fill(0);
   stop = startHudSync({ lockEnds: LOCK_ENDS, wordCount: 10 });
 });
@@ -156,6 +157,24 @@ describe('globals.css', () => {
   it("hides only section 02's click-keyed lines, so every other section's [data-reveal] copy stays on the page", () => {
     expect(rule('[data-reveal]')).toBeNull();
     expect(css).not.toMatch(/\[data-reveal\]\s*(?:,[^{]*)?\{[^}]*opacity:\s*0/);
+  });
+});
+
+describe("the footer's total", () => {
+  it("is the inked bench total plus the visitor's parts (hud.visitorParts), and drops back when they are cleared", () => {
+    stop();
+    const lockEnds = { ...LOCK_ENDS, [MACHINE.quoter]: Float32Array.from([0.1, 0.2, 0.3]), [MACHINE.watch]: Float32Array.from([0.5]) } as LockEnds;
+    stop = startHudSync({ lockEnds, wordCount: 10 });
+    hud.compilePerMachine[MACHINE.quoter] = 1;
+    hud.compilePerMachine[MACHINE.watch] = 1;
+    tick();
+    expect(ids['footer-total'].textContent).toBe(copy.yours.footer(4));
+    hud.visitorParts = 12;
+    tick();
+    expect(ids['footer-total'].textContent).toBe(copy.yours.footer(16));
+    hud.visitorParts = 0;
+    tick();
+    expect(ids['footer-total'].textContent).toBe(copy.yours.footer(4));
   });
 });
 

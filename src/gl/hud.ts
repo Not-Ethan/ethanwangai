@@ -21,6 +21,7 @@ export const hud = {
   compile: 0,        // the quoter's uCompile, 0..1: the ladder's lines rung ticks with it
   compilePerMachine: new Float32Array(MACHINE_COUNT),  // every machine's uCompile, 0..1: the ladder's parts and the footer's total
   parts: 0,          // parts of the quoter and the intake past the shader's ink threshold; the DOM counts its own at lock
+  visitorParts: 0,   // the built visitor's parts, its layout's count (0 on the empty slot): the footer adds them to the bench's
   uptime: 0,         // machine-clock seconds, wall time
   running: false,    // the quoter's lever has locked
   runningSince: 0,   // `uptime` on the frame the quoter's lever last locked; the running clock is uptime − runningSince
