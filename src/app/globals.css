@@ -113,10 +113,13 @@ a:hover, button.link:hover { color: var(--hot); }
 
 /* section 02's reveals (task 4.1): hudSync marks a copy line .is-revealed once hud.click reaches its data-click,
    and lights the ladder's rungs up to hud.rung (.is-lit), that one .is-current. Only the click-keyed lines start
-   hidden: the other sections' [data-reveal] copy has no driver yet, so it stays shown until one lands. */
-[data-reveal][data-click] { opacity: 0; transform: translateY(0.6em); transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
-[data-reveal].is-revealed { opacity: 1; transform: none; }
+   hidden, and only under :root[data-gl], which hudSync sets while the scene drives hud.click: with no WebGL2, a
+   refused context, ?nogl=1 or no JS the server-rendered copy is whole (spec: the DOM is the complete site on its
+   own). The other sections' [data-reveal] copy has no driver yet, so it stays shown until one lands. The reveal and
+   the reduced-motion variant carry the same (0,4,0) scope as the hide and follow it, so they win. */
+:root[data-gl] [data-reveal][data-click] { opacity: 0; transform: translateY(0.6em); transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+:root[data-gl] [data-reveal].is-revealed { opacity: 1; transform: none; }
 [data-rung] { color: var(--pencil); transition: color 0.2s; }
 [data-rung].is-lit { color: var(--ink); }
 [data-rung].is-lit:last-child, [data-rung].is-current { color: var(--hot); }
-@media (prefers-reduced-motion: reduce) { [data-reveal][data-click] { transition-duration: 0.2s; transform: none; } }
+@media (prefers-reduced-motion: reduce) { :root[data-gl] [data-reveal][data-click] { transition-duration: 0.2s; transform: none; } }

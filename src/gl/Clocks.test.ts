@@ -331,6 +331,18 @@ describe('stepFrame', () => {
     expect({ ...hud, pose: undefined }).toEqual(before);
   });
 
+  it('marks the hud live (hud.gl) on its first frame on measured ranges, the frame it first writes hud.click', () => {
+    const { d, scroll } = driver();
+    const ranges = scroll.current.ranges;
+    hud.gl = false;
+    scroll.current.ranges = [];
+    stepFrame(d, DT, DT);
+    expect(hud.gl).toBe(false);                                      // nothing drives the clicks yet: section 02's copy stays whole
+    scroll.current.ranges = ranges;
+    stepFrame(d, DT, 2 * DT);
+    expect(hud.gl).toBe(true);
+  });
+
   it('at the top with no intro: the quoter stays pencil and parked while the bot and slot run from load', () => {
     const { d, uniforms } = driver();
     frames(d, 60);
@@ -728,6 +740,15 @@ describe('<Clocks result uniforms tier /> and <CameraRig /> mounted through R3F'
     await act(async () => root.unmount());
     win.dispatchEvent(new CustomEvent('dbso:rebuild'));
     expect(intro.pending).toBe(false);                               // unsubscribed
+  });
+
+  it('takes hud.gl down on unmount, so the DOM shows section 02\'s copy whole once no frame writes hud.click', async () => {
+    hud.gl = false;
+    const { root, advance } = await mount('');
+    await advance(DT);
+    expect(hud.gl).toBe(true);
+    await act(async () => root.unmount());
+    expect(hud.gl).toBe(false);
   });
 
   it('?built=1 builds and runs everything from the first frame', async () => {

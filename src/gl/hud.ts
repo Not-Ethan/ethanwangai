@@ -12,6 +12,10 @@ export interface HudHover { machine: number; col: number; x: number; y: number; 
 const hero = CAMERA_KEYS.desktop[0].pose;
 
 export const hud = {
+  // the GL tier is live: Clocks has run a frame on measured ranges, so section, u, rung and click are the scene's. False
+  // until then and again once Clocks unmounts (the renderer failed); hudSync mirrors it onto <html data-gl>, and
+  // section 02's click-keyed copy hides only under that, so with no scene the server-rendered DOM stays whole
+  gl: false,
   section: 0,
   u: 0,
   compile: 0,        // the quoter's uCompile, 0..1: the ladder's lines rung ticks with it

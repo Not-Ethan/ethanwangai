@@ -260,6 +260,7 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
 
   stepPalette(d.palette, u, dt);
 
+  hud.gl = true;
   hud.section = s.section;
   hud.u = s.u;
   hud.rung = s.rung;
@@ -302,6 +303,10 @@ export function Clocks({ result, uniforms, tier }: { result: LayoutResult; unifo
     window.addEventListener('dbso:rebuild', onRebuild);
     return () => window.removeEventListener('dbso:rebuild', onRebuild);
   }, []);
+
+  // No frame writes hud.click after this unmounts (GLErrorBoundary caught the renderer failing), so the scene is no
+  // longer live: hudSync takes <html data-gl> off and section 02's copy shows whole.
+  useEffect(() => () => { hud.gl = false; }, []);
 
   useFrame((state, delta) => stepFrame(driver, delta, state.clock.elapsedTime), -1);
   return null;

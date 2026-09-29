@@ -28,7 +28,19 @@ function fakeEl(dataset: Record<string, string> = {}): FakeEl {
   };
 }
 
+/** <html>: just the attributes the loop sets on it. */
+interface FakeRoot { attrs: Set<string>; hasAttribute(name: string): boolean; toggleAttribute(name: string, force?: boolean): boolean }
+function fakeRoot(): FakeRoot {
+  const attrs = new Set<string>();
+  return {
+    attrs,
+    hasAttribute: (name) => attrs.has(name),
+    toggleAttribute: (name, force = !attrs.has(name)) => { if (force) attrs.add(name); else attrs.delete(name); return force; },
+  };
+}
+
 const ids: Record<string, FakeEl> = {};
+let root: FakeRoot = fakeRoot();
 let rungs: FakeEl[] = [], clicks: FakeEl[] = [];
 let pending: FrameRequestCallback | null = null;
 let stop: () => void = () => {};
@@ -43,10 +55,11 @@ beforeEach(() => {
   clicks = Array.from({ length: 4 }, (_, i) => fakeEl({ click: String(i) }));
   const strips = SECTIONS.map((s) => fakeEl({ strip: s.id }));
   const bySelector: Record<string, FakeEl[]> = { '[data-strip]': strips, '[data-rung]': rungs, '[data-click]': clicks };
-  vi.stubGlobal('document', { getElementById: (id: string) => ids[id] ?? null, querySelectorAll: (s: string) => bySelector[s] ?? [] });
+  root = fakeRoot();
+  vi.stubGlobal('document', { documentElement: root, getElementById: (id: string) => ids[id] ?? null, querySelectorAll: (s: string) => bySelector[s] ?? [] });
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => { pending = cb; return 1; });
   vi.stubGlobal('cancelAnimationFrame', () => { pending = null; });
-  Object.assign(hud, { section: 0, compile: 0, rung: -1, click: -1, running: false, uptime: 0, runningSince: 0 });
+  Object.assign(hud, { gl: false, section: 0, compile: 0, rung: -1, click: -1, running: false, uptime: 0, runningSince: 0 });
   hud.compilePerMachine.fill(0);
   stop = startHudSync({ lockEnds: LOCK_ENDS, wordCount: 10 });
 });
@@ -83,18 +96,61 @@ describe("section 02's copy lines", () => {
   });
 });
 
+describe('<html data-gl>, the live-scene marker the click-keyed lines hide under', () => {
+  it('is off while no scene drives hud.click (no WebGL2, a refused context, ?nogl=1), so the copy stays whole', () => {
+    for (let i = 0; i < 3; i++) tick();
+    expect(root.hasAttribute('data-gl')).toBe(false);
+  });
+
+  it('goes on in the same frame as the lines revealed so far, follows hud.gl, and comes off when the scene goes', () => {
+    hud.click = 1;
+    tick();
+    expect(root.hasAttribute('data-gl')).toBe(false);
+    hud.gl = true;                                                   // Clocks' first frame on measured ranges
+    tick();
+    expect(root.hasAttribute('data-gl')).toBe(true);
+    expect(withClass(clicks, 'is-revealed', 'click')).toEqual([0, 1]);
+    hud.click = 3;
+    tick();
+    expect(root.hasAttribute('data-gl')).toBe(true);
+    hud.gl = false;                                                  // Clocks unmounted: the renderer failed after it ran
+    tick();
+    expect(root.hasAttribute('data-gl')).toBe(false);
+  });
+
+  it("is written on a new loop's first frame, and left as it is on stop for the next tier's loop to take over", () => {
+    hud.gl = true;
+    tick();
+    stop();
+    expect(root.hasAttribute('data-gl')).toBe(true);                // no gap for the hidden lines to flash in across a tier change
+    hud.gl = false;
+    stop = startHudSync({ lockEnds: LOCK_ENDS, wordCount: 10 });
+    tick();
+    expect(root.hasAttribute('data-gl')).toBe(false);
+  });
+});
+
 describe('globals.css', () => {
   const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8');
   /** The declarations of the top-level rule whose selector list is exactly `selector`. */
   const rule = (selector: string) =>
     new RegExp(`(?:^|\\n)${selector.replace(/[[\].:-]/g, '\\$&')}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? null;
 
-  it('styles the classes the loop writes: a click-keyed line hidden until .is-revealed, rungs pencil, ink when lit, hot when current', () => {
-    expect(rule('[data-reveal][data-click]')).toMatch(/opacity:\s*0;/);
-    expect(rule('[data-reveal].is-revealed')).toMatch(/opacity:\s*1;[^}]*transform:\s*none/);
+  it('styles the classes the loop writes: a click-keyed line hidden (live scene) until .is-revealed, rungs pencil, ink when lit, hot when current', () => {
+    expect(rule(':root[data-gl] [data-reveal][data-click]')).toMatch(/opacity:\s*0;/);
+    expect(rule(':root[data-gl] [data-reveal].is-revealed')).toMatch(/opacity:\s*1;[^}]*transform:\s*none/);
     expect(rule('[data-rung]')).toMatch(/color:\s*var\(--pencil\)/);
     expect(rule('[data-rung].is-lit')).toMatch(/color:\s*var\(--ink\)/);
     expect(rule('[data-rung].is-lit:last-child, [data-rung].is-current')).toMatch(/color:\s*var\(--hot\)/);
+  });
+
+  it('hides the click-keyed lines only under :root[data-gl], so with no scene (or no JS) the server-rendered copy is whole', () => {
+    const selectors = Array.from(css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]*\[data-click\][^{}]*)\{/g), (m) => m[1].trim());
+    expect(selectors).toHaveLength(2);                              // the hide and its reduced-motion variant
+    for (const s of selectors) expect(s).toMatch(/^:root\[data-gl\] \[data-reveal\]\[data-click\]$/);
+    // the reveal and the reduced-motion variant match the hide's specificity (0,4,0) and follow it, so they win
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{ :root\[data-gl\] \[data-reveal\]\[data-click\] \{ transition-duration: 0\.2s; transform: none; \} \}/);
+    expect(css.indexOf(':root[data-gl] [data-reveal].is-revealed')).toBeGreaterThan(css.indexOf(':root[data-gl] [data-reveal][data-click]'));
   });
 
   it("hides only section 02's click-keyed lines, so every other section's [data-reveal] copy stays on the page", () => {

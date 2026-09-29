@@ -1,9 +1,9 @@
 // The chrome's per-frame sync (design §3.1, §9, task 3.6): a plain DOM rAF loop, outside R3F, that reads `hud`
 // (gl/hud.ts, which Clocks writes every frame) and writes only what changed: the hero ladder's lines, parts and
 // running clock, the alive section's uptime, the footer's total, the section rail's current item, section 02's lit
-// rungs (every one up to hud.rung, that one current) and its revealed copy lines (task 4.1). No React state and no
-// layout reads: every node is looked up once, at start, and the last value written to each is kept here, so a frame
-// where nothing changed touches no DOM at all.
+// rungs (every one up to hud.rung, that one current), its revealed copy lines and <html data-gl>, the live-scene
+// marker those lines hide under (task 4.1). No React state and no layout reads: every node is looked up once, at
+// start, and the last value written to each is kept here, so a frame where nothing changed touches no DOM at all.
 import { SECTIONS } from '@/bench/sections';
 import { smoothstep } from '@/bench/math';
 import { TIMING } from '@/bench/timing';
@@ -32,6 +32,8 @@ const BAND_LINES = BAND_ROWS[PARTITION.quoter];
 const NOT_RUNNING = '--:--:--';
 
 const CLASS = { current: 'is-current', lit: 'is-lit', revealed: 'is-revealed' } as const;
+/** The live-scene marker on <html>: set while hud.gl is. */
+const ATTR_GL = 'data-gl';
 
 const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
 /** hh:mm:ss of a whole number of seconds. */
@@ -47,6 +49,7 @@ export function startHudSync({ lockEnds, wordCount }: HudSyncOptions): () => voi
   const all = (selector: string) => Array.from(document.querySelectorAll<HTMLElement>(selector));
   const lines = byId('ladder-lines'), parts = byId('ladder-parts'), footer = byId('footer-total');
   const clocks = [byId('ladder-running'), byId('uptime')];
+  const root = document.documentElement;
   const strips = all('[data-strip]'), rungs = all('[data-rung]'), clicks = all('[data-click]');
   const syncReadout = createReadoutSync(byId('readout'));   // the bed's hover readout (task 4.3)
 
@@ -54,6 +57,7 @@ export function startHudSync({ lockEnds, wordCount }: HudSyncOptions): () => voi
 
   // −2 is a value none of these ever takes, so the first frame writes every node.
   let lastLines = -2, lastParts = -2, lastTotal = -2, lastSecond = -2, lastSection = -2, lastRung = -2, lastClick = -2;
+  let lastGl: boolean | null = null;
 
   const frame = () => {
     raf = requestAnimationFrame(frame);
@@ -89,6 +93,11 @@ export function startHudSync({ lockEnds, wordCount }: HudSyncOptions): () => voi
       }
     }
 
+    // globals.css hides section 02's click-keyed lines only under :root[data-gl], so the copy is whole in every tier
+    // without a scene (no WebGL2, a refused context, ?nogl=1, no JS). The marker and the lines' classes are written in
+    // the same frame, so a line already reached never flashes out when the scene comes up.
+    if (hud.gl !== lastGl) { lastGl = hud.gl; root.toggleAttribute(ATTR_GL, hud.gl); }
+
     if (hud.click !== lastClick) {
       lastClick = hud.click;
       for (const el of clicks) el.classList.toggle(CLASS.revealed, Number(el.dataset.click) <= hud.click);
@@ -97,5 +106,7 @@ export function startHudSync({ lockEnds, wordCount }: HudSyncOptions): () => voi
     syncReadout(hud.hover);
   };
   let raf = requestAnimationFrame(frame);
+  // data-gl and the lines' classes are left as they are: a stop is a tier change, whose next loop rewrites both on its
+  // first frame. Taking the marker off in between would flash the still-hidden lines in and fade them out again.
   return () => cancelAnimationFrame(raf);
 }
