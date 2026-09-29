@@ -24,7 +24,13 @@ import {
   createPaletteLerp, retargetPalette, stepPalette, PALETTE_LERP_S,
   travelAxis, fitShadowCamera, createShadowFit, SHADOW_MARGIN, SHADOW_FIT_TAU, SHADOW_DISTANCE,
   sortedBirths, inkedCount, INK_T, INK_THRESHOLD,
+  createVisitorClock, requestVisitor, keyVisitor, stepVisitor, slotPeriodFor, SLOT_PERIOD_REST_S, SLOT_PERIOD_TAU_S,
 } from './Clocks';
+import { planVisitor, uploadVisitor, clearVisitor } from './visitor';
+
+// The kits' reserve and the ink partition are visitor.test.ts's; here only when the clock uploads and clears.
+vi.mock('./visitor', async (importOriginal) => ({ ...(await importOriginal<typeof import('./visitor')>()), uploadVisitor: vi.fn(), clearVisitor: vi.fn() }));
+const upload = vi.mocked(uploadVisitor), clear = vi.mocked(clearVisitor);
 
 // ---- the scroll layer, stubbed: Clocks reads useScroll().state.current and reducedMotion --------------------------
 
@@ -661,6 +667,136 @@ describe('the intro', () => {
   });
 });
 
+describe('the visitor', () => {
+  const V = MACHINE.visitor;
+  const LOCK_S = (lockStart(1) + TIMING.lockW) * TIMING.visitorCompileS;   // the visitor's lever lands at ≈ 1.39 s
+  const first = planVisitor('build a thing that runs. then another.', 'desktop')!;
+  const second = planVisitor('a second thing.', 'desktop')!;
+  beforeEach(() => { upload.mockClear(); clear.mockClear(); });
+
+  it('the scan period a keystroke sets: 3 s before any, 0.4 + 2.6·e^(−0.3·k) after k, toward 0.4 s', () => {
+    expect(slotPeriodFor(0)).toBe(3);
+    expect(slotPeriodFor(1)).toBeCloseTo(0.4 + 2.6 * Math.exp(-0.3), 12);
+    expect(slotPeriodFor(40)).toBeCloseTo(0.4, 4);
+    expect(SLOT_PERIOD_REST_S).toBe(3);
+  });
+
+  it('Enter on the empty slot uploads the plan on the next frame and compiles it over 1.4 s; the lever lock switches it on', () => {
+    const { d, uniforms } = driver();
+    const t = frames(d, 10);
+    expect(uniforms.uCompile.value[V]).toBe(0);
+    requestVisitor(d.visitor, first);
+    expect(upload).not.toHaveBeenCalled();                          // lands on the frame, not the event
+    stepFrame(d, DT, t + DT);                                        // the build starts here
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect(upload).toHaveBeenCalledWith(first);
+    expect(uniforms.uCompile.value[V]).toBe(0);
+    stepFrame(d, DT, t + DT + 0.7);
+    expect(uniforms.uCompile.value[V]).toBeCloseTo(0.5, 6);
+    stepFrame(d, DT, t + DT + LOCK_S - 0.01);
+    expect(uniforms.uRun.value[V]).toBe(0);                          // the lever is still dropping
+    stepFrame(d, DT, t + DT + LOCK_S);
+    expect(uniforms.uVel.value).toBeCloseTo(TIMING.impulse, 6);      // it locks: impulse and rate spike
+    expect(uniforms.uFillRate.value[V]).toBe(3);
+    frames(d, 30, DT, t + DT + LOCK_S);
+    expect(uniforms.uCompile.value[V]).toBe(1);
+    expect(uniforms.uRun.value[V]).toBeGreaterThan(0.8);
+    expect(uniforms.uMachineTime.value[V]).toBeGreaterThan(0);      // and the words ping on its clock
+    expect(upload).toHaveBeenCalledTimes(1);                         // one upload, not one per frame
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);        // the hero is not touched
+  });
+
+  it('Enter again tears the sentence down over 0.6 s, then uploads the next and builds it from 0; the latest Enter wins', () => {
+    const { d, uniforms } = driver();
+    requestVisitor(d.visitor, first);
+    let t = frames(d, 150);                                          // 2.5 s: built and running
+    expect(uniforms.uCompile.value[V]).toBe(1);
+    requestVisitor(d.visitor, second);
+    stepFrame(d, DT, (t += DT));                                     // the teardown starts from 1
+    expect(uniforms.uCompile.value[V]).toBe(1);
+    stepFrame(d, DT, t + 0.3);
+    expect(uniforms.uCompile.value[V]).toBeCloseTo(0.5, 6);
+    expect(d.clocks.locked[V]).toBe(0);                              // below the lock: it winds down
+    const third = planVisitor('a third.', 'desktop')!;
+    requestVisitor(d.visitor, third);                                // typed over mid-teardown
+    stepFrame(d, DT, t + 0.59);
+    expect(upload).toHaveBeenCalledTimes(1);                         // nothing lands until the teardown ends
+    stepFrame(d, DT, t + 0.6);
+    expect(upload).toHaveBeenCalledTimes(2);
+    expect(upload).toHaveBeenLastCalledWith(third);
+    expect(uniforms.uCompile.value[V]).toBe(0);
+    stepFrame(d, DT, t + 0.6 + 0.7);
+    expect(uniforms.uCompile.value[V]).toBeCloseTo(0.5, 6);
+    expect(clear).not.toHaveBeenCalled();
+  });
+
+  it('a request mid-compile tears down from where the compile stands, not from 1', () => {
+    const { d, uniforms } = driver();
+    requestVisitor(d.visitor, first);
+    stepFrame(d, DT, 1);
+    stepFrame(d, DT, 1.7);
+    expect(uniforms.uCompile.value[V]).toBeCloseTo(0.5, 6);
+    requestVisitor(d.visitor, second);
+    stepFrame(d, DT, 1.75);
+    expect(uniforms.uCompile.value[V]).toBeCloseTo(0.5, 6);
+    stepFrame(d, DT, 2.05);
+    expect(uniforms.uCompile.value[V]).toBeCloseTo(0.25, 6);
+  });
+
+  it('a clear tears the sentence down and then zero-scales the reserve; a clear on the empty slot lands at once', () => {
+    const { d, uniforms } = driver();
+    requestVisitor(d.visitor, first);
+    let t = frames(d, 150);
+    requestVisitor(d.visitor, null);
+    stepFrame(d, DT, (t += DT));
+    stepFrame(d, DT, t + 0.59);
+    expect(clear).not.toHaveBeenCalled();
+    expect(uniforms.uCompile.value[V]).toBeGreaterThan(0);
+    stepFrame(d, DT, (t += 0.6));
+    expect(clear).toHaveBeenCalledTimes(1);
+    expect(uniforms.uCompile.value[V]).toBe(0);
+    expect(d.visitor.built).toBe(false);
+    requestVisitor(d.visitor, null);                                 // Escape again on the empty slot
+    stepFrame(d, DT, t + DT);
+    expect(clear).toHaveBeenCalledTimes(2);
+    expect(uniforms.uCompile.value[V]).toBe(0);
+    requestVisitor(d.visitor, first);                                // and the next Enter builds at once
+    stepFrame(d, DT, t + 2 * DT);
+    expect(upload).toHaveBeenCalledTimes(2);
+  });
+
+  it('keystrokes reseed uSlotPeriod, which relaxes back to 3 s with τ 10 s; a build starts the count over', () => {
+    const { d, uniforms } = driver();
+    frames(d, 2);
+    expect(uniforms.uSlotPeriod.value).toBe(3);
+    for (let k = 0; k < 5; k++) keyVisitor(d.visitor);
+    expect(d.visitor.slotPeriod).toBeCloseTo(slotPeriodFor(5), 12);
+    const p0 = d.visitor.slotPeriod;
+    frames(d, 200, 0.05);                                            // 10 s = one τ
+    expect(uniforms.uSlotPeriod.value).toBeCloseTo(3 - (3 - p0) * Math.exp(-10 / SLOT_PERIOD_TAU_S), 4);
+    requestVisitor(d.visitor, first);
+    stepFrame(d, DT, 20);
+    keyVisitor(d.visitor);
+    expect(d.visitor.slotPeriod).toBeCloseTo(slotPeriodFor(1), 12);
+  });
+
+  it('?built=1 pins the visitor at 1: Enter still uploads, and the sentence shows built at once', () => {
+    const { d, uniforms } = driver({ built: true });
+    requestVisitor(d.visitor, first);
+    stepFrame(d, DT, 1);
+    expect(upload).toHaveBeenCalledWith(first);
+    expect(uniforms.uCompile.value[V]).toBe(1);
+  });
+
+  it('a fresh clock is empty and parked', () => {
+    const v = createVisitorClock();
+    expect(stepVisitor(v, 5, DT)).toBe(0);
+    expect(v).toMatchObject({ built: false, tearing: false, queued: null, keystrokes: 0 });
+    expect(upload).not.toHaveBeenCalled();
+    expect(clear).not.toHaveBeenCalled();
+  });
+});
+
 // The component wiring, through R3F's reconciler against a renderer stub: useScroll inside the canvas, the themechange
 // listener, useFrame at −1 before CameraRig at 0, the debug switch read from location.search, window.__dbso and the
 // dbso:rebuild listener.
@@ -786,5 +922,36 @@ describe('<Clocks result uniforms tier /> and <CameraRig /> mounted through R3F'
     await act(async () => root.unmount());
     switchTheme('light');
     expect(hexOf(uniforms.uPaper.value)).toBe(PALETTES.dark.paper);   // unsubscribed
+  });
+
+  it('listens for dbso:visitor:build, :clear and :key, lays the sentence out on the event, and lets go on unmount', async () => {
+    upload.mockClear(); clear.mockClear();
+    const { root, uniforms, advance } = await mount('');
+    await advance(DT);
+    const text = 'build a thing that runs. then another.';
+    win.dispatchEvent(new CustomEvent('dbso:visitor:build', { detail: { text } }));
+    await advance(1);
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect(upload.mock.calls[0][0]).toEqual(planVisitor(text, 'desktop'));
+    expect(upload.mock.calls[0][0].result.counts.total).toBe(12);
+    await advance(1.7);
+    expect(uniforms.uCompile.value[MACHINE.visitor]).toBeCloseTo(0.5, 6);
+    win.dispatchEvent(new CustomEvent('dbso:visitor:key'));
+    await advance(1.75);
+    expect(uniforms.uSlotPeriod.value).toBeLessThan(slotPeriodFor(1) + 0.01);
+    win.dispatchEvent(new CustomEvent('dbso:visitor:clear'));
+    await advance(1.8);                                              // the teardown starts
+    await advance(2.4);                                              // and ends
+    expect(clear).toHaveBeenCalledTimes(1);
+    expect(uniforms.uCompile.value[MACHINE.visitor]).toBe(0);
+    win.dispatchEvent(new CustomEvent('dbso:visitor:build', { detail: { text: '   ' } }));   // a blank sentence clears
+    await advance(2.5);
+    expect(clear).toHaveBeenCalledTimes(2);
+    expect(upload).toHaveBeenCalledTimes(1);
+    const removed = vi.spyOn(win, 'removeEventListener');
+    await act(async () => root.unmount());
+    const events = ['dbso:visitor:build', 'dbso:visitor:clear', 'dbso:visitor:key'];
+    for (const e of events) expect(removed.mock.calls.some(([name]) => name === e), e).toBe(true);
+    removed.mockRestore();
   });
 });

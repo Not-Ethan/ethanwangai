@@ -2,9 +2,12 @@
 // The per-frame driver (design §8): useFrame at priority −1, before CameraRig. Each frame it reads the scroll refs,
 // evaluates sceneState(g), steps the pure clocks (clocksLogic.ts), and writes every uniform, the pose CameraRig
 // applies, the shadow-camera fit, the 300 ms palette lerp and the hud. It also owns the intro (§3.1): the hero
-// compile is a 2.2 s tween Scene starts at T0, the end of the cross-fade, and the rebuild control restarts. No React
-// state is set on this path; every write lands in an object allocated once. stepFrame is the whole frame as a
-// function of (driver, dt, elapsed), so the tests drive it without a renderer.
+// compile is a 2.2 s tween Scene starts at T0, the end of the cross-fade, and the rebuild control restarts. It owns the
+// visitor's switch-on too (§3.1 · 09): Yours dispatches dbso:visitor:build / :clear / :key, the next frame tears a
+// built sentence down over 0.6 s, uploads the new one into the reserve (visitor.ts) and compiles it over 1.4 s, and
+// keystrokes reseed the slot's scan period. No React state is set on this path; every write lands in an object
+// allocated once. stepFrame is the whole frame as a function of (driver, dt, elapsed), so the tests drive it without
+// a renderer.
 import { useEffect, useMemo, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -20,6 +23,7 @@ import { KEY_LIGHT } from './Lights';
 import { lightRef } from './registry';
 import { hud } from './hud';
 import { dbso, exposeDebug } from './debug';
+import { planVisitor, uploadVisitor, clearVisitor, type VisitorPlan } from './visitor';
 
 // ---- palette: the 300 ms theme lerp, in linear space through applyPalette ----------------------------------------
 
@@ -184,6 +188,77 @@ export function startIntro(): void {
   intro.pending = true;
 }
 
+// ---- the visitor (design §3.1 · 09, §8 clock 2): Enter builds, Enter again rebuilds, Escape clears --------------------
+
+/** The slot's resting scan period, s: the one configs/slot.ts bakes and the registry starts on. */
+export const SLOT_PERIOD_REST_S = 3.0;
+/** The scan period relaxes back to rest with this time constant once the typing stops, s. */
+export const SLOT_PERIOD_TAU_S = 10;
+
+/** The scan period a keystroke sets: 3 s before any, falling toward 0.4 s as the typing goes on. */
+export function slotPeriodFor(keystrokes: number): number {
+  return 0.4 + 2.6 * Math.exp(-0.3 * keystrokes);
+}
+
+export interface VisitorClock {
+  build: Tween; teardown: Tween;
+  built: boolean;                                // a sentence sits in the reserve
+  tearing: boolean;                              // the teardown is running; what is queued lands when it ends
+  queued: { plan: VisitorPlan | null } | null;   // the next request: a plan builds, null clears; the latest wins
+  compile: number;                               // the visitor's compile this frame, 0..1
+  keystrokes: number;                            // since the last build or clear
+  slotPeriod: number;                            // uSlotPeriod, s
+}
+
+export function createVisitorClock(): VisitorClock {
+  return {
+    build: createTween(TIMING.visitorCompileS), teardown: createTween(TIMING.visitorTeardownS),
+    built: false, tearing: false, queued: null, compile: 0, keystrokes: 0, slotPeriod: SLOT_PERIOD_REST_S,
+  };
+}
+
+/** Enter (a plan) or a clear (null). It lands on the next frame, after a teardown when a sentence is built. */
+export function requestVisitor(v: VisitorClock, plan: VisitorPlan | null): void {
+  v.queued = { plan };
+}
+
+/** A keystroke in the input: reseeds the slot's scan cadence. */
+export function keyVisitor(v: VisitorClock): void {
+  v.keystrokes++;
+  v.slotPeriod = slotPeriodFor(v.keystrokes);
+}
+
+/** Lands the queued request: uploads a plan into the reserve and starts its compile from 0, or zero-scales the reserve. */
+function landVisitor(v: VisitorClock, nowS: number): void {
+  const plan = v.queued?.plan ?? null;
+  v.queued = null;
+  v.keystrokes = 0;
+  if (plan) {
+    uploadVisitor(plan);
+    v.build.start(nowS, 0, 1);
+    v.built = true;
+  } else {
+    clearVisitor();
+    v.built = false;
+  }
+}
+
+/**
+ * One frame of the visitor on the renderer's clock: a request tears a built sentence down from where its compile
+ * stands to 0 over 0.6 s (reverse birth order, in the shader) and lands when that ends, or lands at once on an empty
+ * slot; then the scan period relaxes toward rest. Returns the visitor's compile for stepClocks.
+ */
+export function stepVisitor(v: VisitorClock, nowS: number, dt: number): number {
+  if (v.queued && !v.tearing) {
+    if (v.built) { v.teardown.start(nowS, v.compile, 0); v.tearing = true; }
+    else landVisitor(v, nowS);
+  }
+  if (v.tearing && v.teardown.done(nowS)) { v.tearing = false; landVisitor(v, nowS); }
+  v.compile = v.tearing ? v.teardown.value(nowS) : v.built ? v.build.value(nowS) : 0;
+  v.slotPeriod += (SLOT_PERIOD_REST_S - v.slotPeriod) * (1 - Math.exp(-dt / SLOT_PERIOD_TAU_S));
+  return v.compile;
+}
+
 // ---- the frame ------------------------------------------------------------------------------------------------------
 
 const BUILT: (number | null)[] = new Array<number>(MACHINE_COUNT).fill(1);
@@ -191,6 +266,7 @@ const BUILT: (number | null)[] = new Array<number>(MACHINE_COUNT).fill(1);
 export interface ClocksDriver {
   result: LayoutResult; uniforms: BenchUniforms; tier: Tier;
   scroll: RefObject<ScrollState | null>; reducedMotion: boolean; built: boolean; pinned: number | null; intro: Intro;
+  visitor: VisitorClock;   // per driver: a tier change rebuilds the kits with an empty reserve, and this with them
   clocks: ClockState; scene: SceneState; inputs: ClockInputs; births: Float64Array[];
   fit: ShadowFit; palette: PaletteLerp;
   pos: THREE.Vector3; prevPos: THREE.Vector3; hasPrev: boolean;
@@ -203,7 +279,7 @@ export function createClocksDriver(o: {
 }): ClocksDriver {
   return {
     result: o.result, uniforms: o.uniforms, tier: o.tier, scroll: o.scroll, reducedMotion: o.reducedMotion, built: o.built,
-    pinned: o.pinned, intro: o.intro ?? intro,
+    pinned: o.pinned, intro: o.intro ?? intro, visitor: createVisitorClock(),
     clocks: createClockState(), scene: createSceneState(),
     inputs: { dt: 0, compileTarget: BUILT, heroCompile: 0, visitorCompile: 0, velocity: 0, reducedMotion: o.reducedMotion },
     births: sortedBirths(o.result), fit: createShadowFit(), palette: createPaletteLerp(o.uniforms, o.theme),
@@ -230,7 +306,7 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
   i.dt = dt;
   i.compileTarget = d.built ? BUILT : s.compileTarget;
   i.heroCompile = d.pinned ?? it.tween.value(elapsed);
-  i.visitorCompile = 0;
+  i.visitorCompile = stepVisitor(d.visitor, elapsed, dt);
   i.velocity = sc.velocity;
   i.reducedMotion = d.reducedMotion;
   stepClocks(d.clocks, i);
@@ -245,6 +321,7 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
   u.uVel.value = c.vel + c.impulse;
   u.uMerge.value = s.merge;
   u.uLean.value = s.lean;
+  u.uSlotPeriod.value = d.visitor.slotPeriod;
 
   d.pos.fromArray(s.pose.position);
   if (d.hasPrev) travelAxis(d.prevPos, d.pos, u.uTravelAxis.value);
@@ -303,6 +380,26 @@ export function Clocks({ result, uniforms, tier }: { result: LayoutResult; unifo
     window.addEventListener('dbso:rebuild', onRebuild);
     return () => window.removeEventListener('dbso:rebuild', onRebuild);
   }, []);
+
+  // Section 09: Yours dispatches the sentence on Enter, a clear on Escape or an empty Enter, and every keystroke. The
+  // plan is laid out here, on the event; the next frame tears down, uploads and compiles it on the renderer's clock.
+  useEffect(() => {
+    const v = driver.visitor;
+    const onBuild = (e: Event) => {
+      const text = (e as CustomEvent<{ text?: unknown } | null>).detail?.text;
+      requestVisitor(v, typeof text === 'string' ? planVisitor(text, driver.tier) : null);
+    };
+    const onClear = () => requestVisitor(v, null);
+    const onKey = () => keyVisitor(v);
+    window.addEventListener('dbso:visitor:build', onBuild);
+    window.addEventListener('dbso:visitor:clear', onClear);
+    window.addEventListener('dbso:visitor:key', onKey);
+    return () => {
+      window.removeEventListener('dbso:visitor:build', onBuild);
+      window.removeEventListener('dbso:visitor:clear', onClear);
+      window.removeEventListener('dbso:visitor:key', onKey);
+    };
+  }, [driver]);
 
   // No frame writes hud.click after this unmounts (GLErrorBoundary caught the renderer failing), so the scene is no
   // longer live: hudSync takes <html data-gl> off and section 02's copy shows whole.

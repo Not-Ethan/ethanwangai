@@ -5,6 +5,8 @@
 // rect cached (rects.ts); that is the only upload. Each frame, at priority 0 after Clocks (−1) has placed the section,
 // the cached rects become uRect from the scroll offset alone, and the trickle's slot, the burst, the DPR and the band
 // pitch are written into the registry. No React state, no getBoundingClientRect and no buffer upload on the scroll path.
+// The visitor partition is handed to visitor.ts (bindVisitorInk): on Enter its targets, its centroid and its spawn, re-
+// sampled from the sentence Yours wrote into #yours-echo, are written once, the only upload after load.
 import { useEffect, useLayoutEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -25,6 +27,7 @@ import { sampleTextPoints } from './textSampler';
 import { RectTracker, type OffsetElement, type StickyElementSource } from './rects';
 import { hud } from './hud';
 import { dbso } from './debug';
+import { visitorInk, type VisitorInk } from './visitor';
 
 /** Drawn after the kits, never sorted among them. */
 export const INK_RENDER_ORDER = 10;
@@ -124,6 +127,35 @@ export function followSources(points: InkPoints, tracker: RectTracker): () => vo
   };
 }
 
+/** The visitor partition's source: the echo span Yours writes the submitted sentence into. */
+const VISITOR_ECHO = INK_SOURCES.find((s) => s.slot === PARTITION.visitor)!.selector;
+
+/** Re-samples the visitor partition alone from #yours-echo, which now holds the sentence: its aSpawnUV, flagged once. */
+export function resampleVisitor(points: InkPoints): void {
+  const el = document.querySelector<HTMLElement>(VISITOR_ECHO);
+  if (!el) return;
+  const text = sampleTextPoints(el, null);
+  dbso.samples[PARTITION.visitor] = text.count;
+  if (text.count === 0) return;
+  const spawn = points.geometry.getAttribute('aSpawnUV') as THREE.BufferAttribute;
+  const { offsets, count } = points.data;
+  const offset = offsets[PARTITION.visitor];
+  writeSpawnUV(spawn.array as Float32Array, offset, (offsets[PARTITION.visitor + 1] ?? count) - offset, text.uv, text.count);
+  spawn.needsUpdate = true;
+}
+
+/** Hands the visitor partition and uCentroid to visitor.ts's upload; returns the release, which a newer binding survives. */
+export function bindVisitorInk(points: InkPoints, u: BenchUniforms): () => void {
+  const { offsets, count } = points.data;
+  const offset = offsets[PARTITION.visitor];
+  const handle: VisitorInk = {
+    geometry: points.geometry, offset, size: (offsets[PARTITION.visitor + 1] ?? count) - offset, centroid: u.uCentroid.value,
+    resample: () => resampleVisitor(points),
+  };
+  visitorInk.current = handle;
+  return () => { if (visitorInk.current === handle) visitorInk.current = null; };
+}
+
 /** The registry entries the layout and the curl volume own: written once, before the first frame draws. */
 export function bindInkUniforms(u: BenchUniforms, curl: THREE.Data3DTexture, result: LayoutResult): void {
   u.uCurl.value = curl;
@@ -154,6 +186,7 @@ export function Ink({ result, uniforms, tier }: { result: LayoutResult; uniforms
   useLayoutEffect(() => bindInkUniforms(uniforms, curl, result), [uniforms, curl, result]);
 
   useEffect(() => followSources(points, tracker), [points, tracker]);
+  useEffect(() => bindVisitorInk(points, uniforms), [points, uniforms]);
 
   // Priority 0: after Clocks (−1) has written hud.section for this frame. A priority above 0 would hand the render
   // loop to this hook (R3F stops rendering on its own), which is not what "after Clocks" means.
