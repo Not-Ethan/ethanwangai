@@ -160,11 +160,60 @@ describe('globals.css', () => {
   });
 });
 
+// The server renders the ladder and the footer with the layout's final counts (spec §11: the DOM is the complete site
+// in every tier); the loop only takes them over once the scene is live, and counts them up with it from there.
+describe('the ladder and footer counts', () => {
+  it('are left as the server rendered them until the scene is live (hud.gl), so the SVG tier keeps the final counts', () => {
+    const ssr = { 'ladder-lines': '40', 'ladder-parts': '6,815', 'footer-total': copy.yours.footer(7770) };
+    for (const [id, text] of Object.entries(ssr)) ids[id].textContent = text;
+    hud.compile = 0.2;                                            // mid-band: the scene's count would be 19 lines
+    hud.compilePerMachine.fill(1);
+    hud.visitorParts = 12;
+    for (let i = 0; i < 3; i++) tick();
+    for (const [id, text] of Object.entries(ssr)) expect(ids[id].textContent, id).toBe(text);
+    expect(ids['ladder-words'].textContent).toBe('10');         // the headline's words are the same in every tier
+
+    hud.gl = true;                                                // Clocks' first frame: the scene counts from here
+    hud.compile = 0;
+    hud.compilePerMachine.fill(0);
+    hud.visitorParts = 0;
+    tick();
+    expect(ids['ladder-lines'].textContent).toBe('0');
+    expect(ids['ladder-parts'].textContent).toBe('0');
+    expect(ids['footer-total'].textContent).toBe(copy.yours.footer(0));
+  });
+
+  it("go back to the built bench's counts when the scene goes (a lost context), as the SVG tier reads them", () => {
+    stop();
+    const lockEnds = { ...LOCK_ENDS, [MACHINE.quoter]: Float32Array.from([0.1, 0.2, 0.3]), [MACHINE.intake]: Float32Array.from([0.4, 0.5]), [MACHINE.watch]: Float32Array.from([0.5]) } as LockEnds;
+    stop = startHudSync({ lockEnds, wordCount: 10 });
+    hud.gl = true;
+    hud.compile = 0.2;
+    hud.compilePerMachine[MACHINE.quoter] = 0.25;                // two of the quoter's three parts, nothing else yet
+    hud.visitorParts = 12;
+    tick();
+    expect(ids['ladder-parts'].textContent).toBe('2');
+    expect(ids['footer-total'].textContent).toBe(copy.yours.footer(14));
+
+    hud.gl = false;                                               // Clocks unmounted: the page is the SVG tier now
+    hud.visitorParts = 0;
+    tick();
+    expect(ids['ladder-lines'].textContent).toBe(String(BAND_ROWS[PARTITION.quoter]));
+    expect(ids['ladder-parts'].textContent).toBe('5');           // the quoter's three and the intake's two
+    expect(ids['footer-total'].textContent).toBe(copy.yours.footer(6));
+
+    for (const id of ['ladder-lines', 'ladder-parts', 'footer-total']) ids[id].textContent = 'untouched';
+    tick();                                                       // written once, on the frame the scene went
+    for (const id of ['ladder-lines', 'ladder-parts', 'footer-total']) expect(ids[id].textContent, id).toBe('untouched');
+  });
+});
+
 describe("the footer's total", () => {
   it("is the inked bench total plus the visitor's parts (hud.visitorParts), and drops back when they are cleared", () => {
     stop();
     const lockEnds = { ...LOCK_ENDS, [MACHINE.quoter]: Float32Array.from([0.1, 0.2, 0.3]), [MACHINE.watch]: Float32Array.from([0.5]) } as LockEnds;
     stop = startHudSync({ lockEnds, wordCount: 10 });
+    hud.gl = true;
     hud.compilePerMachine[MACHINE.quoter] = 1;
     hud.compilePerMachine[MACHINE.watch] = 1;
     tick();
@@ -187,7 +236,7 @@ describe("the hero ladder's lines rung", () => {
   // over aRow / rows · 0.22 + 0.03 of it); the release starts at 0.75, so the rows hold in between.
   const printed = t0 + 0.25 * (t1 - t0);
   const rows = BAND_ROWS[PARTITION.quoter];
-  const linesAt = (compile: number) => { hud.compile = compile; tick(); return ids['ladder-lines'].textContent; };
+  const linesAt = (compile: number) => { hud.gl = true; hud.compile = compile; tick(); return ids['ladder-lines'].textContent; };
 
   it('ticks from 0 to the band\'s rows while the band prints, T0 + 0.35 → 0.5 s, and holds them after', () => {
     expect(t0).toBeGreaterThan(0.15);

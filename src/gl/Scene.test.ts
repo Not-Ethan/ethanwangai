@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { act, createElement } from 'react';
 import * as THREE from 'three';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { createRoot, extend } from '@react-three/fiber';
 import { KIND, MACHINE } from '@/bench/types';
 import { buildBench } from '@/bench/counts';
@@ -14,7 +15,8 @@ import { PALETTES } from '@/theme/palettes';
 import { applyPalette, createUniforms, hexToColor, type BenchUniforms } from './material/uniforms';
 import { KEY_LIGHT } from './Lights';
 import { intro } from './Clocks';
-import { bedPitch, createOUTexture, configureUniforms, GLErrorBoundary, PaperBackground, bindPaper, warmUp, CAMERA, BENCH_CENTER, FADE_MS } from './Scene';
+import { ScrollProvider } from '@/scroll/ScrollProvider';
+import { bedPitch, createOUTexture, configureUniforms, GLErrorBoundary, PaperBackground, Scene, bindPaper, warmUp, watchContextLoss, CAMERA, BENCH_CENTER, FADE_MS } from './Scene';
 
 // The warm-up (design §11): nothing shows until the fonts are in and every program is compiled; the fade is 200 ms; T0 is its end.
 describe('warmUp', () => {
@@ -306,5 +308,78 @@ describe('bindPaper', () => {
     bindPaper(scene, gl, u);
     expect(scene.background).toBe(u.uPaper.value);
     expect(clears).toEqual([[u.uPaper.value, 1]]);
+  });
+});
+
+describe('GLErrorBoundary onError', () => {
+  (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  function Thrower(): null { throw new Error('context creation refused'); }
+
+  it('tells the scene the renderer failed, once, so it can switch to the SVG tier', async () => {
+    const quiet = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const onError = vi.fn();
+      const root = createRoot({} as HTMLCanvasElement);
+      await root.configure({
+        gl: { render() {}, setSize() {}, setPixelRatio() {}, shadowMap: { enabled: false, type: THREE.PCFShadowMap, needsUpdate: false }, outputColorSpace: THREE.SRGBColorSpace, toneMapping: THREE.NoToneMapping, domElement: {} } as unknown as THREE.WebGLRenderer,
+        size: { width: 8, height: 8, top: 0, left: 0 }, dpr: 1, frameloop: 'never',
+      });
+      await act(async () => root.render(createElement(GLErrorBoundary, { fallback: null, onError }, createElement(Thrower))));
+      expect(onError).toHaveBeenCalledTimes(1);
+      await act(async () => root.unmount());
+    } finally {
+      quiet.mockRestore();
+      errors.mockRestore();
+    }
+  });
+});
+
+// Review Focus #5: a context lost after T0 (a GPU reset, a driver update, too many contexts) takes the scene with it,
+// so the canvas's webglcontextlost switches the page to the SVG tier.
+describe('watchContextLoss', () => {
+  it('calls back on the canvas\'s webglcontextlost, once', () => {
+    const canvas = new EventTarget() as HTMLCanvasElement;
+    const onLost = vi.fn();
+    watchContextLoss(canvas, onLost);
+    expect(onLost).not.toHaveBeenCalled();
+    canvas.dispatchEvent(new Event('webglcontextlost'));
+    expect(onLost).toHaveBeenCalledTimes(1);
+    canvas.dispatchEvent(new Event('webglcontextlost'));   // R3F's own forceContextLoss on the unmount that follows
+    expect(onLost).toHaveBeenCalledTimes(1);
+  });
+});
+
+// The first render of <Scene />, as the client makes it once the chunk lands (server-rendered here, where no effect
+// runs): the hero plate is always under the canvas; without WebGL2 the canvas is never mounted and the plates are the tier's.
+describe('<Scene /> first render', () => {
+  const render = () => renderToStaticMarkup(createElement(ScrollProvider, null, createElement(Scene)));
+  afterEach(() => vi.unstubAllGlobals());
+
+  function stubGL(search: string, context: unknown) {
+    vi.stubGlobal('location', { search });
+    vi.stubGlobal('document', { createElement: () => ({ getContext: () => context }) });
+  }
+  const webgl2 = { MAX_VERTEX_ATTRIBS: 0x8869, getParameter: () => 16, getExtension: () => null };
+
+  it('with WebGL2: the hero plate first, then the canvas wrapper at opacity 0 over it', () => {
+    stubGL('', webgl2);
+    const html = render();
+    expect(html.startsWith('<div class="sp-layer"')).toBe(true);
+    expect(html).not.toContain('data-machine');
+    const wrapper = html.indexOf('<div class="pointer-events-none fixed inset-0 z-0" style="opacity:0" aria-hidden="true">');
+    expect(wrapper).toBeGreaterThan(html.indexOf('sp-hero-portrait'));
+    expect(html).toContain('<canvas');
+  });
+
+  it('without WebGL2 (or with ?nogl=1): the SVG tier and no canvas', () => {
+    for (const [search, context] of [['', null], ['?nogl=1', webgl2]] as const) {
+      stubGL(search, context);
+      const html = render();
+      expect(html.startsWith('<div class="sp-layer"'), search).toBe(true);
+      expect(html, search).toContain('data-machine');
+      expect(html, search).not.toContain('<canvas');
+      expect(html, search).not.toContain('pointer-events-none fixed inset-0 z-0');
+    }
   });
 });

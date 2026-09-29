@@ -1,11 +1,13 @@
 // The chrome's per-frame sync (design §3.1, §9, task 3.6): a plain DOM rAF loop, outside R3F, that reads `hud`
 // (gl/hud.ts, which Clocks writes every frame) and writes only what changed: the hero ladder's lines, parts and
-// running clock, the alive section's uptime, the footer's total (the inked bench plus the visitor's built parts), the
+// running clock, the alive section's uptime, the footer's total (the inked bench plus the visitor's built parts; this
+// and the ladder's two counts from the scene only while it is live, hud.gl, over the server's final counts), the
 // section rail's current item, section 02's lit rungs (every one up to hud.rung, that one current), its revealed copy
 // lines and <html data-gl>, the live-scene marker those lines hide under (task 4.1). No React state and no layout
 // reads: every node is looked up once, at start, and the last value written to each is kept here, so a frame where
 // nothing changed touches no DOM at all.
 import { SECTIONS } from '@/bench/sections';
+import { MACHINE_COUNT } from '@/bench/types';
 import { smoothstep } from '@/bench/math';
 import { TIMING } from '@/bench/timing';
 import { BAND_ROWS, PARTITION } from '@/gl/inkGeometry';
@@ -29,6 +31,8 @@ export interface HudSyncOptions {
 const LINES_FROM = 0.35 / TIMING.heroCompileS, LINES_TO = 0.5 / TIMING.heroCompileS;
 /** Rows the quoter's ink prints through the band: 40, or 0 if the band is ever cut, and the rung reads 0 with it. */
 const BAND_LINES = BAND_ROWS[PARTITION.quoter];
+/** Every machine's compile once the page is built: the counts the SVG tier reads. */
+const BUILT = new Float32Array(MACHINE_COUNT).fill(1);
 /** The running clock until the quoter's lever locks: the width of hh:mm:ss, so the ladder line never reflows. */
 const NOT_RUNNING = '--:--:--';
 
@@ -63,14 +67,20 @@ export function startHudSync({ lockEnds, wordCount }: HudSyncOptions): () => voi
   const frame = () => {
     raf = requestAnimationFrame(frame);
 
-    const n = Math.round(BAND_LINES * smoothstep(LINES_FROM, LINES_TO, hud.compile));
-    if (n !== lastLines) { lastLines = n; setText(lines, String(n)); }
+    // The server rendered the ladder and the footer with the layout's final counts, which is what they read with no
+    // scene (the SVG tier, spec §11); the scene takes them over on its first frame and counts them up from there, and
+    // if it goes (a lost context, a failed renderer) they go back to the built bench's on that frame, once.
+    if (hud.gl || lastGl) {
+      const compile = hud.gl ? hud.compilePerMachine : BUILT;
+      const n = hud.gl ? Math.round(BAND_LINES * smoothstep(LINES_FROM, LINES_TO, hud.compile)) : BAND_LINES;
+      if (n !== lastLines) { lastLines = n; setText(lines, String(n)); }
 
-    const p = ladderParts(lockEnds, hud.compilePerMachine);
-    if (p !== lastParts) { lastParts = p; setText(parts, p.toLocaleString('en-US')); }
+      const p = ladderParts(lockEnds, compile);
+      if (p !== lastParts) { lastParts = p; setText(parts, p.toLocaleString('en-US')); }
 
-    const total = inkedTotal(lockEnds, hud.compilePerMachine) + hud.visitorParts;
-    if (total !== lastTotal) { lastTotal = total; setText(footer, copy.yours.footer(total)); }
+      const total = inkedTotal(lockEnds, compile) + (hud.gl ? hud.visitorParts : 0);
+      if (total !== lastTotal) { lastTotal = total; setText(footer, copy.yours.footer(total)); }
+    }
 
     const second = hud.running ? Math.max(0, Math.floor(hud.uptime - hud.runningSince)) : -1;
     if (second !== lastSecond) {

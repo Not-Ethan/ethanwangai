@@ -4,6 +4,7 @@ import { copy } from '@/site/copy';
 import { facts } from '@/site/facts';
 import { SECTIONS } from '@/bench/sections';
 import { MACHINE, type Tier } from '@/bench/types';
+import { COUNTS } from '@/generated/counts';
 import { useScroll } from '@/scroll/ScrollProvider';
 import { Plate } from '@/site/Plate';
 
@@ -111,8 +112,9 @@ export function Yours() {
                 <li><a className="mono" href={facts.links.resume.href} target="_blank" rel="noopener noreferrer">{facts.links.resume.label}</a></li>
                 <li className="mono pencil">{c.school}</li>
               </ul>
-              {/* 0 is a placeholder; Stage 3/5 write generated inked total + visitor parts here */}
-              <footer className="mt-8"><p className="mono pencil" id="footer-total">{c.footer(0)}</p></footer>
+              {/* the bench's final inked total, which the SVG tier keeps (spec §11); hudSync counts it, with the
+                  visitor's built parts, from the scene's first frame */}
+              <footer className="mt-8"><p className="mono pencil" id="footer-total">{c.footer(COUNTS.desktop.inkedAtEnd)}</p></footer>
             </div>
           </div>
         </div>

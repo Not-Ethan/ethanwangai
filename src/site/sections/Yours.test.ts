@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { COUNTS } from '@/generated/counts';
+import { ScrollProvider } from '@/scroll/ScrollProvider';
 import { copy } from '@/site/copy';
 import { facts } from '@/site/facts';
 import { planVisitor } from '@/gl/visitor';
-import { clearSentence, mailtoHref, submitSentence, type YoursDom } from './Yours';
+import { Yours, clearSentence, mailtoHref, submitSentence, type YoursDom } from './Yours';
 
 /** The plate a sentence should print, from the layout itself. */
 function plateFor(text: string): string {
@@ -108,5 +112,15 @@ describe('clearSentence', () => {
     expect(dom.plate.textContent).toBe(copy.yours.plateEmpty);
     expect(dom.mailto.href).toBe(mailtoHref(''));
     expect(events).toEqual([{ type: 'dbso:visitor:clear', detail: null }]);
+  });
+});
+
+// The footer is server-rendered with the layout's final inked total, which is what it reads in the SVG tier; hudSync
+// counts it from the scene once the scene is live (spec §11, task 5.2).
+describe('the footer, server-rendered', () => {
+  it('prints the bench\'s final inked total from the generated counts', () => {
+    const html = renderToStaticMarkup(createElement(ScrollProvider, null, createElement(Yours)));
+    expect(html).toContain(`<p class="mono pencil" id="footer-total">${copy.yours.footer(COUNTS.desktop.inkedAtEnd)}</p>`);
+    expect(copy.yours.footer(COUNTS.desktop.inkedAtEnd)).toContain(COUNTS.desktop.inkedAtEnd.toLocaleString('en-US'));
   });
 });

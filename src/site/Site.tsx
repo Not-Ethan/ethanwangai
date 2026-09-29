@@ -2,6 +2,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import { ScrollProvider } from '@/scroll/ScrollProvider';
+import { StaticPlates } from '@/fallback/StaticPlates';
 import { useTier } from '@/gl/useTier';
 import { benchLockEnds } from './chrome/inkedCount';
 import { startHudSync } from './chrome/hudSync';
@@ -19,8 +20,10 @@ import { Summers } from './sections/Summers';
 import { Alive } from './sections/Alive';
 import { Yours } from './sections/Yours';
 
-// The GL scene is client-only: it needs a WebGL2 context and reads the DOM's theme; the server renders the complete DOM site without it.
-const Scene = dynamic(() => import('@/gl/Scene').then((m) => m.Scene), { ssr: false });
+// The GL scene is client-only: it needs a WebGL2 context and reads the DOM's theme; the server renders the complete DOM
+// site without it. Its placeholder is the hero plate Scene itself draws under the canvas, so the server HTML carries the
+// poster and first paint shows it (design §10, §11) while the scene's chunk loads.
+const Scene = dynamic(() => import('@/gl/Scene').then((m) => m.Scene), { ssr: false, loading: () => <StaticPlates mode="hero" /> });
 
 const WORD_COUNT = copy.sentence.headline.split(' ').length;
 

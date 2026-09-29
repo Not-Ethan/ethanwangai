@@ -5,12 +5,16 @@
 // `flat` (no tone mapping): the palette uniforms must reach the screen as the palette's own sRGB values, so the paper,
 // pencil and ink match the DOM's CSS tokens and the SVG plate they cross-fade with (§11). The wrapper mounts at
 // opacity 0: the warm-up (§11) waits for the fonts, compiles every program, draws one frame, and only then fades the
-// canvas in over 200 ms; the end of that fade is T0, when Clocks starts the hero compile.
-import { Component, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
+// canvas in over 200 ms; the end of that fade is T0, when Clocks starts the hero compile. Under it, always, is the SVG
+// layer (fallback/StaticPlates.tsx): the hero plate the canvas cross-fades over. With no WebGL2, a renderer failure or
+// a lost context the Canvas unmounts and that layer becomes the SVG tier; the DOM is left as it is.
+import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Canvas, useThree, type RootState } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Tier, Vec3 } from '@/bench/types';
+import { StaticPlates } from '@/fallback/StaticPlates';
+import { webgl2Available } from '@/fallback/glSupport';
 import { buildBench } from '@/bench/counts';
 import { hashString } from '@/bench/hash';
 import { BENCH_SEED_TEXT } from '@/bench/bench';
@@ -106,14 +110,42 @@ export async function warmUp({ gl, scene, camera }: Pick<RootState, 'gl' | 'scen
   startIntro();
 }
 
-/** Keeps a renderer failure (no WebGL2, context creation refused) from taking the DOM down with it; the DOM is the site on its own. */
-export class GLErrorBoundary extends Component<{ fallback: ReactNode; children?: ReactNode }, { failed: boolean }> {
+/**
+ * Keeps a renderer failure (no WebGL2, context creation refused) from taking the DOM down with it; the DOM is the site
+ * on its own. `onError` tells Scene, which switches the SVG layer to the tier.
+ */
+export class GLErrorBoundary extends Component<{ fallback: ReactNode; onError?: () => void; children?: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() { this.props.onError?.(); }
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
+/**
+ * A lost context (a GPU reset, a driver update, the browser reclaiming it) takes the scene with it, after T0 as much as
+ * before (Review Focus #5): the SVG tier takes over rather than a blank paper. Once: R3F's own forceContextLoss on the
+ * unmount that follows fires it again.
+ */
+export function watchContextLoss(canvas: HTMLCanvasElement, onLost: () => void): void {
+  canvas.addEventListener('webglcontextlost', onLost, { once: true });
+}
+
+/**
+ * The GL layer's root: the SVG layer, and over it the canvas while WebGL2 holds. The probe runs once, on the first
+ * render (Scene is client-only); a failure after it (the error boundary, a lost context) flips the same switch.
+ */
 export function Scene() {
+  const [failed, setFailed] = useState(() => !webgl2Available());
+  const fail = useCallback(() => setFailed(true), []);
+  return (
+    <>
+      <StaticPlates mode={failed ? 'tier' : 'hero'} />
+      {!failed && <GLLayer onFail={fail} />}
+    </>
+  );
+}
+
+function GLLayer({ onFail }: { onFail: () => void }) {
   const { tier, dpr, shadows, onDecline } = useTier();
   const result = useMemo(() => buildBench(tier), [tier]);
   const ou = useMemo(() => createOUTexture(), []);
@@ -124,7 +156,7 @@ export function Scene() {
 
   return (
     <div ref={wrapper} className="pointer-events-none fixed inset-0 z-0" style={HIDDEN} aria-hidden>
-      <GLErrorBoundary fallback={null}>
+      <GLErrorBoundary fallback={null} onError={onFail}>
         <Canvas
           dpr={dpr}
           shadows={shadows ? SHADOW_MAP : false}
@@ -132,7 +164,7 @@ export function Scene() {
           camera={CAMERA_OPTIONS}
           frameloop="always"
           flat
-          onCreated={(state) => { void warmUp(state, wrapper.current); }}
+          onCreated={(state) => { watchContextLoss(state.gl.domElement, onFail); void warmUp(state, wrapper.current); }}
         >
           <PaperBackground uniforms={u} />
           <PerformanceMonitor onDecline={onDecline}>
