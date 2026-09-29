@@ -21,7 +21,9 @@ export interface CameraKey { section: number; u: number; pose: Pose }
 // them, every machine clear of the copy column, the quoter the wall behind running out of the right edge; a drop to
 // the slot, low (13°) from its front-right and nearly along the front row (75° round; re-authored in Task 5.0), so the
 // slot is large in front and the rest of the bench recedes behind it to the right, the balance its left end, clear of
-// 09's copy column, and the quoter runs out of the right edge. 59 units.
+// 09's copy column, and the quoter runs out of the right edge. The kalshi, heron, darch, summers and alive dwells
+// each carry a slow push-in toward their own lookAt (Task 6.4, the dead-scroll audit): every one of them used to hold
+// dead still — same position, same lookAt — from its travel-in to the section's end. 59.8 units.
 const D: CameraKey[] = [
   { section: 0, u: 0.00, pose: { position: [-9.9, 18.2, 20.5], lookAt: [-4.8, 4.3, -3.2], fov: 30 } },   // hero: quoter lower-right, its top at the deck, tight to the right edge; intake below the copy block; small machines cropped at the bottom edge
   { section: 0, u: 0.15, pose: { position: [-9.9, 18.2, 20.5], lookAt: [-4.8, 4.3, -3.2], fov: 30 } },   // hold while the copy is sticky
@@ -33,15 +35,15 @@ const D: CameraKey[] = [
   { section: 2, u: 1.00, pose: { position: [-4.3, 4.3, 10.0], lookAt: [-7.5, 1.5, 1.6], fov: 30 } },
   { section: 3, u: 0.08, pose: { position: [-4.3, 4.3, 10.0], lookAt: [-7.2, 0.6, 0.0], fov: 30 } },     // dolly start
   { section: 3, u: 0.30, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.8, -0.6, -1.8], fov: 30 } },   // dolly end (the one lateral dolly): low oblique along the bed
-  { section: 3, u: 1.00, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.8, -0.6, -1.8], fov: 30 } },
-  { section: 4, u: 0.15, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.4, 1.9, 2.6], fov: 30 } },     // side-on and low on the balance, quoter behind: a tilt from the dolly's end station
-  { section: 4, u: 1.00, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.4, 1.9, 2.6], fov: 30 } },
+  { section: 3, u: 1.00, pose: { position: [-2.2, 4.5, 12.9], lookAt: [-6.8, -0.6, -1.8], fov: 30 } },   // dead-scroll audit (Task 6.4): a slow push-in over the dwell, was a flat hold on the dolly-end station
+  { section: 4, u: 0.15, pose: { position: [-2.2, 4.5, 12.9], lookAt: [-6.4, 1.9, 2.6], fov: 30 } },     // side-on and low on the balance, quoter behind: a tilt from the dolly's end station (now the 6.4 push-in's landing point)
+  { section: 4, u: 1.00, pose: { position: [-2.3, 4.4, 12.7], lookAt: [-6.4, 1.9, 2.6], fov: 30 } },     // dead-scroll audit (Task 6.4): a further slow push-in over the dwell
   { section: 5, u: 0.15, pose: { position: [8.2, 5.2, 11.7], lookAt: [0.4, 2.0, 7.1], fov: 30 } },      // low along the splitter from its fan end: one in along the in-rail, twelve out toward the camera; balance and intake behind, right of the copy column
-  { section: 5, u: 1.00, pose: { position: [8.2, 5.2, 11.7], lookAt: [0.4, 2.0, 7.1], fov: 30 } },
+  { section: 5, u: 1.00, pose: { position: [8.1, 5.2, 11.6], lookAt: [0.4, 2.0, 7.1], fov: 30 } },       // dead-scroll audit (Task 6.4): a slow push-in over the dwell
   { section: 6, u: 0.15, pose: { position: [5.0, 9.3, 14.8], lookAt: [1.2, -1.5, 5.3], fov: 30 } },      // high calm on the watch, centred, the quoter's front above it; a rise from the darch station
-  { section: 6, u: 1.00, pose: { position: [5.0, 9.3, 14.8], lookAt: [1.2, -1.5, 5.3], fov: 30 } },
+  { section: 6, u: 1.00, pose: { position: [5.0, 9.2, 14.7], lookAt: [1.2, -1.5, 5.3], fov: 30 } },      // dead-scroll audit (Task 6.4): a slow push-in over the dwell
   { section: 7, u: 0.60, pose: { position: [13.2, 8.0, 16.4], lookAt: [-0.9, 0.3, 6.4], fov: 30 } },     // poster: small machines large in front, the quoter the wall behind
-  { section: 7, u: 1.00, pose: { position: [13.2, 8.0, 16.4], lookAt: [-0.9, 0.3, 6.4], fov: 30 } },
+  { section: 7, u: 1.00, pose: { position: [13.1, 7.9, 16.3], lookAt: [-0.9, 0.3, 6.4], fov: 30 } },     // dead-scroll audit (Task 6.4): a slow push-in over the dwell
   { section: 8, u: 0.25, pose: { position: [12.0, 2.5, 8.75], lookAt: [-2.0, -0.8, 5.0], fov: 30 } },   // low at the slot's front-right: the slot large in front, the bench behind it to the right
   { section: 8, u: 1.00, pose: { position: [12.0, 2.5, 8.75], lookAt: [-2.0, -0.8, 5.0], fov: 30 } },
 ];
