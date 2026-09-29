@@ -16,7 +16,7 @@ export function Kalshi() {
             <div className="copy-col sticky top-24 md:top-28">
               <h2 className="h2" data-ink-source="kalshi" data-reveal>{c.heading}</h2>
               <p className="body mt-5" data-reveal>{c.body}</p>
-              <dl className="mt-8 space-y-4">
+              <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-2">
                 {c.figures.map((fig) => (
                   <div key={fig.label}>
                     <dd className="mono-figure">{fig.value}</dd>

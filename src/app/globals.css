@@ -38,7 +38,7 @@ body {
 }
 .h2 {
   font-family: var(--font-display), Arial, sans-serif;
-  font-weight: 700; font-size: clamp(1.9rem, 4.2vw, 3.6rem); line-height: 1.0; letter-spacing: -0.025em;
+  font-weight: 700; font-size: clamp(1.7rem, min(4.2vw, 5.6vh), 3.6rem); line-height: 1.0; letter-spacing: -0.025em;
   text-transform: lowercase;
 }
 .body { font-size: clamp(1.125rem, 1.35vw, 1.25rem); line-height: 1.45; max-width: 34ch; }
@@ -46,7 +46,7 @@ body {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.8125rem; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; text-transform: lowercase;
 }
-.mono-figure { font-family: var(--font-mono), ui-monospace, monospace; font-size: clamp(3rem, 5vw, 4.5rem); line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.mono-figure { font-family: var(--font-mono), ui-monospace, monospace; font-size: clamp(2rem, min(5vw, 7vh), 4.5rem); line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 /* 08's uptime, `running 00:04:12` (spec §3.1 · 08), on one line in the copy column: 16 mono characters at 0.59em
    each are 9.44em, so 3.6vw keeps them inside the 5-of-12 column from 1280 px up (489 px of 551 at 1440) and the
    floor is still an oversized figure (48 px). On two lines at 5vw 08's block was 793 px, more than the 788 px a
@@ -116,14 +116,16 @@ a:hover, button.link:hover { color: var(--hot); }
   #yours { scroll-margin-top: calc(-94vh - 1rem); }
 
   /* 08's heading is the longest on the page, and its block fits under the pin only if its h2 does. At the plain .h2
-     size it is 8 lines from 1024 to 1366 px wide: 763 px of block under 688 px of room at 1280 × 800, so the block
-     let go at u 0.9 with its uptime below the fold. Three caps under the plain clamp. 0.105 of the copy column
-     (md:px-12, gap-4, col-span-5) keeps it at six lines or fewer; it wraps to eight by 0.111. 10vh − 30px gives up
-     size for height. Below 1280 px the column narrows (under about 1210 px the uptime takes a second line), so the
-     heading gives back 0.035 px per px of width. Swept over 768–1920 × 540–1100 px, the block holds to u = 1 at
-     every desktop viewport from 1216 px wide and 560 px tall, 1152 px and 610, 960 px and 640; below those the h2
-     is at its 1.9rem floor. 1440 × 900 and 1920 × 1080 keep 3.6rem. */
-  #alive .h2 { font-size: clamp(1.9rem, min(4.2vw, 0.105 * ((100vw - 17rem) * 5 / 12 + 4rem), 10vh - 30px - 0.035 * max(0px, 1280px - 100vw)), 3.6rem); }
+     size of the time (clamp(1.9rem, 4.2vw, 3.6rem)) it was 8 lines from 1024 to 1366 px wide: 763 px of block under
+     688 px of room at 1280 × 800, so the block let go at u 0.9 with its uptime below the fold. Three caps under the
+     plain clamp, whose 1.7rem floor and 5.6vh cap (Task 5.0) this rule shares. 0.105 of the copy column (md:px-12,
+     gap-4, col-span-5) keeps it at six lines or fewer; it wraps to eight by 0.111. 10vh − 30px gives up size for
+     height. Below 1280 px the column narrows (under about 1210 px the uptime takes a second line), so the heading
+     gives back 0.035 px per px of width. Swept over 768–1920 × 540–1100 px before the plain clamp had its 5.6vh cap,
+     the block held to u = 1 at every desktop viewport from 1216 px wide and 560 px tall, 1152 px and 610, 960 px and
+     640, with the h2 at its then 1.9rem floor below those; the cap and the lower floor only shrink it. 1920 × 1080
+     keeps 3.6rem; 1440 × 900 takes the plain 5.6vh. */
+  #alive .h2 { font-size: clamp(1.7rem, min(4.2vw, 5.6vh, 0.105 * ((100vw - 17rem) * 5 / 12 + 4rem), 10vh - 30px - 0.035 * max(0px, 1280px - 100vw)), 3.6rem); }
 }
 
 /* section 02's ladder track (#rungs' sticky containing block): #more is 100vh on desktop, so a ladder left at the

@@ -104,7 +104,7 @@ export function Yours() {
               </form>
               <Plate machine={MACHINE.visitor}><span ref={plate} id="yours-plate">{c.plateEmpty}</span></Plate>
               <p className="mono pencil mt-2">{c.note}</p>
-              <ul className="mt-12 space-y-2">
+              <ul className="mt-8 space-y-1">
                 <li><a ref={mail} id="mailto" className="font-mono text-2xl break-all md:text-3xl" href={mailtoHref('')}>{facts.links.email}</a></li>
                 <li><a className="mono" href={facts.links.github.href} target="_blank" rel="noopener noreferrer">{facts.links.github.label}</a></li>
                 <li><a className="mono" href={facts.links.linkedin.href} target="_blank" rel="noopener noreferrer">{facts.links.linkedin.label}</a></li>
@@ -112,7 +112,7 @@ export function Yours() {
                 <li className="mono pencil">{c.school}</li>
               </ul>
               {/* 0 is a placeholder; Stage 3/5 write generated inked total + visitor parts here */}
-              <footer className="mt-16"><p className="mono pencil" id="footer-total">{c.footer(0)}</p></footer>
+              <footer className="mt-8"><p className="mono pencil" id="footer-total">{c.footer(0)}</p></footer>
             </div>
           </div>
         </div>
