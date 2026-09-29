@@ -10,7 +10,8 @@ import { ThemeToggle } from './ThemeToggle';
  * The header is `fixed z-40`, so it is its own stacking context: the overlay is rendered
  * first with no z-index of its own, and the controls that must stay tappable over it
  * (home, resume, menu) are `relative z-10`. `menu` therefore both opens and closes it;
- * Escape closes it too. `defaultOpen` is the uncontrolled initial state.
+ * Escape closes it too. `defaultOpen` is the uncontrolled initial state. The header is a solid paper band the full
+ * width and its own height, no border, so copy scrolling under it is hidden rather than crossing the nav's text.
  */
 export function Nav({ defaultOpen = false }: { defaultOpen?: boolean }) {
   const { scrollTo } = useScroll();
@@ -23,7 +24,7 @@ export function Nav({ defaultOpen = false }: { defaultOpen?: boolean }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
   return (
-    <header className="fixed inset-x-0 top-0 z-40 flex items-start justify-between px-4 py-4 md:px-8">
+    <header className="fixed inset-x-0 top-0 z-40 flex items-start justify-between bg-paper px-4 py-4 md:px-8">
       {open && (
         <div className="fixed inset-0 flex flex-col justify-center gap-6 bg-paper px-6 md:hidden">
           {copy.nav.items.map((it) => (
