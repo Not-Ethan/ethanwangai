@@ -64,3 +64,16 @@ Order: 6.1, 6.2, 6.3 **[parallel-safe]**; 6.4; 6.5; 6.6; 6.7.
 - [ ] **Step 1:** The orchestrator runs a review workflow over the branch diff (spec conformance, correctness, performance rules from §12, copy rules) and fixes confirmed findings.
 - [ ] **Step 2:** Final gate stills: hero (T0 + 3 s) light and dark, kalshi, poster, yours-built, phone hero, `?nogl=1`, reduced motion. Save to `.playwright-mcp/gates/final-*.png`.
 - [ ] **Step 3:** `git checkout main && git merge --no-ff redesign/drawn-built-switched-on -m "Ship Drawn, Built, Switched On"` only after the orchestrator confirms every gate.
+
+---
+
+### Task 6.0: Phone hero on the production build, and the no-WebGL clock (added after judging G6) **[parallel-safe with 6.4]**
+
+G6 verdict: desktop, reduced motion and the no-WebGL tier read as a complete site; the phone tier does on the dev server (`.playwright-mcp/gates/g6-phone-hero.png`: the macro shows the bot, lever, carriages, cells ≈ 17 px). On the **production build** (`next build && next start`) the phone hero shows the pencil SVG plate instead of the GL machine while the ladder still ticks (`g6-final-phone-hero.png`): the canvas is not covering the SVG. Also, the no-WebGL ladder prints `running --:--:--`, which reads as broken.
+
+**Files:** `src/gl/Scene.tsx`, `src/fallback/StaticPlates.tsx` / `staticPlates.css`, `src/site/chrome/hudSync.ts`, `src/site/chrome/Ladder.tsx`, `src/site/sections/Alive.tsx` (only as needed)
+
+- [ ] **Step 1: Reproduce on production.** `npm run build && npx next start -p 3111`; Playwright at 390 × 844 (which makes `detectTier()` phone), load `/`, wait to T0 + 4 s, screenshot. Confirm whether the canvas is present (`document.querySelector('canvas')`), its wrapper's computed opacity, its z-index relative to the StaticPlates layer, and whether `window.__dbso.t0` was set. Compare with the dev server at the same size. Find the cause (candidates: the cross-fade never completes on the phone tier in prod so the wrapper stays at opacity 0; the portrait plate's layer ordering differs in the production CSS bundle; the canvas renders transparent). Fix it at the cause; do not paper over with a timeout.
+- [ ] **Step 2: No-WebGL clock.** When `hud.gl` is false (no scene ever drove the clock), hide the ladder's `running` item and section 08's uptime line instead of printing `--:--:--`; the SSR markup keeps the final counts (40 lines, the quoter+intake parts, the footer total). The GL tier is unchanged.
+- [ ] **Step 3: Stills** on the production server: `g6b-phone-hero.png` (390 × 844, T0 + 4 s), `g6b-phone-hero-375.png` (375 × 667), `g6b-nogl-hero-dark.png` (`?nogl=1` after toggling to dark), `g6b-nogl-alive.png`. Zero console errors. Stop the server.
+- [ ] **Step 4: Verify** `npx vitest run` green, tsc clean, lint clean, `npm run build` clean. **Commit:** `git add -A && git commit -m "Fix the phone hero on the production build; hide the clock in the no-WebGL tier"`
