@@ -43,10 +43,12 @@ describe('the ink rows band (design §3.1: T0 + 0.35 → 0.95 s)', () => {
     expect(assigned('rowY')).toEqual(['bandOrigin.y+(rows*0.5-aRow)*uBandPitch']);
   });
 
-  it("gives the merge burst its own origin, halfway from the copy to the bed, its rows starting there (Task 5.0)", () => {
-    // With the hero's blend and margin the burst's eight rows landed on the bed; halfway and flush they start between
-    // the copy column and the bed. Every other partition keeps the hero's.
-    expect(glslConst('BURST_BLEND')).toBe(0.5);
+  it("gives the merge burst its own origin, a quarter of the way from the copy to the bed, its rows starting there (Task 5.0)", () => {
+    // With the hero's blend and margin the burst's eight rows landed on the bed. Halfway, flush, at the hero's lengths,
+    // they started past the intake's hopper and ran over it, the in-rail and the frame (s02-burst-rows at 1440 × 900).
+    // At 0.27 they start about 40 px (1440 × 900) and 20 px (1280 × 720) right of the copy line's last word, clear of
+    // the hopper. Every other partition keeps the hero's.
+    expect(glslConst('BURST_BLEND')).toBe(0.27);
     expect(glslConst('BURST_MARGIN')).toBe(0);
     expect(glslConst('BAND_BLEND')).toBe(0.33);
     expect(glslConst('BAND_MARGIN')).toBe(0.32);
@@ -54,9 +56,21 @@ describe('the ink rows band (design §3.1: T0 + 0.35 → 0.95 s)', () => {
   });
 
   it('ends each row at its own hashed length, so the rows end ragged like code', () => {
-    const [lineLen] = assigned('lineLen');
-    expect(lineLen).toMatch(/aRow/);
-    expect(lineLen).not.toMatch(/aSeed/);
+    const [ragged] = assigned('ragged');
+    expect(ragged).toMatch(/aRow/);
+    expect(ragged).not.toMatch(/aSeed/);
+    expect(assigned('lineLen')).toEqual(
+      [`part==${PARTITION.merge}?BURST_LINE_MIN+BURST_LINE_RAG*ragged:LINE_MIN+LINE_RAG*ragged`],
+    );
+  });
+
+  it("keeps the burst's rows short enough to sit on the paper between the copy line and the hopper (Task 5.0)", () => {
+    // The gap from the copy line's right edge to the hopper is about 0.15 NDC wide at 1440 × 900 (≈ 405 → 515 px) and
+    // at 1280 × 720 (≈ 377 → 476 px). The hero's lengths (0.14 to 0.60) cannot fit in it; the burst's run 0.05 to 0.11.
+    const [min, rag] = ['BURST_LINE_MIN', 'BURST_LINE_RAG'].map(glslConst);
+    expect([min, rag]).toEqual([0.05, 0.06]);
+    expect(min + rag).toBeLessThan(glslConst('LINE_MIN'));   // the longest burst row is shorter than the hero's shortest
+    expect(glslConst('BURST_BLEND')).toBeLessThan(glslConst('BAND_BLEND'));
   });
 
   it('stills the curl while a point sits in its row', () => {
