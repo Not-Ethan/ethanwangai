@@ -152,6 +152,33 @@ describe('copy measure', () => {
   });
 });
 
+describe('the evidence figures (spec §9: oversized mono figures, 48–72 px)', () => {
+  // Task 5.0 made .mono-figure height-aware so kalshi's block fits under its pin at 1280 × 720. The vh cap may move a
+  // figure within the spec's range, never under it: the floor binds on phones (5vw) and under ~686 px tall (7vh).
+  const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8');
+  const decls = /(?:^|\n)\.mono-figure\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
+  const m = /font-size:\s*clamp\(([\d.]+)rem,\s*min\(([\d.]+)vw,\s*([\d.]+)vh\),\s*([\d.]+)rem\)/.exec(decls);
+  const [lo, vw, vhCap, hi] = m ? [Number(m[1]) * 16, Number(m[2]), Number(m[3]), Number(m[4]) * 16] : [NaN, NaN, NaN, NaN];
+  const px = (w: number, h: number) => Math.min(Math.max(lo, Math.min((vw / 100) * w, (vhCap / 100) * h)), hi);
+
+  it("sets kalshi's figures, the clamp's only plain user, at 48–72 px at every viewport, phones and short desktops included", () => {
+    expect(m, '.mono-figure is clamp(Arem, min(Bvw, Cvh), Drem)').not.toBeNull();
+    expect([lo, hi]).toEqual([48, 72]);
+    const figures = render('kalshi').match(/<dd\b[^>]*class="([^"]*)"/g) ?? [];
+    expect(figures.length).toBeGreaterThan(0);
+    for (const f of figures) expect(f).toMatch(/class="mono-figure"/);
+    for (const [w, h] of [[375, 667], [390, 844], [768, 1024], [1024, 600], [1280, 600], [1280, 720], [1366, 657], [1440, 900], [1920, 1080], [2560, 1440]]) {
+      expect(px(w, h), `${w} × ${h}`).toBeGreaterThanOrEqual(48);
+      expect(px(w, h), `${w} × ${h}`).toBeLessThanOrEqual(72);
+    }
+  });
+
+  it('keeps the sizes kalshi\'s block was fitted at: 50.4 px at 1280 × 720 and 63 px at 1440 × 900', () => {
+    expect(px(1280, 720)).toBeCloseTo(50.4, 9);
+    expect(px(1440, 900)).toBeCloseTo(63, 9);
+  });
+});
+
 describe('copy lead and tail (Step 3 gate: u = 0.7 of #heron)', () => {
   // u is measured at the viewport's top edge, so at u of a section only (1 − u) of it is still
   // below that edge and the next section's heading sits (1 − u)·H + lead below it. The block

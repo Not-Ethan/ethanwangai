@@ -46,7 +46,10 @@ body {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.8125rem; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; text-transform: lowercase;
 }
-.mono-figure { font-family: var(--font-mono), ui-monospace, monospace; font-size: clamp(2rem, min(5vw, 7vh), 4.5rem); line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+/* the evidence figures (spec §9: 48–72 px). 7vh shrinks them on short viewports so kalshi's block fits under its pin
+   (50.4 px at 1280 × 720, 63 px at 1440 × 900); the 3rem floor keeps them oversized below 960 px wide (phones) and
+   under ~686 px tall. */
+.mono-figure { font-family: var(--font-mono), ui-monospace, monospace; font-size: clamp(3rem, min(5vw, 7vh), 4.5rem); line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 /* 08's uptime, `running 00:04:12` (spec §3.1 · 08), on one line in the copy column: 16 mono characters at 0.59em
    each are 9.44em, so 3.6vw keeps them inside the 5-of-12 column from 1280 px up (489 px of 551 at 1440) and the
    floor is still an oversized figure (48 px). On two lines at 5vw 08's block was 793 px, more than the 788 px a
