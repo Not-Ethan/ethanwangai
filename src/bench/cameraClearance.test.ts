@@ -254,8 +254,9 @@ describe('anti-journey', () => {
 });
 
 describe('phone clearance at the dwells (aspect 390/844)', () => {
-  it('at every dwell the active machine sits in the lower 55% and inside the frame width', () => {
+  it('at every dwell but the hero macro the active machine sits in the lower 55% and inside the frame width', () => {
     for (const { section, u } of DWELL) {
+      if (section === 0 && u === 0) continue;   // the macro crops the quoter: its own case below
       const b = at(section, u, [SECTIONS[section].machine], 'phone');
       const where = `(${section}, ${u}) ${SECTIONS[section].id}`;
       expect(b.top, `${where} top`).toBeLessThanOrEqual(0.10);
@@ -264,9 +265,72 @@ describe('phone clearance at the dwells (aspect 390/844)', () => {
     }
   });
 
-  it('hero (0, 0): the bot in frame and the quoter at least 1.2 of the width', () => {
-    expect(inFrame(at(0, 0, [bot], 'phone')), 'bot in frame').toBe(true);
-    expect(width(at(0, 0, [quoter], 'phone'))).toBeGreaterThanOrEqual(1.2);
+  describe('hero (0, 0): a macro on the bed\'s front-left corner (design §11 phone tier)', () => {
+    const P = BENCH.phone;
+    const pose = () => poseAt(0, 0, 'phone');
+    const partsOf = (m: MachineId, module?: string) => P.parts.filter((p) => p.machine === m && (module === undefined || p.module === module));
+    /** NDC bounds of a list of parts' rest positions, every one of them in front of the camera. */
+    const boundsOf = (parts: typeof P.parts): NdcBounds => {
+      expect(DWELL).toContainEqual({ section: 0, u: 0 });
+      const pts = parts.map((p) => projectPoint(p.position, pose(), ASPECT.phone));
+      expect(pts.every((q) => q !== null)).toBe(true);
+      const xs = pts.map((q) => q![0]), ys = pts.map((q) => q![1]);
+      return { left: Math.min(...xs), right: Math.max(...xs), top: Math.max(...ys), bottom: Math.min(...ys) };
+    };
+
+    it('holds the bot, the lever and the two carriages parked at the corner whole, in the lower 55%', () => {
+      // The quoter's six carriages park at the ends of their rails; the −x pair on the front and middle rails are the
+      // corner's, and the lever pivots on the front-left post: the switch-on the intro ends on.
+      const corner = [...partsOf(bot), ...partsOf(quoter, 'lever'), ...partsOf(quoter, 'carriage4'), ...partsOf(quoter, 'carriage2')];
+      expect(partsOf(quoter, 'carriage4').every((p) => p.position[0] < 0 && p.position[2] > partsOf(quoter, 'carriage2')[0].position[2])).toBe(true);
+      const b = boundsOf(corner);
+      expect(b.left, 'left').toBeGreaterThanOrEqual(-0.95);
+      expect(b.right, 'right').toBeLessThanOrEqual(0.95);
+      expect(b.bottom, 'bottom').toBeGreaterThanOrEqual(-0.95);
+      expect(b.top, 'top').toBeLessThanOrEqual(0.10);
+    });
+
+    it('keeps everything of the quoter and the intake that lands inside the frame out of the copy\'s upper 45%', () => {
+      for (const p of [...partsOf(quoter), ...partsOf(intake)]) {
+        const q = projectPoint(p.position, pose(), ASPECT.phone);
+        if (!q || Math.abs(q[0]) > 1 || Math.abs(q[1]) > 1) continue;
+        expect(q[1], `${p.module} at ${p.position.join(', ')}`).toBeLessThanOrEqual(0.10);
+      }
+    });
+
+    it('draws every bed cell in the frame at least 12 CSS px wide at 390 × 844 and at 375 × 667', () => {
+      // A cell is 0.24 wide on phone (quoter.ts doubles cellScale with the pitch). fov is vertical, so a cell's size in
+      // px scales with the viewport's height: 667 px tall is the smaller case.
+      const cells = partsOf(quoter).filter((p) => p.module === 'bed');
+      let n = 0;
+      for (const [w, h] of [[390, 844], [375, 667]]) {
+        for (const c of cells) {
+          const mid = projectPoint(c.position, pose(), w / h);
+          if (!mid || Math.abs(mid[0]) > 1 || Math.abs(mid[1]) > 1) continue;
+          const half = c.scale[0] / 2;
+          const l = projectPoint([c.position[0] - half, c.position[1], c.position[2]], pose(), w / h)!;
+          const r = projectPoint([c.position[0] + half, c.position[1], c.position[2]], pose(), w / h)!;
+          expect(Math.hypot((r[0] - l[0]) * w / 2, (r[1] - l[1]) * h / 2), `cell ${c.param[0]}, ${c.param[1]} at ${w} × ${h}`).toBeGreaterThanOrEqual(12);
+          n++;
+        }
+      }
+      expect(n, 'cells in frame').toBeGreaterThan(50);
+    });
+
+    it('keeps the bench in front clear of the frame: the balance is not in the shot', () => {
+      for (const p of partsOf(balance)) {
+        const q = projectPoint(p.position, pose(), ASPECT.phone);
+        expect(q === null || Math.abs(q[0]) > 1 || Math.abs(q[1]) > 1, `balance ${p.module}`).toBe(true);
+      }
+    });
+  });
+
+  it('yours (8, 0.6): sets the slot, where the visitor builds, under 09\'s copy, which runs to 656 px of 844 (NDC −0.55)', () => {
+    // 09's block is its heading, the input, the plate, the note, the links and the footer; on a phone it cannot fit
+    // the upper 45%, so the slot sits under all of it and the input, the plate and the note stay on plain paper.
+    const s = at(8, 0.6, [slot], 'phone');
+    expect(s.top, 'slot top').toBeLessThanOrEqual(-0.55);
+    expect(s.bottom, 'slot bottom').toBeGreaterThanOrEqual(-0.95);
   });
 });
 

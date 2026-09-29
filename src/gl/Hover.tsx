@@ -1,10 +1,11 @@
 'use client';
 // The bed hover (design §3.1/04, §8 Pointer, task 4.3): one invisible 12 × 8 plane at the quoter bed's height, which a
 // pointer is raycast against by hand. The canvas wrapper has pointer-events: none, so R3F's own pointer events never
-// fire: a window pointermove (desktop) or a tap (phone, held 2 s) records the pointer in CSS px, and useFrame raycasts
-// it while the bed is the subject (02, 04, 08). A hit lifts that column (uHover = (quoter, col)) and writes hud.hover
-// with the market's quote from the CPU copy of the OU tape at the quoter's own clock, the texel the shader reads, so
-// the readout prints the machine's own numbers. No React state: the listeners write a plain object, the frame the rest.
+// fire: a window pointermove (desktop) or a pointerdown (phone, held 2 s) records the pointer in CSS px, and useFrame
+// raycasts it while the bed is the subject (02, 04, 08). A hit lifts that column (uHover = (quoter, col)) and writes
+// hud.hover with the market's quote from the CPU copy of the OU tape at the quoter's own clock, the texel the shader
+// reads, so the readout prints the machine's own numbers. No React state: the listeners write a plain object, the frame
+// the rest.
 import { useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -135,10 +136,39 @@ export function stepHover(h: HoverDriver, camera: THREE.Camera, width: number, h
   clearHover(h);
 }
 
+type PointerAt = Event & { clientX: number; clientY: number };
+
 /**
- * The hover plane and its listeners. Desktop hovers: pointermove, and leaving the window clears. Phone taps: a click
- * (which a scroll gesture never fires) holds the readout for TAP_HOLD_MS. Mounted after CameraRig, so both run at
- * priority 0 and this frame's camera is the one raycast.
+ * Records the pointer into `p` and returns the unsubscribe. Desktop hovers: a window pointermove holds it with no
+ * expiry and leaving the page (`root`, the document element) lets it go. Phone taps (design §11: hover replaced by
+ * tap-to-readout): a pointerdown holds it for TAP_HOLD_MS from `now()`, and a pointercancel, which the browser fires
+ * when it takes the press for a scroll, lets it go at once, so a swipe never leaves a readout behind.
+ */
+export function followPointer(p: HoverPointer, tier: Tier, win: EventTarget, root: EventTarget, now: () => number): () => void {
+  const at = (e: Event, until: number) => { p.x = (e as PointerAt).clientX; p.y = (e as PointerAt).clientY; p.until = until; };
+  const release = () => { p.until = -Infinity; };
+  const [press, move, leave] = tier === 'desktop'
+    ? [null, (e: Event) => at(e, Infinity), release]
+    : [(e: Event) => at(e, now() + TAP_HOLD_MS), null, null];
+  if (move) win.addEventListener('pointermove', move, { passive: true });
+  if (leave) root.addEventListener('pointerleave', leave);
+  if (press) {
+    win.addEventListener('pointerdown', press, { passive: true });
+    win.addEventListener('pointercancel', release);
+  }
+  return () => {
+    if (move) win.removeEventListener('pointermove', move);
+    if (leave) root.removeEventListener('pointerleave', leave);
+    if (press) {
+      win.removeEventListener('pointerdown', press);
+      win.removeEventListener('pointercancel', release);
+    }
+  };
+}
+
+/**
+ * The hover plane and its listeners (followPointer): desktop hovers, phone taps. Mounted after CameraRig, so both run
+ * at priority 0 and this frame's camera is the one raycast.
  */
 export function Hover({ result, uniforms, ouData, tier }: { result: LayoutResult; uniforms: BenchUniforms; ouData: Uint8Array; tier: Tier }) {
   const h = useMemo(() => createHover(result, uniforms, ouData), [result, uniforms, ouData]);
@@ -149,23 +179,7 @@ export function Hover({ result, uniforms, ouData, tier }: { result: LayoutResult
     (h.mesh.material as THREE.Material).dispose();
   }, [h]);
 
-  useEffect(() => {
-    const p = h.pointer;
-    const at = (e: MouseEvent, until: number) => { p.x = e.clientX; p.y = e.clientY; p.until = until; };
-    if (tier === 'desktop') {
-      const onMove = (e: PointerEvent) => at(e, Infinity);
-      const onLeave = () => { p.until = -Infinity; };
-      window.addEventListener('pointermove', onMove, { passive: true });
-      document.documentElement.addEventListener('pointerleave', onLeave);
-      return () => {
-        window.removeEventListener('pointermove', onMove);
-        document.documentElement.removeEventListener('pointerleave', onLeave);
-      };
-    }
-    const onTap = (e: MouseEvent) => at(e, performance.now() + TAP_HOLD_MS);
-    window.addEventListener('click', onTap);
-    return () => window.removeEventListener('click', onTap);
-  }, [h, tier]);
+  useEffect(() => followPointer(h.pointer, tier, window, document.documentElement, () => performance.now()), [h, tier]);
 
   useFrame((state) => stepHover(h, state.camera, state.size.width, state.size.height, performance.now()));
   return <primitive object={h.mesh} />;

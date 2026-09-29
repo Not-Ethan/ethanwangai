@@ -2,18 +2,23 @@
 // The GL layer's rendering tier (design §6 DPR/MSAA, §11 phone tier): the scroll layer's tier, which is
 // detectTier() (pointer coarse, width < 820 or hardwareConcurrency ≤ 4) kept live by ScrollProvider and the one
 // tier the DOM laid its sections out with, plus what the renderer makes of it: DPR, the shadow map and the MSAA
-// sample count. drei's PerformanceMonitor calls onDecline, which lowers DPR by 0.25 steps to a floor of 1; the
-// rest of the step-down ladder arrives in Stage 6. `?tier=phone` (or `desktop`) forces the GL tier for stills and
-// Stage 5's phone checks; the DOM keeps the detected tier.
+// sample count, the velocity stretch (0.3·|uVel| on desktop, halved on phone) and the leader-line switch (off on
+// phone; configureUniforms writes both into the registry). drei's PerformanceMonitor calls onDecline, which lowers DPR
+// by 0.25 steps to a floor of 1; the rest of the step-down ladder arrives in Stage 6. `?tier=phone` (or `desktop`)
+// forces the GL tier for stills and Stage 5's phone checks; the DOM keeps the detected tier.
 import { useCallback, useMemo, useState } from 'react';
 import type { Tier } from '@/bench/types';
 import { useScroll } from '@/scroll/ScrollProvider';
 
-export interface TierSettings { tier: Tier; dpr: number; shadows: boolean; msaa: number }
+export interface TierSettings {
+  tier: Tier; dpr: number; shadows: boolean; msaa: number;
+  stretch: number;   // uStretch: parts stretch along the camera's travel axis by stretch · |uVel|
+  lines: number;     // uLines: the leader-line kill switch, 1 = on
+}
 
 export const TIER_SETTINGS: Record<Tier, Omit<TierSettings, 'tier'>> = {
-  desktop: { dpr: 1.25, shadows: true, msaa: 4 },
-  phone: { dpr: 1, shadows: false, msaa: 2 },
+  desktop: { dpr: 1.25, shadows: true, msaa: 4, stretch: 0.3, lines: 1 },
+  phone: { dpr: 1, shadows: false, msaa: 2, stretch: 0.15, lines: 0 },
 };
 export const DPR_STEP = 0.25;
 export const DPR_FLOOR = 1;
@@ -36,6 +41,5 @@ export function useTier(): TierSettings & { onDecline: () => void } {
   const [declines, setDeclines] = useState(0);
   // Stops counting at the floor, so a decline there is a no-op render-wise (same state, React bails out).
   const onDecline = useCallback(() => setDeclines((n) => (dprAfterDeclines(tier, n) > DPR_FLOOR ? n + 1 : n)), [tier]);
-  const base = TIER_SETTINGS[tier];
-  return { tier, dpr: dprAfterDeclines(tier, declines), shadows: base.shadows, msaa: base.msaa, onDecline };
+  return { tier, ...TIER_SETTINGS[tier], dpr: dprAfterDeclines(tier, declines), onDecline };
 }

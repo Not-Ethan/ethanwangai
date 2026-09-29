@@ -18,8 +18,8 @@ import { mulberry32 } from '@/bench/hash';
 // uShadow, uGlyph and uLines belong to the ground, ink and leader-line programs, not the kit material.
 const VERTEX_UNIFORMS = [
   'uCompile', 'uMachineTime', 'uRun', 'uFillRate', 'uTilt', 'uTime', 'uVel', 'uMerge', 'uLean', 'uHover',
-  'uOU', 'uOUInfo', 'uCellH', 'uPitch', 'uTravelAxis', 'uBenchCenter', 'uBalancePivot', 'uSlotPeriod', 'uSlotPhase',
-  'uLock',
+  'uOU', 'uOUInfo', 'uCellH', 'uPitch', 'uTravelAxis', 'uStretch', 'uBenchCenter', 'uBalancePivot', 'uSlotPeriod',
+  'uSlotPhase', 'uLock',
 ];
 const FRAGMENT_UNIFORMS = ['uPaper', 'uInkTop', 'uInkKey', 'uInkShade', 'uPencil', 'uHot', 'uKeyDir'];
 const KINDS = ['static', 'sweep', 'spin', 'cell', 'cap', 'lever', 'lane', 'scan', 'ping', 'stack', 'tilt'];
@@ -83,6 +83,11 @@ describe('assembleVertex', () => {
     expect(v.project).toContain('vWorldY =');
     expect(v.project).toContain('gl_Position =');
     expect(v.project).toContain('vec4 mvPosition');
+  });
+
+  it('stretches along the travel axis by uStretch·|uVel|, the tier\'s rate (0.3 desktop, 0.15 phone), not a literal', () => {
+    expect(normalise(v.project)).toContain('floatstretch=uStretch*abs(uVel);');
+    expect(normalise(v.project)).toContain('wp.xyz+=uTravelAxis*dot(wp.xyz-uBenchCenter,uTravelAxis)*stretch;');
   });
 });
 

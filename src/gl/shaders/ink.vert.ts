@@ -6,14 +6,17 @@
 // off its glyph into its row, holds, and is released to its part, all on the machine's own uCompile in one window
 // shared by the whole partition, so every row prints in the same frame for every point; a point whose part locks
 // early peels off its row on its own clock before that release, so the rows thin toward the parts. The merge burst
-// keeps its band on its own staggered clock, and the trickle never enters it. three declares projectionMatrix and
-// modelViewMatrix (and the sampler3D precision) for a ShaderMaterial, so this file must not.
+// keeps its band on its own staggered clock, and the trickle never enters it. Where the source spans the viewport
+// (phones: the copy is the full column) there is no paper beside it, and the band prints under the copy instead.
+// three declares projectionMatrix and modelViewMatrix (and the sampler3D precision) for a ShaderMaterial, so this
+// file must not.
 export const INK_VERTEX = /* glsl */`
 precision highp float; precision highp sampler3D;
 in vec3 aTarget; in float aTargetBirth; in float aSeed; in float aRow; in float aPartition; in float aTrickle; in vec2 aSpawnUV;
 uniform vec4 uRect[8]; uniform vec3 uCentroid[8]; uniform float uCompile[8]; uniform float uTime; uniform float uVel;
 uniform float uBurst; uniform float uTrickle; uniform float uActiveRect; uniform sampler3D uCurl; uniform float uPixelRatio;
 uniform float uBandPitch; uniform float uBandRows[8]; uniform vec3 uLock; uniform float uGlyph; uniform float uInkEnabled;
+uniform vec2 uViewport;
 out float vAlpha; out float vGlyph;
 const int PART_MACHINE[7] = int[7](0, 1, 0, 2, 3, 4, 7);
 // The compile band's window in uCompile: T0 + 0.35 s and T0 + 0.95 s over TIMING.heroCompileS = 2.2 s (0.35 / 2.2,
@@ -27,6 +30,12 @@ const float BAND_MARGIN = 0.32, LINE_MIN = 0.14, LINE_RAG = 0.46;
 // origin and short, so all eight sit on the paper between the copy column and the intake's hopper. The hero's blend
 // and margin landed them on the bed; halfway, at the hero's lengths, they ran over the hopper, the in-rail and the frame.
 const float BURST_BLEND = 0.27, BURST_MARGIN = 0.0, BURST_LINE_MIN = 0.05, BURST_LINE_RAG = 0.06;
+// Under the copy (Task 5.4): where the source leaves less than UNDER_ROOM (NDC x, a fifth of the width) on its right,
+// as on phones, the rows start at its left edge (the 16 px gutter) and run UNDER_LINE_MIN plus up to UNDER_LINE_RAG
+// (NDC x: 10% to 40% of the viewport); the first row sits UNDER_GAP_PX under the source, or at COPY_FLOOR (NDC y: the
+// copy's upper 45%, spec §9) if that is higher, and the pitch tightens only as far as keeps the last row UNDER_GAP_PX
+// clear of the bottom edge. Desktop's columns leave half the width or more, so its band stays beside the copy.
+const float UNDER_ROOM = 0.4, COPY_FLOOR = 0.1, UNDER_GAP_PX = 16.0, UNDER_LINE_MIN = 0.2, UNDER_LINE_RAG = 0.6;
 // A point that departs after its row has printed still flies into it, over this much uCompile.
 const float LATE_LEG = 0.03;
 // A compile point leaves its row on its own clock from t = ROW_LEAVE, ahead of the band's release, so the ink bound
@@ -73,6 +82,13 @@ void main() {
   float xInLine = fract(aSeed * 13.7) * lineLen;
   float rowY = bandOrigin.y + (rows * 0.5 - aRow) * uBandPitch;
   vec2 rowPt = vec2(bandOrigin.x + (part == 2 ? BURST_MARGIN : BAND_MARGIN) + xInLine, rowY);
+  // under the copy where there is no room beside it (phones), in CSS px through uViewport
+  float under = step(1.0 - UNDER_ROOM, r.x + r.z);
+  float gap = UNDER_GAP_PX * 2.0 / uViewport.y;
+  float underTop = min(r.y - r.w - gap, COPY_FLOOR);
+  float underPitch = min(uBandPitch, (underTop + 1.0 - gap) / rows);
+  vec2 underPt = vec2(r.x + fract(aSeed * 13.7) * (UNDER_LINE_MIN + UNDER_LINE_RAG * ragged), underTop - (aRow + 0.5) * underPitch);
+  rowPt = mix(rowPt, underPt, under);
   float band;   // how far the point sits in its row: 1 holds it there, curl stilled
   if (aTrickle > 0.5) {
     band = 0.0;   // the trickle never enters the band (design §7)

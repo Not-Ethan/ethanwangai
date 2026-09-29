@@ -46,6 +46,10 @@ describe('createUniforms', () => {
     expect(u.uLines.value).toBe(1);
   });
 
+  it('stretches at the desktop rate, 0.3·|uVel|, until Scene writes the tier\'s', () => {
+    expect(u.uStretch.value).toBe(0.3);
+  });
+
   it('takes its geometry constants from the bench package, not hand-typed', () => {
     expect(u.uOUInfo.value.toArray()).toEqual([OU.markets, OU.steps, OU.rows, 8]);
     expect(u.uCellH.value).toBe(QUOTER_BED.hBase);
@@ -93,6 +97,7 @@ describe('createUniforms', () => {
     expect(u.uCurl.value).toBeNull();
     expect(u.uPixelRatio.value).toBe(1);
     expect(u.uBandPitch.value).toBe(0);
+    expect(u.uViewport.value).toBeInstanceOf(THREE.Vector2);   // the viewport in CSS px, which Ink.tsx writes each frame
     expect(u.uInk.value).toBeInstanceOf(THREE.Color);
   });
 

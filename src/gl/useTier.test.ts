@@ -10,8 +10,14 @@ vi.mock('@/scroll/ScrollProvider', () => ({ useScroll: () => ({ state: { current
 
 describe('TIER_SETTINGS', () => {
   it('desktop renders at DPR 1.25 with the shadow map and 4× MSAA; phone at DPR 1, no shadow map, 2×', () => {
-    expect(TIER_SETTINGS.desktop).toEqual({ dpr: 1.25, shadows: true, msaa: 4 });
-    expect(TIER_SETTINGS.phone).toEqual({ dpr: 1, shadows: false, msaa: 2 });
+    expect(TIER_SETTINGS.desktop).toMatchObject({ dpr: 1.25, shadows: true, msaa: 4 });
+    expect(TIER_SETTINGS.phone).toMatchObject({ dpr: 1, shadows: false, msaa: 2 });
+  });
+
+  it('stretches parts along the travel axis by 0.3·|uVel| on desktop and half that on phone, whose leader lines are off (design §11)', () => {
+    expect(TIER_SETTINGS.desktop).toEqual({ dpr: 1.25, shadows: true, msaa: 4, stretch: 0.3, lines: 1 });
+    expect(TIER_SETTINGS.phone).toEqual({ dpr: 1, shadows: false, msaa: 2, stretch: 0.15, lines: 0 });
+    expect(TIER_SETTINGS.phone.stretch).toBe(TIER_SETTINGS.desktop.stretch / 2);
   });
 });
 

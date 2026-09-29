@@ -20,6 +20,7 @@ uniform vec4 uOUInfo;
 uniform float uCellH;
 uniform float uPitch;
 uniform vec3 uTravelAxis;
+uniform float uStretch;
 uniform vec3 uBenchCenter;
 uniform vec3 uBalancePivot;
 uniform float uSlotPeriod;

@@ -11,7 +11,7 @@ import { createUniforms } from './material/uniforms';
 import { hud } from './hud';
 import {
   FILL_WINDOW, HOVER_PLANE, HOVER_SECTIONS, TAP_HOLD_MS,
-  bedCell, createHover, ouStep, quoterBedGrid, readQuote, stepHover,
+  bedCell, createHover, followPointer, ouStep, quoterBedGrid, readQuote, stepHover, type HoverPointer,
 } from './Hover';
 
 const W = 1440, H = 900;
@@ -226,5 +226,48 @@ describe('stepHover', () => {
     stepHover(h, cam, W, H, t + TAP_HOLD_MS);
     expect(hud.hover.machine).toBe(-1);
     expect(uniforms.uHover.value.toArray()).toEqual([-1, -1]);
+  });
+});
+
+// The listeners (design §11 phone tier: hover replaced by tap-to-readout). A plain EventTarget stands in for the window
+// and the root element; a pointer event is an Event carrying clientX / clientY.
+describe('followPointer', () => {
+  const pointerEvent = (type: string, x = 0, y = 0) => Object.assign(new Event(type), { clientX: x, clientY: y });
+  function listen(tier: Tier, now = 1000) {
+    const win = new EventTarget(), root = new EventTarget();
+    const p: HoverPointer = { x: 0, y: 0, until: -Infinity };
+    const stop = followPointer(p, tier, win, root, () => now);
+    return { win, root, p, stop };
+  }
+
+  it('desktop: follows pointermove with no expiry and lets go when the pointer leaves the page; a press does nothing', () => {
+    const { win, root, p, stop } = listen('desktop');
+    win.dispatchEvent(pointerEvent('pointerdown', 5, 6));
+    expect(p.until).toBe(-Infinity);
+    win.dispatchEvent(pointerEvent('pointermove', 300, 200));
+    expect(p).toEqual({ x: 300, y: 200, until: Infinity });
+    root.dispatchEvent(pointerEvent('pointerleave'));
+    expect(p.until).toBe(-Infinity);
+    stop();
+    win.dispatchEvent(pointerEvent('pointermove', 1, 2));
+    expect(p.until).toBe(-Infinity);
+  });
+
+  it('phone: a pointerdown holds the readout at the finger for 2 s; moving the finger never hovers', () => {
+    const { win, p, stop } = listen('phone', 5000);
+    win.dispatchEvent(pointerEvent('pointermove', 300, 200));
+    expect(p.until).toBe(-Infinity);
+    win.dispatchEvent(pointerEvent('pointerdown', 120, 640));
+    expect(p).toEqual({ x: 120, y: 640, until: 5000 + TAP_HOLD_MS });
+    stop();
+    win.dispatchEvent(pointerEvent('pointerdown', 1, 2));
+    expect(p.x).toBe(120);
+  });
+
+  it('phone: a press the browser takes for a scroll (pointercancel) drops the readout at once', () => {
+    const { win, p } = listen('phone');
+    win.dispatchEvent(pointerEvent('pointerdown', 120, 640));
+    win.dispatchEvent(pointerEvent('pointercancel'));
+    expect(p.until).toBe(-Infinity);
   });
 });

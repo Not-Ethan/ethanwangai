@@ -47,13 +47,17 @@ const D: CameraKey[] = [
 ];
 
 // Phone, fov 38, portrait: the frame is 2.7× narrower than desktop's, so each section's machine is framed whole
-// inside the width and in the lower 55%, under the copy. The quoter sections are far front shots; the small
-// machines are closer, each from its own side. Far and near alternate, so the transits are long (40 units where
-// desktop moves 3); each one spans its section's travel window, and a section that opens with a lead-in key
-// (u ≤ 0.10) holds the previous station across it, as on desktop, so no section starts with a cut.
+// inside the width and in the lower 55%, under the copy. The hero is a macro on the bed's front-left corner (design
+// §11, re-authored in Task 5.4 from a far shot whose cells were 6 px): low (15°) and 10° round from the front, the
+// lookAt above the bench so the corner sits under the copy, it holds the bot, the lever and the carriages parked on
+// the front and middle rails, with cells 17 px or more at 390 × 844, and leaves the balance in front out of the shot;
+// the rise pulls back to the whole quoter. The other quoter sections are far front shots; the small machines are
+// closer, each from its own side. Far and near alternate, so the transits are long (40 units where desktop moves 3);
+// each one spans its section's travel window, and a section that opens with a lead-in key (u ≤ 0.10) holds the
+// previous station across it, as on desktop, so no section starts with a cut.
 const P: CameraKey[] = [
-  { section: 0, u: 0.00, pose: { position: [-11.0, 13.0, 39.0], lookAt: [1.5, 3.8, -6.0], fov: 38 } },   // hero: the whole quoter low in the frame, the bot at its near corner
-  { section: 0, u: 0.15, pose: { position: [-11.0, 13.0, 39.0], lookAt: [1.5, 3.8, -6.0], fov: 38 } },
+  { section: 0, u: 0.00, pose: { position: [-3.0, 5.5, 10.9], lookAt: [-5.0, 2.4, -0.5], fov: 38 } },    // hero: the macro on the front-left corner, the lever and the bot in front
+  { section: 0, u: 0.15, pose: { position: [-3.0, 5.5, 10.9], lookAt: [-5.0, 2.4, -0.5], fov: 38 } },
   { section: 0, u: 1.00, pose: { position: [-9.0, 18.0, 40.0], lookAt: [1.0, 3.0, -4.5], fov: 38 } },    // risen
   { section: 1, u: 0.10, pose: { position: [-9.0, 18.0, 40.0], lookAt: [1.0, 3.0, -4.5], fov: 38 } },
   { section: 1, u: 1.00, pose: { position: [-9.0, 18.0, 40.0], lookAt: [1.0, 3.0, -4.5], fov: 38 } },
@@ -71,8 +75,8 @@ const P: CameraKey[] = [
   { section: 6, u: 1.00, pose: { position: [3.5, 11.2, 21.1], lookAt: [3.8, 3.8, 4.7], fov: 38 } },
   { section: 7, u: 0.60, pose: { position: [10.0, 22.0, 38.0], lookAt: [-2.0, 3.5, -5.0], fov: 38 } },   // poster
   { section: 7, u: 1.00, pose: { position: [10.0, 22.0, 38.0], lookAt: [-2.0, 3.5, -5.0], fov: 38 } },
-  { section: 8, u: 0.25, pose: { position: [4.3, 1.9, 12.5], lookAt: [6.5, 0.0, 2.5], fov: 38 } },       // low on the slot
-  { section: 8, u: 1.00, pose: { position: [4.3, 1.9, 12.5], lookAt: [6.5, 0.0, 2.5], fov: 38 } },
+  { section: 8, u: 0.25, pose: { position: [4.3, 1.9, 12.5], lookAt: [6.5, 1.2, 2.5], fov: 38 } },       // low on the slot, tilted up (Task 5.4) so the slot and the visitor's build sit under 09's input and plate
+  { section: 8, u: 1.00, pose: { position: [4.3, 1.9, 12.5], lookAt: [6.5, 1.2, 2.5], fov: 38 } },
 ];
 
 export const CAMERA_KEYS: Record<Tier, CameraKey[]> = { desktop: D, phone: P };

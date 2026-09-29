@@ -141,6 +141,23 @@ a:hover, button.link:hover { color: var(--hot); }
   .rungs-track { min-height: calc(100% + 5rem + 6 * 1.5 * 0.8125rem + 5 * 0.25rem); }
 }
 
+/* the phone layout (spec §9, §11): below 820 px, detectTier's `width < 820`, the copy sits in the upper 45% on plain
+   paper and the camera frames the bench in the lower 55% (the phone poses in src/bench/camera.ts are authored for
+   it). The sections are one column with 16 px gutters already (col-span-12, px-4; body clips overflow-x). Every copy
+   wrapper, the hero's sticky block and each section's copy-col, holds the upper 45% at least. The hero's headline,
+   deck and ladder fit in it at 375 × 667: 3.5rem clears the 52 px nav band (py-4 around one .mono row), and 0.75rem
+   between the three puts the ladder's second row at 293 px of the 300 px, where the 6rem and 1.25rem of desktop put
+   it at 349. Plates collapse to one line: the text is cut with an ellipsis, the control beside it (the hero's
+   `rebuild`) keeps its width. */
+@media (max-width: 819px) {
+  .hero-copy, .copy-col { min-height: 45vh; }
+  .hero-copy { padding-top: 3.5rem; }
+  .hero-copy #deck, .hero-copy .ladder { margin-top: 0.75rem; }
+  [data-plate] { flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
+  [data-plate] > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  [data-plate] > :not(span) { flex-shrink: 0; }
+}
+
 /* section rail: one rotated line up the left edge, desktop only. It occupies x < 28px; copy starts
    at 48px (md:px-12). About a `left center` origin, rotate(-90deg) swings the line upward from
    top: 50%, so the last translateX(-50%) runs back along the rotated line to centre it on the

@@ -19,6 +19,13 @@ describe('writeInkFrame', () => {
     expect(u.uTrickle.value).toBe(1);
   });
 
+  it('writes the viewport in CSS px, which the band on phones measures its gaps in', () => {
+    const u = createUniforms();
+    writeInkFrame(u, new RectTracker(), 0, 390, 844, 3, false);
+    expect(u.uViewport.value.toArray()).toEqual([390, 844]);
+    expect(u.uBandPitch.value).toBeCloseTo((14 * 2) / 844, 12);
+  });
+
   it('under reduced motion hides the ink and stops the trickle', () => {
     hud.section = SECTION_INDEX.kalshi;
     const u = createUniforms();

@@ -3,8 +3,9 @@
 // layout (inkGeometry.ts) and drawn after the kits. The DOM is the ink's source: on mount, after document.fonts.ready
 // and on debounced resize, every source element's glyph pixels are sampled into aSpawnUV (textSampler.ts) and its page
 // rect cached (rects.ts); that is the only upload. Each frame, at priority 0 after Clocks (−1) has placed the section,
-// the cached rects become uRect from the scroll offset alone, and the trickle's slot, the burst, the DPR and the band
-// pitch are written into the registry. No React state, no getBoundingClientRect and no buffer upload on the scroll path.
+// the cached rects become uRect from the scroll offset alone, and the trickle's slot, the burst, the DPR, the band
+// pitch and the viewport's CSS size are written into the registry. No React state, no getBoundingClientRect and no
+// buffer upload on the scroll path.
 // The visitor partition is handed to visitor.ts (bindVisitorInk): on Enter its targets, its centroid and its spawn, re-
 // sampled from the sentence Yours wrote into #yours-echo, are written once, the only upload after load.
 import { useEffect, useLayoutEffect, useMemo } from 'react';
@@ -175,6 +176,7 @@ export function writeInkFrame(u: BenchUniforms, tracker: RectTracker, scrollY: n
   u.uBurst.value = mergeBurst(hud.section, hud.u);
   u.uPixelRatio.value = pixelRatio;
   u.uBandPitch.value = (BAND_PITCH_PX / vh) * 2;
+  u.uViewport.value.set(vw, vh);
 }
 
 export function Ink({ result, uniforms, tier }: { result: LayoutResult; uniforms: BenchUniforms; tier: Tier }) {

@@ -28,6 +28,7 @@ export interface BenchUniforms {
   uCellH: { value: number };                // quoter cell hBase
   uPitch: { value: number };                // quoter bed pitch (desktop; phone doubles it)
   uTravelAxis: { value: THREE.Vector3 };    // unit camera travel axis for velocity stretch
+  uStretch: { value: number };              // stretch per unit |uVel| along uTravelAxis: 0.3 desktop, 0.15 phone (Scene writes it)
   uBenchCenter: { value: THREE.Vector3 };
   uBalancePivot: { value: THREE.Vector3 };  // bench-space point the balance rail tilts about: the post top
   uSlotPeriod: { value: number };           // scanning-bar period, reseeded per keystroke
@@ -54,6 +55,7 @@ export interface BenchUniforms {
   uPixelRatio: { value: number };           // renderer DPR, for gl_PointSize
   uInk: { value: THREE.Color };             // the palette's ink: type and ink dots
   uBandPitch: { value: number };            // the band's row pitch in NDC y (14 CSS px · 2 / vh)
+  uViewport: { value: THREE.Vector2 };      // the viewport in CSS px: the band's CSS-px gutters and gaps in NDC
   uBandRows: { value: Float32Array };       // [8] rows in each partition's band
 }
 
@@ -125,6 +127,7 @@ export function createUniforms(): BenchUniforms {
     uCellH: { value: QUOTER_BED.hBase },
     uPitch: { value: QUOTER_BED.pitch },
     uTravelAxis: { value: new THREE.Vector3(1, 0, 0) },   // the bed axis, which the hero impulse stretches along
+    uStretch: { value: 0.3 },                             // up to 1.3× at |uVel| = 1 until Scene writes the tier's
     uBenchCenter: { value: new THREE.Vector3() },
     uBalancePivot: { value: new THREE.Vector3(balance[0], balance[1] + BALANCE_POST_H, balance[2]) },
     uSlotPeriod: { value: SLOT_SCAN_PERIOD_S },
@@ -150,6 +153,7 @@ export function createUniforms(): BenchUniforms {
     uPixelRatio: { value: 1 },
     uInk: { value: new THREE.Color() },
     uBandPitch: { value: 0 },   // Ink.tsx writes it from the viewport height each frame
+    uViewport: { value: new THREE.Vector2(1440, 900) },   // Ink.tsx writes it each frame; ScrollProvider's first guess until then
     uBandRows: { value: bandRows() },
   };
   applyPalette(u, PALETTES.light, PALETTES.light, 0);

@@ -172,6 +172,15 @@ describe('configureUniforms', () => {
     }
   });
 
+  it('halves the velocity stretch and switches the leader lines off on phone (design §11 phone tier)', () => {
+    const desktopU = configureUniforms(createUniforms(), 'desktop', ou);
+    const phoneU = configureUniforms(createUniforms(), 'phone', ou);
+    expect(desktopU.uStretch.value).toBe(0.3);
+    expect(phoneU.uStretch.value).toBe(0.15);
+    expect(desktopU.uLines.value).toBe(1);
+    expect(phoneU.uLines.value).toBe(0);
+  });
+
   it('leaves the registry\'s own constants in place', () => {
     const u = configureUniforms(createUniforms(), 'desktop', ou);
     expect(u.uOUInfo.value.toArray()).toEqual([256, 2048, 48, 8]);

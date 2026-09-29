@@ -29,7 +29,7 @@ import { Ink } from './Ink';
 import { Clocks, startIntro } from './Clocks';
 import { CameraRig } from './CameraRig';
 import { Hover } from './Hover';
-import { useTier } from './useTier';
+import { TIER_SETTINGS, useTier } from './useTier';
 import { hud } from './hud';
 
 export const CAMERA = { fov: 30, near: 0.5, far: 120 } as const;
@@ -62,12 +62,15 @@ export function createOUTexture(seed: number = hashString(BENCH_SEED_TEXT)): THR
 }
 
 /**
- * The registry entries Scene owns: the tier's bed pitch, the key direction, the bench centre, the OU texture and its
- * playback rate, which reduced motion drops to 1 step a second so the bed steps at 1 Hz (design §11). The balance
- * pivot is the registry's own constant (the post top, uniforms.ts), not the machine's centroid, which the lever pulls off the post.
+ * The registry entries Scene owns: the tier's bed pitch, velocity stretch and leader-line switch (phone: half the
+ * stretch, no lines; design §11), the key direction, the bench centre, the OU texture and its playback rate, which
+ * reduced motion drops to 1 step a second so the bed steps at 1 Hz (design §11). The balance pivot is the registry's
+ * own constant (the post top, uniforms.ts), not the machine's centroid, which the lever pulls off the post.
  */
 export function configureUniforms(u: BenchUniforms, tier: Tier, ou: THREE.Texture, reducedMotion = false): BenchUniforms {
   u.uPitch.value = bedPitch(tier);
+  u.uStretch.value = TIER_SETTINGS[tier].stretch;
+  u.uLines.value = TIER_SETTINGS[tier].lines;
   u.uKeyDir.value.set(...KEY_LIGHT.position).normalize();
   u.uBenchCenter.value.set(...BENCH_CENTER);
   u.uOU.value = ou;

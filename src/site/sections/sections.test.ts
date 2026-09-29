@@ -433,3 +433,49 @@ describe('the visitor echo (#yours-echo)', () => {
     expect(html).toMatch(/<span\b[^>]*\bid="yours-echo"[^>]*><\/span>/);
   });
 });
+
+describe('the phone layout (spec §9 phone layout, §11 phone tier)', () => {
+  // Below 820 px (detectTier's `width < 820`) the copy sits in the upper 45% on plain paper and the camera frames the
+  // bench in the lower 55% (the phone poses in src/bench/camera.ts are authored for it). The sections are one column
+  // with 16 px gutters already (col-span-12, px-4); these rules are the rest.
+  const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8');
+  const phone = /@media \(max-width: 819px\)\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
+  const rule = (selector: string): string =>
+    new RegExp(`(?:^|\\n)\\s*${selector.replace(/[.[\]>*:()]/g, '\\$&')}\\s*\\{([^}]*)\\}`).exec(phone)?.[1] ?? '';
+  const decl = (selector: string, prop: string): string => new RegExp(`(?:^|;)\\s*${prop}:\\s*([^;]+)`).exec(rule(selector))?.[1].trim() ?? '';
+
+  it('gives every copy wrapper, the hero\'s sticky block and each section\'s copy-col, the upper 45% at least', () => {
+    expect(phone, 'a max-width: 819px block').not.toBe('');
+    expect(decl('.hero-copy, .copy-col', 'min-height')).toBe('45vh');
+    const hero = render('sentence');
+    const cls = enclosingClass(hero, hero.indexOf('grid-cols-12'), 'div');
+    expect(cls).toMatch(/(^|\s)hero-copy(\s|$)/);
+    expect(cls).toMatch(/\bsticky\b/);
+  });
+
+  it('collapses every plate to one line, cutting its text with an ellipsis and keeping its control', () => {
+    expect(decl('[data-plate]', 'white-space')).toBe('nowrap');
+    expect(decl('[data-plate]', 'overflow')).toBe('hidden');
+    expect(decl('[data-plate]', 'flex-wrap')).toBe('nowrap');
+    expect(decl('[data-plate] > span', 'text-overflow')).toBe('ellipsis');
+    expect(decl('[data-plate] > span', 'overflow')).toBe('hidden');
+    expect(decl('[data-plate] > span', 'min-width')).toBe('0');
+    expect(decl('[data-plate] > :not(span)', 'flex-shrink')).toBe('0');   // the hero's `rebuild`
+    const plate = /<figcaption\b[^>]*data-plate="0"[^>]*>(<span>[\s\S]*?<\/span>)(<button\b)/.exec(render('sentence'));
+    expect(plate, 'the plate\'s text is its first span, the control a sibling').not.toBeNull();
+  });
+
+  it('fits the headline, the deck and the ladder in the upper 45% at 375 × 667', () => {
+    // As the browser lays them out at 375 px wide: the headline in three lines of the display floor (2.75rem at 0.92),
+    // the deck in two of .body (18 px at 1.45), the ladder in two .mono rows at the root line-height 1.5.
+    const rem = (v: string) => Number(/^([\d.]+)rem$/.exec(v)?.[1] ?? NaN) * 16;
+    const top = rem(decl('.hero-copy', 'padding-top'));
+    const gap = rem(decl('.hero-copy #deck, .hero-copy .ladder', 'margin-top'));
+    const mono = rem(/(?:^|\n)\.mono\s*\{[^}]*font-size:\s*([^;]+);/.exec(css)?.[1] ?? '');
+    const nav = 16 + 1.5 * mono + 16;   // the header's py-4 around one .mono row
+    expect(top, 'the headline clears the nav band').toBeGreaterThanOrEqual(nav);
+    const bottom = top + 3 * 44 * 0.92 + gap + 2 * 18 * 1.45 + gap + 2 * 1.5 * mono;
+    expect(bottom).toBeLessThanOrEqual(0.45 * 667);
+    expect(render('sentence')).toMatch(/<p class="ladder\b/);
+  });
+});

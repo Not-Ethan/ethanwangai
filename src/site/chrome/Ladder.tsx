@@ -12,7 +12,7 @@ const FINAL_PARTS = COUNTS.desktop.byMachine[MACHINE.quoter] + COUNTS.desktop.by
 export function Ladder({ words }: { words: number }) {
   const l = copy.sentence.ladder;
   return (
-    <p className="mono mt-5 flex flex-wrap gap-x-2" aria-hidden="false">
+    <p className="ladder mono mt-5 flex flex-wrap gap-x-2" aria-hidden="false">
       <span><b id="ladder-words">{words}</b> {l.words}</span><span className="pencil">·</span>
       <span><b id="ladder-lines">{FINAL_LINES}</b> {l.lines}</span><span className="pencil">·</span>
       <span><b id="ladder-parts">{FINAL_PARTS.toLocaleString('en-US')}</b> {l.parts}</span><span className="pencil">·</span>
