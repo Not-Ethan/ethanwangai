@@ -47,6 +47,12 @@ body {
   font-size: 0.8125rem; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; text-transform: lowercase;
 }
 .mono-figure { font-family: var(--font-mono), ui-monospace, monospace; font-size: clamp(3rem, 5vw, 4.5rem); line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+/* 08's uptime, `running 00:04:12` (spec §3.1 · 08), on one line in the copy column: 16 mono characters at 0.59em
+   each are 9.44em, so 3.6vw keeps them inside the 5-of-12 column from 1280 px up (489 px of 551 at 1440) and the
+   floor is still an oversized figure (48 px). On two lines at 5vw 08's block was 793 px, more than the 788 px a
+   900 px viewport leaves under its 112 px pin, so it could not hold through the poster dwell; on one it is 700 px.
+   Narrower columns wrap at the space. */
+.uptime-figure { font-size: clamp(3rem, 3.6vw, 4.5rem); }
 .rule { border-top: 1px solid var(--pencil); }
 .hot { color: var(--hot); }
 .pencil { color: var(--pencil); }
@@ -85,6 +91,19 @@ a:hover, button.link:hover { color: var(--hot); }
     margin-bottom: calc(6rem - var(--copy-lead));
     min-height: calc(100% + var(--copy-tail));
   }
+}
+
+/* 08 → 09: the poster dwell. 08's camera holds the poster over the last 40% of the section (spec §3.1 · 08: "60–100%
+   dwell ... nothing moves in the DOM except the uptime"), so its block must stay pinned to u = 1 and 09's heading must
+   stay below the fold until then. At 08's u the next section's top is (1 − u)·110vh below the viewport's top edge, so
+   at u = 1 it is at the edge and 09's block, led --copy-lead into its section, is exactly --copy-lead down: 100vh
+   keeps it off screen, and 110vh keeps the usual 10vh of air under 08's tail. 08's track runs a full viewport past
+   its section, so its block lets go at u = 1 or later whenever it fits under its pin (at 1440 × 900 it is 700 px
+   under a 112 px pin); tail ≤ the next lead still holds (100vh ≤ 110vh), so the two never overlap. 09's tail grows
+   with its lead (lead − 10vh, as everywhere else), so the page still ends with 09's block where it ended before. */
+@media (min-width: 48rem) {
+  #alive .copy-track { --copy-tail: 100vh; }
+  #yours .copy-track { --copy-lead: 110vh; --copy-tail: 100vh; }
 }
 
 /* section 02's ladder track (#rungs' sticky containing block): #more is 100vh on desktop, so a ladder left at the

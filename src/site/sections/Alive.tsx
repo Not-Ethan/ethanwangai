@@ -18,7 +18,7 @@ export function Alive() {
                 <p key={line} className="body mt-5" data-reveal>{line}</p>
               ))}
               {/* Stage 3 ticks the uptime; nothing else in this section's DOM moves */}
-              <p className="mono-figure mt-10">{c.running} <span id="uptime">00:00:00</span></p>
+              <p className="mono-figure uptime-figure mt-10">{c.running} <span id="uptime">00:00:00</span></p>
             </div>
           </div>
         </div>

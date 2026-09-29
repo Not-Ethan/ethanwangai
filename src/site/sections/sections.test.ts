@@ -194,6 +194,55 @@ describe('copy lead and tail (Step 3 gate: u = 0.7 of #heron)', () => {
   });
 });
 
+describe("08's poster dwell (desktop): its block holds to u = 1 and 09's heading stays below the fold", () => {
+  // 08's camera holds the poster from u = 0.6 to 1 and nothing in the DOM may move but the uptime (spec §3.1 · 08). u
+  // is read at the viewport's top edge, so at 08's u the next section's top is (1 − u)·110vh down and 09's block sits
+  // its --copy-lead below that: at u = 1 it is exactly --copy-lead down, so the lead must be a full viewport. 08's
+  // block holds while its track still runs a pin-plus-block past the viewport's top; a track that runs a full viewport
+  // past the section holds it to u = 1 whenever it fits under its pin. Each track still ends before the next block
+  // starts, and 09's tail grows with its lead so the page ends with 09's block where it did.
+  const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8');
+  const base = /@media \(min-width: 48rem\)\s*\{\s*\.copy-track\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
+  const scoped = (id: string): string => new RegExp(`@media \\(min-width: 48rem\\)\\s*\\{[^@]*?#${id} \\.copy-track\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+  const vh = (decls: string, prop: string): number => Number(new RegExp(`${prop}:\\s*([\\d.]+)vh`).exec(decls)?.[1] ?? NaN);
+  const lead = (id: string) => (Number.isNaN(vh(scoped(id), '--copy-lead')) ? vh(base, '--copy-lead') : vh(scoped(id), '--copy-lead'));
+  const tail = (id: string) => (Number.isNaN(vh(scoped(id), '--copy-tail')) ? vh(base, '--copy-tail') : vh(scoped(id), '--copy-tail'));
+
+  it("leads 09's block a full viewport into its section, so it is below the fold at every u of 08's dwell", () => {
+    const alive = SECTIONS[SECTION_INDEX.alive];
+    for (const u of [0.6, 0.8, 1]) expect((1 - u) * alive.vh.desktop + lead('yours'), `09's block at 08's u = ${u}`).toBeGreaterThanOrEqual(100);
+  });
+
+  it("runs 08's track a full viewport past its section, so its block is still pinned at u = 1", () => {
+    expect(tail('alive')).toBeGreaterThanOrEqual(100);
+  });
+
+  it('never lets a track run past the next block, and keeps the air between them', () => {
+    const ids = SECTIONS.slice(1).map((s) => s.id);
+    for (let i = 0; i + 1 < ids.length; i++) expect(tail(ids[i]), `${ids[i]} tail ≤ ${ids[i + 1]} lead`).toBeLessThanOrEqual(lead(ids[i + 1]));
+    expect(lead('yours') - tail('alive'), "air between 08's and 09's blocks").toBeGreaterThanOrEqual(vh(base, '--copy-lead') - vh(base, '--copy-tail'));
+  });
+
+  it("ends the page with 09's block where it did: its tail grows with its lead", () => {
+    for (const v of [lead('yours'), tail('yours'), vh(base, '--copy-lead'), vh(base, '--copy-tail')]) expect(Number.isFinite(v)).toBe(true);
+    expect(lead('yours') - tail('yours')).toBe(vh(base, '--copy-lead') - vh(base, '--copy-tail'));
+  });
+
+  it("sets 08's uptime on one line in the copy column at 1440 px, so the block fits under its pin", () => {
+    const html = render('alive');
+    const uptime = /<p\b[^>]*class="([^"]*)"[^>]*>[^<]*<span id="uptime">/.exec(html)?.[1] ?? '';
+    expect(uptime.split(/\s+/)).toContain('mono-figure');
+    expect(uptime.split(/\s+/)).toContain('uptime-figure');
+    const [, lo, vw, hi] = /(?:^|\n)\.uptime-figure\s*\{[^}]*font-size:\s*clamp\(([\d.]+)rem,\s*([\d.]+)vw,\s*([\d.]+)rem\)/.exec(css)?.map(Number) ?? [];
+    const px = Math.min(Math.max(lo * 16, (vw / 100) * 1440), hi * 16);
+    expect(px, 'still an oversized figure (spec §9: 48–72 px)').toBeGreaterThanOrEqual(48);
+    // `running 00:00:00` is 16 mono characters at a 0.6em advance less the figure's 0.01em tracking
+    const text = `${copy.alive.running} 00:00:00`;
+    const column = ((1440 - 2 * 48 - 11 * 16) / 12) * 5 + 4 * 16;   // md:px-12, gap-4, col-span-5
+    expect(text.length * 0.59 * px, 'uptime width at 1440').toBeLessThanOrEqual(column);
+  });
+});
+
 describe("section 02's ladder (#rungs)", () => {
   // hudSync lights the rungs per merge click and darkens them again through the burst, but #more is 100vh on desktop,
   // so a ladder left at the top of its grid is under the nav by the first click and gone by the third. It pins
