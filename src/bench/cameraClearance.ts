@@ -2,7 +2,7 @@
 // tables can be checked numerically against the DOM's copy columns (design §3.1, gate G1). Pure: three's math
 // classes only, no renderer.
 import { PerspectiveCamera, Vector3 } from 'three';
-import { MACHINE_COUNT, type LayoutResult, type MachineId } from './types';
+import { MACHINE_COUNT, type LayoutResult, type MachineId, type Vec3 } from './types';
 import type { Pose } from './camera';
 
 /** NDC box, x right and y up, of projected rest positions; the frame is [−1, 1] on both axes. */
@@ -24,11 +24,7 @@ const NEAR = 0.5, FAR = 120;
  * than mirrored through it, which is what a naive project() would do.
  */
 export function projectBounds(result: LayoutResult, machines: MachineId[], pose: Pose, aspect: number): NdcBounds | null {
-  const cam = new PerspectiveCamera(pose.fov, aspect, NEAR, FAR);
-  cam.position.set(pose.position[0], pose.position[1], pose.position[2]);
-  cam.lookAt(pose.lookAt[0], pose.lookAt[1], pose.lookAt[2]);
-  cam.updateMatrixWorld(true);
-  cam.updateProjectionMatrix();
+  const cam = cameraAt(pose, aspect);
   const listed = new Array<boolean>(MACHINE_COUNT).fill(false);
   for (const m of machines) listed[m] = true;
   const v = new Vector3();
@@ -44,6 +40,24 @@ export function projectBounds(result: LayoutResult, machines: MachineId[], pose:
     if (v.y < bottom) bottom = v.y;
   }
   return left === Infinity ? null : { left, right, top, bottom };
+}
+
+/** NDC [x, y] of one bench-space point through `pose`, or null when it is on or behind the camera plane. */
+export function projectPoint(point: Vec3, pose: Pose, aspect: number): [number, number] | null {
+  const cam = cameraAt(pose, aspect);
+  const v = new Vector3(point[0], point[1], point[2]).applyMatrix4(cam.matrixWorldInverse);
+  if (v.z >= 0) return null;
+  v.applyMatrix4(cam.projectionMatrix);
+  return [v.x, v.y];
+}
+
+function cameraAt(pose: Pose, aspect: number): PerspectiveCamera {
+  const cam = new PerspectiveCamera(pose.fov, aspect, NEAR, FAR);
+  cam.position.set(pose.position[0], pose.position[1], pose.position[2]);
+  cam.lookAt(pose.lookAt[0], pose.lookAt[1], pose.lookAt[2]);
+  cam.updateMatrixWorld(true);
+  cam.updateProjectionMatrix();
+  return cam;
 }
 
 /** Camera pitch above the bench plane in degrees: asin((position.y − lookAt.y) / |position − lookAt|). */

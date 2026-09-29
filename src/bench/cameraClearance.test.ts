@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { Quaternion, Vector3 } from 'three';
 import { MACHINE, type MachineId, type Tier, type Vec3 } from './types';
 import { buildBench } from './counts';
 import { CAMERA_KEYS, evaluatePose, type Pose } from './camera';
 import { SECTIONS, sectionRanges, locate } from './sections';
-import { DWELL, projectBounds, elevationDeg, azimuthDeg, type NdcBounds } from './cameraClearance';
+import { DWELL, projectBounds, projectPoint, elevationDeg, azimuthDeg, type NdcBounds } from './cameraClearance';
 
 // The DOM's copy columns in NDC: every section's copy is the left 42% (x < −0.16); the hero's copy block is the left 58%
 // down to 65% of the height (x < 0.17, y > −0.3). The bounds below keep each section's subject clear of them, and at
@@ -33,6 +34,28 @@ const height = (b: NdcBounds) => b.top - b.bottom;
 const centreX = (b: NdcBounds) => (b.left + b.right) / 2;
 const inFrame = (b: NdcBounds) => b.left >= -1 && b.right <= 1 && b.top <= 1 && b.bottom >= -1;
 const intersectsFrame = (b: NdcBounds) => b.right >= -1 && b.left <= 1 && b.top >= -1 && b.bottom <= 1;
+
+/**
+ * The splitter's out-rails from the desktop layout, each as [block end, far end] in bench space and ordered across the
+ * fan. A bar part is its midpoint, a rotation and a length along local x, so its ends are the midpoint ± half the length.
+ */
+function fanRails(): Array<[Vec3, Vec3]> {
+  const parts = BENCH.desktop.parts.filter((p) => p.machine === splitter);
+  const block = parts.filter((p) => p.module === 'block');
+  const hub = [0, 1, 2].map((k) => block.reduce((sum, p) => sum + p.position[k], 0) / block.length);
+  const rails = parts.filter((p) => p.module === 'fan').map((p): [Vec3, Vec3] => {
+    const h = new Vector3(p.scale[0] / 2, 0, 0).applyQuaternion(new Quaternion(...p.quaternion));
+    const a: Vec3 = [p.position[0] - h.x, p.position[1] - h.y, p.position[2] - h.z];
+    const b: Vec3 = [p.position[0] + h.x, p.position[1] + h.y, p.position[2] + h.z];
+    const d = (v: Vec3) => Math.hypot(v[0] - hub[0], v[1] - hub[1], v[2] - hub[2]);
+    return d(a) <= d(b) ? [a, b] : [b, a];
+  });
+  // Across the fan: each rail's heading in the bench plane, measured from the fan's mean heading.
+  const heading = ([a, b]: [Vec3, Vec3]) => Math.atan2(b[2] - a[2], b[0] - a[0]);
+  const mean = Math.atan2(rails.reduce((s, r) => s + Math.sin(heading(r)), 0), rails.reduce((s, r) => s + Math.cos(heading(r)), 0));
+  const across = (r: [Vec3, Vec3]) => Math.atan2(Math.sin(heading(r) - mean), Math.cos(heading(r) - mean));
+  return rails.sort((r, q) => across(r) - across(q));
+}
 
 describe('projectBounds', () => {
   it('boxes the projected rest positions, y up, and returns null with nothing in front of the camera', () => {
@@ -114,13 +137,34 @@ describe('desktop clearance at the dwells (aspect 1.6)', () => {
     expect(Math.abs(azimuthDeg(pose)), '|azimuth|').toBeLessThanOrEqual(25);
   });
 
-  it('darch (5, 0.7): the splitter long and low (camera under y 2.2, pitched under 16°), clear of the copy column and wide; the balance and the intake behind it clear of the column too', () => {
+  it('darch (5, 0.7): the splitter low (pitched under 20°) and along its length from the fan end (50–70° round), clear of the copy column; one in, twelve out: the out-rails open across the frame; the balance and the intake behind it clear of the column too', () => {
     const s = at(5, 0.7, [splitter]);
     const pose = poseAt(5, 0.7, 'desktop');
     expect(s.left).toBeGreaterThanOrEqual(-0.12);
-    expect(width(s)).toBeGreaterThanOrEqual(0.5);
-    expect(elevationDeg(pose), 'elevation').toBeLessThanOrEqual(16);
-    expect(pose.position[1], 'camera height').toBeLessThanOrEqual(2.2);
+    expect(elevationDeg(pose), 'elevation').toBeLessThanOrEqual(20);
+    expect(pose.position[1], 'camera height').toBeLessThanOrEqual(5.5);
+    expect(azimuthDeg(pose), 'azimuth').toBeGreaterThanOrEqual(-70);
+    expect(azimuthDeg(pose), 'azimuth').toBeLessThanOrEqual(-50);
+    // The twelve out-rails lie flat and diverge across z. Seen down that spread they stack into one wedge: the earlier
+    // pose (camera at y 2.2, 41° round from far in front) put all twelve rail ends inside 12° at the block, about 10 px
+    // apart, at the frame's right edge. Here every rail end is in frame and right of the copy column, the fan opens at
+    // least 45° at the block, and neighbouring ends sit at least 0.04 apart (x scaled by the aspect; about 18 px at 900).
+    const rails = fanRails();
+    expect(rails).toHaveLength(12);
+    const near = rails.map(([a]) => projectPoint(a, pose, ASPECT.desktop)!);
+    const ends = rails.map(([, b]) => projectPoint(b, pose, ASPECT.desktop)!);
+    for (const [j, [x, y]] of ends.entries()) {
+      expect(x >= -0.12 && x <= 1 && y >= -1 && y <= 1, `rail ${j} end in frame, right of the copy column (${x.toFixed(2)}, ${y.toFixed(2)})`).toBe(true);
+    }
+    const apex = [0, 1].map((k) => near.reduce((sum, p) => sum + p[k], 0) / near.length);
+    const dir = ([x, y]: [number, number]) => Math.atan2(y - apex[1], (x - apex[0]) * ASPECT.desktop);
+    const first = dir(ends[0]);
+    const turn = ends.map((e) => Math.atan2(Math.sin(dir(e) - first), Math.cos(dir(e) - first)) * 180 / Math.PI);
+    expect(Math.max(...turn) - Math.min(...turn), 'fan opening at the block, degrees').toBeGreaterThanOrEqual(45);
+    for (let j = 1; j < ends.length; j++) {
+      const gap = Math.hypot((ends[j][0] - ends[j - 1][0]) * ASPECT.desktop, ends[j][1] - ends[j - 1][1]);
+      expect(gap, `rail ends ${j - 1} and ${j} apart`).toBeGreaterThanOrEqual(0.04);
+    }
     // The balance's tile stacks and the intake's hopper are the tall, dense machines left of the splitter: from a low
     // front view they land in the copy column's band at the height of the darch copy, dark on dark. Each is either
     // right of the column or out of the frame.

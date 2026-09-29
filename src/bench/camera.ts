@@ -13,8 +13,9 @@ export interface CameraKey { section: number; u: number; pose: Pose }
 // deck and the intake's hopper under the copy block's floor; the rise to the high 3/4 over the bed (41°) for `more` is
 // mostly a tilt from a station a unit away; a descent to the bot for the macro; one climb along the front row (the
 // kalshi dolly, the only lateral dolly); the balance side-on and low (13°, 22° off its rail's normal); the splitter
-// long and low from front-right (camera at y 2.2, 41° round), far enough that the balance and the intake behind it
-// sit right of the copy column instead of under the darch copy; the watch from high up (47°); the poster pulled back
+// low (19°) along its length from the fan end (59° round), so the twelve out-rails open across the frame (54° at the
+// block) instead of stacking along the line of sight, with the balance and the intake behind it right of the copy
+// column instead of under the darch copy; the watch from high up (47°); the poster pulled back
 // and around to a 3/4 from front-right (55° round, 24° up; re-authored at gate G4) so the front row recedes toward the
 // copy column instead of spanning the frame: splitter, watch and slot large in front, the balance and the bot past
 // them, every machine clear of the copy column, the quoter the wall behind running out of the right edge; a drop to
@@ -33,8 +34,8 @@ const D: CameraKey[] = [
   { section: 3, u: 1.00, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.8, -0.6, -1.8], fov: 30 } },
   { section: 4, u: 0.15, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.4, 1.9, 2.6], fov: 30 } },     // side-on and low on the balance, quoter behind: a tilt from the dolly's end station
   { section: 4, u: 1.00, pose: { position: [-2.2, 4.5, 13.0], lookAt: [-6.4, 1.9, 2.6], fov: 30 } },
-  { section: 5, u: 0.15, pose: { position: [5.6, 2.2, 16.1], lookAt: [-3.3, -0.6, 5.9], fov: 30 } },     // long and low along the splitter from front-right: the fan opens toward the camera; balance, intake and bot right of the copy column
-  { section: 5, u: 1.00, pose: { position: [5.6, 2.2, 16.1], lookAt: [-3.3, -0.6, 5.9], fov: 30 } },
+  { section: 5, u: 0.15, pose: { position: [8.2, 5.2, 11.7], lookAt: [0.4, 2.0, 7.1], fov: 30 } },      // low along the splitter from its fan end: one in along the in-rail, twelve out toward the camera; balance and intake behind, right of the copy column
+  { section: 5, u: 1.00, pose: { position: [8.2, 5.2, 11.7], lookAt: [0.4, 2.0, 7.1], fov: 30 } },
   { section: 6, u: 0.15, pose: { position: [5.0, 9.3, 14.8], lookAt: [1.2, -1.5, 5.3], fov: 30 } },      // high calm on the watch, centred, the quoter's front above it; a rise from the darch station
   { section: 6, u: 1.00, pose: { position: [5.0, 9.3, 14.8], lookAt: [1.2, -1.5, 5.3], fov: 30 } },
   { section: 7, u: 0.60, pose: { position: [13.2, 8.0, 16.4], lookAt: [-0.9, 0.3, 6.4], fov: 30 } },     // poster: small machines large in front, the quoter the wall behind
