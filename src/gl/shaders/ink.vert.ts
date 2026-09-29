@@ -23,6 +23,9 @@ const float BAND_T0 = 0.15909, BAND_T1 = 0.43182;
 const float BAND_BLEND = 0.33;
 // A row starts BAND_MARGIN (NDC x) from the origin and runs LINE_MIN plus up to LINE_RAG more, hashed per row.
 const float BAND_MARGIN = 0.32, LINE_MIN = 0.14, LINE_RAG = 0.46;
+// The merge burst (part 2) has its own: halfway from the copy to the bed, its rows starting at the origin, so the eight
+// rows start between the copy column and the bed. The hero's blend and margin landed them on the bed.
+const float BURST_BLEND = 0.5, BURST_MARGIN = 0.0;
 // A point that departs after its row has printed still flies into it, over this much uCompile.
 const float LATE_LEG = 0.03;
 // A compile point leaves its row on its own clock from t = ROW_LEAVE, ahead of the band's release, so the ink bound
@@ -62,12 +65,12 @@ void main() {
   vec2 p = mix(mix(spawn, ctrl, e), mix(ctrl, target, e), e);
   // rows band: one grid per partition, its origin never the point's own spawn, so row k is one height for all points
   vec2 rectCenter = vec2(r.x + 0.5 * r.z, r.y - 0.5 * r.w);
-  vec2 bandOrigin = mix(rectCenter, centroidNdc, BAND_BLEND);
+  vec2 bandOrigin = mix(rectCenter, centroidNdc, part == 2 ? BURST_BLEND : BAND_BLEND);
   float rows = uBandRows[part];
   float lineLen = LINE_MIN + LINE_RAG * hash1(aRow + 17.0 * float(part));   // ragged right ends, one length per row
   float xInLine = fract(aSeed * 13.7) * lineLen;
   float rowY = bandOrigin.y + (rows * 0.5 - aRow) * uBandPitch;
-  vec2 rowPt = vec2(bandOrigin.x + BAND_MARGIN + xInLine, rowY);
+  vec2 rowPt = vec2(bandOrigin.x + (part == 2 ? BURST_MARGIN : BAND_MARGIN) + xInLine, rowY);
   float band;   // how far the point sits in its row: 1 holds it there, curl stilled
   if (aTrickle > 0.5) {
     band = 0.0;   // the trickle never enters the band (design §7)

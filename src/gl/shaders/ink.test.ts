@@ -39,8 +39,18 @@ describe('the ink rows band (design §3.1: T0 + 0.35 → 0.95 s)', () => {
 
   it("puts every point of a partition on one row grid: the origin is the source rect's centre, never the spawn", () => {
     expect(assigned('rectCenter')).toEqual(['vec2(r.x+0.5*r.z,r.y-0.5*r.w)']);
-    expect(assigned('bandOrigin')).toEqual(['mix(rectCenter,centroidNdc,BAND_BLEND)']);
+    expect(assigned('bandOrigin')).toEqual([`mix(rectCenter,centroidNdc,part==${PARTITION.merge}?BURST_BLEND:BAND_BLEND)`]);
     expect(assigned('rowY')).toEqual(['bandOrigin.y+(rows*0.5-aRow)*uBandPitch']);
+  });
+
+  it("gives the merge burst its own origin, halfway from the copy to the bed, its rows starting there (Task 5.0)", () => {
+    // With the hero's blend and margin the burst's eight rows landed on the bed; halfway and flush they start between
+    // the copy column and the bed. Every other partition keeps the hero's.
+    expect(glslConst('BURST_BLEND')).toBe(0.5);
+    expect(glslConst('BURST_MARGIN')).toBe(0);
+    expect(glslConst('BAND_BLEND')).toBe(0.33);
+    expect(glslConst('BAND_MARGIN')).toBe(0.32);
+    expect(assigned('rowPt')).toEqual([`vec2(bandOrigin.x+(part==${PARTITION.merge}?BURST_MARGIN:BAND_MARGIN)+xInLine,rowY)`]);
   });
 
   it('ends each row at its own hashed length, so the rows end ragged like code', () => {
