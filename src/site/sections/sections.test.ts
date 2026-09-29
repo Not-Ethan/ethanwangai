@@ -241,6 +241,90 @@ describe("08's poster dwell (desktop): its block holds to u = 1 and 09's heading
     const column = ((1440 - 2 * 48 - 11 * 16) / 12) * 5 + 4 * 16;   // md:px-12, gap-4, col-span-5
     expect(text.length * 0.59 * px, 'uptime width at 1440').toBeLessThanOrEqual(column);
   });
+
+  // The desktop rule for `selector` inside the 08 → 09 media block (a lazy scan that cannot cross another @media).
+  const desktopRule = (selector: string): string =>
+    new RegExp(`@media \\(min-width: 48rem\\)\\s*\\{[^@]*?${selector}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+  const clampOf = (selector: string, prop: string): [number, number, number] => {
+    const decls = new RegExp(`(?:^|\\n)${selector.replace(/\./g, '\\.')}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+    const m = new RegExp(`${prop}:\\s*clamp\\(([\\d.]+)rem,\\s*([\\d.]+)vw,\\s*([\\d.]+)rem\\)`).exec(decls);
+    return m ? [Number(m[1]) * 16, Number(m[2]), Number(m[3]) * 16] : [NaN, NaN, NaN];
+  };
+  const clampPx = ([lo, vw, hi]: [number, number, number], w: number) => Math.min(Math.max(lo, (vw / 100) * w), hi);
+  const column = (w: number) => ((w - 2 * 48 - 11 * 16) / 12) * 5 + 4 * 16;   // md:px-12, gap-4, col-span-5
+  const PIN = 7 * 16;                                                          // md:top-28
+  const pad = Number(/(?:^|\n)\.copy-col\s*\{[^}]*padding-bottom:\s*([\d.]+)vh/.exec(css)?.[1] ?? NaN);   // under the last line
+
+  it("lands a jump to #yours (nav `contact`) where 08's block has left the screen, not on 08's poster", () => {
+    // #yours's top is 08's u = 1: the poster, with 09's block a full lead below the fold. Lenis's scrollTo and
+    // scrollIntoView both honour scroll-margin, so a negative one moves the landing into 09.
+    const m = /scroll-margin-top:\s*calc\(-([\d.]+)vh - ([\d.]+)rem\)/.exec(desktopRule('#yours'));
+    expect(m, "#yours's desktop scroll margin").not.toBeNull();
+    const [back, extraRem] = [Number(m![1]), Number(m![2])];
+    // 08's track ends tail('alive') past 09's top; its last line sits the 6vh padding above that
+    expect(back, "08's last line at the viewport's top edge").toBe(tail('alive') - pad);
+    // the uptime's line-height is 1, so its descenders hang ~0.16em below its box: allow 0.2em at its largest
+    const uptimeMax = clampOf('.uptime-figure', 'font-size')[2];
+    expect(extraRem * 16, "room for the uptime's descenders").toBeGreaterThanOrEqual(0.2 * uptimeMax);
+    for (const height of [600, 800, 1080, 1440]) {
+      const blockTop = ((lead('yours') - back) / 100) * height - extraRem * 16;   // 09's block, before its pin catches it
+      expect(blockTop, `09's block lands on screen at ${height} px`).toBeGreaterThan(0);
+      // at least as much of 09 as when the lead was the base and the jump landed at the section's top
+      expect(blockTop, `09's heading no lower than the base lead at ${height} px`).toBeLessThanOrEqual((height * vh(base, '--copy-lead')) / 100);
+    }
+    // phones keep the section's own top: the only scroll margin declared is this desktop one
+    expect(css.match(/scroll-margin[\w-]*\s*:/g) ?? []).toHaveLength(1);
+  });
+
+  describe("08's heading, sized so its block fits under the pin and holds to u = 1 at short desktop viewports", () => {
+    // The plain .h2 is 8 lines of 08's heading from 1024 to 1366 px wide, which left 763 px of block under 688 px of
+    // room at 1280 × 800: the block let go at u 0.9 with its uptime below the fold. A browser sweep measured six
+    // lines up to 0.1077 of the column and eight from 0.111 (Archivo 700 at this copy), so the rule caps the heading at
+    // 0.105 of the column, then trades size for height.
+    const rule = /font-size:\s*clamp\(([\d.]+)rem,\s*min\(([\d.]+)vw,\s*([\d.]+) \* \(\(100vw - ([\d.]+)rem\) \* 5 \/ 12 \+ ([\d.]+)rem\),\s*([\d.]+)vh - ([\d.]+)px - ([\d.]+) \* max\(0px, ([\d.]+)px - 100vw\)\),\s*([\d.]+)rem\)/.exec(desktopRule('#alive \\.h2'));
+    const [lo, vw, share, gutters, gaps, hv, hpx, give, knee, hi] = (rule ?? []).slice(1).map(Number);
+    const h2 = (w: number, h: number) =>
+      Math.min(Math.max(lo * 16, Math.min((vw / 100) * w, share * (((w - gutters * 16) * 5) / 12 + gaps * 16), (hv / 100) * h - hpx - give * Math.max(0, knee - w))), hi * 16);
+    const plain = clampOf('.h2', 'font-size');
+
+    it('is the plain .h2 clamp with three caps inside it, the first a share of the real copy column', () => {
+      expect(rule, "#alive .h2's desktop font-size").not.toBeNull();
+      expect([lo * 16, vw, hi * 16]).toEqual(plain);
+      for (const w of [768, 1024, 1280, 1440, 1920]) expect(((w - gutters * 16) * 5) / 12 + gaps * 16).toBeCloseTo(column(w), 9);
+    });
+
+    it('keeps the plain size where the block already fits: the 1440 × 900 and 1920 × 1080 stills', () => {
+      for (const [w, h] of [[1440, 900], [1920, 1080]]) expect(h2(w, h), `${w} × ${h}`).toBe(clampPx(plain, w));
+    });
+
+    it('never sets it past 0.105 of the column above its floor, where it is six lines or fewer', () => {
+      expect(share).toBeLessThanOrEqual(0.105);
+      for (let w = 768; w <= 2560; w += 16) for (let h = 540; h <= 1440; h += 20) {
+        expect(h2(w, h), `${w} × ${h}`).toBeLessThanOrEqual(Math.max(lo * 16, 0.105 * column(w)) + 1e-9);
+      }
+    });
+
+    it('fits six lines of it, both paragraphs and the uptime under the 7rem pin at the common laptop viewports', () => {
+      // The rest of the block, as the browser lays it out from 1024 px up: the paragraphs at their 34ch measure wrap to 4
+      // and 2 lines, each with mt-5; the uptime (mt-10, line-height 1) takes a second line where the column is narrower
+      // than its 16 characters; the copy-col's 6vh padding closes it. At 1440 × 900 this gives 700.5 px, what the browser
+      // measures, and six lines is an upper bound (at 1366 × 657 the heading is four).
+      const body = clampOf('.body', 'font-size');
+      const lh = Number(/(?:^|\n)\.body\s*\{[^}]*line-height:\s*([\d.]+);/.exec(css)?.[1] ?? NaN);
+      const uptime = clampOf('.uptime-figure', 'font-size');
+      const rest = (w: number, h: number) => {
+        const u = clampPx(uptime, w);
+        const uptimeLines = `${copy.alive.running} 00:00:00`.length * 0.59 * u <= column(w) ? 1 : 2;
+        return (6 * lh * clampPx(body, w) + 2 * 20) + (40 + uptimeLines * u) + (pad / 100) * h;
+      };
+      const block = (w: number, h: number) => 6 * h2(w, h) + rest(w, h);
+      expect(block(1440, 900)).toBeCloseTo(700.5, 0);
+      // the case the rule fixes: the plain size at 1280 px is eight lines (measured) and overruns 1280 × 800
+      expect(PIN + 8 * clampPx(plain, 1280) + rest(1280, 800), 'plain .h2 at 1280 × 800').toBeGreaterThan(800);
+      const laptops = [[1280, 800], [1280, 720], [1366, 657], [1440, 790], [1470, 835], [1536, 750], [1536, 864], [1440, 900], [1680, 1050], [1920, 1080], [1024, 700]];
+      for (const [w, h] of laptops) expect(PIN + block(w, h), `${w} × ${h}: pin + block within the viewport`).toBeLessThanOrEqual(h);
+    });
+  });
 });
 
 describe("section 02's ladder (#rungs)", () => {

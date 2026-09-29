@@ -100,10 +100,30 @@ a:hover, button.link:hover { color: var(--hot); }
    keeps it off screen, and 110vh keeps the usual 10vh of air under 08's tail. 08's track runs a full viewport past
    its section, so its block lets go at u = 1 or later whenever it fits under its pin (at 1440 × 900 it is 700 px
    under a 112 px pin); tail ≤ the next lead still holds (100vh ≤ 110vh), so the two never overlap. 09's tail grows
-   with its lead (lead − 10vh, as everywhere else), so the page still ends with 09's block where it ended before. */
+   with its lead (lead − 10vh, as everywhere else), so the page still ends with 09's block where it ended before.
+   The cost is 35vh of page. 09's range is its lead plus its block less a viewport, so any lead that keeps 09 off
+   screen at 08's u = 1 makes the range at least the block's height: 858 px at 1440 × 900, against 543 at 75vh. */
 @media (min-width: 48rem) {
   #alive .copy-track { --copy-tail: 100vh; }
   #yours .copy-track { --copy-lead: 110vh; --copy-tail: 100vh; }
+
+  /* #yours's top is 08's u = 1, the poster with nothing of 09 on screen, so a jump there (nav `contact` through
+     Lenis's scrollTo, scrollIntoView, a #yours link: all honour scroll-margin) would land on 08. It lands instead
+     at the first scroll where 08's block is wholly off screen: 08's tail less the 6vh padding under its last line,
+     plus 1rem for the uptime's descenders (its line-height is 1, so they hang ~0.16em below its box), or at the
+     page's end if that comes first. 09's block is then pinned or at its resting place, with its heading, the input
+     and the links on screen, and the camera settled on the slot. */
+  #yours { scroll-margin-top: calc(-94vh - 1rem); }
+
+  /* 08's heading is the longest on the page, and its block fits under the pin only if its h2 does. At the plain .h2
+     size it is 8 lines from 1024 to 1366 px wide: 763 px of block under 688 px of room at 1280 × 800, so the block
+     let go at u 0.9 with its uptime below the fold. Three caps under the plain clamp. 0.105 of the copy column
+     (md:px-12, gap-4, col-span-5) keeps it at six lines or fewer; it wraps to eight by 0.111. 10vh − 30px gives up
+     size for height. Below 1280 px the column narrows (under about 1210 px the uptime takes a second line), so the
+     heading gives back 0.035 px per px of width. Swept over 768–1920 × 540–1100 px, the block holds to u = 1 at
+     every desktop viewport from 1216 px wide and 560 px tall, 1152 px and 610, 960 px and 640; below those the h2
+     is at its 1.9rem floor. 1440 × 900 and 1920 × 1080 keep 3.6rem. */
+  #alive .h2 { font-size: clamp(1.9rem, min(4.2vw, 0.105 * ((100vw - 17rem) * 5 / 12 + 4rem), 10vh - 30px - 0.035 * max(0px, 1280px - 100vw)), 3.6rem); }
 }
 
 /* section 02's ladder track (#rungs' sticky containing block): #more is 100vh on desktop, so a ladder left at the
