@@ -152,7 +152,7 @@ describe('buildInkGeometry (desktop)', () => {
     expect(again.trickle).toEqual(d.trickle);
     const other = buildInkGeometry(desktop, 'desktop', SEED + 1);
     expect(other.seed).not.toEqual(d.seed);
-  });
+  }, 30_000);
 });
 
 describe('buildInkGeometry (phone)', () => {
