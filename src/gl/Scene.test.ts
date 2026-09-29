@@ -165,6 +165,13 @@ describe('configureUniforms', () => {
     expect(rail?.position).toEqual([o[0], POST_H, o[2]]);
   });
 
+  it('steps the bed at 1 Hz under reduced motion: the OU tape at 1 step a second, the rest of uOUInfo as it was', () => {
+    for (const tier of ['desktop', 'phone'] as const) {
+      expect(configureUniforms(createUniforms(), tier, ou, true).uOUInfo.value.toArray(), tier).toEqual([256, 2048, 48, 1]);
+      expect(configureUniforms(createUniforms(), tier, ou, false).uOUInfo.value.toArray(), tier).toEqual([256, 2048, 48, 8]);
+    }
+  });
+
   it('leaves the registry\'s own constants in place', () => {
     const u = configureUniforms(createUniforms(), 'desktop', ou);
     expect(u.uOUInfo.value.toArray()).toEqual([256, 2048, 48, 8]);

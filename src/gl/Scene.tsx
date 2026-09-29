@@ -20,7 +20,8 @@ import { hashString } from '@/bench/hash';
 import { BENCH_SEED_TEXT } from '@/bench/bench';
 import { OU, generateOU } from '@/bench/ou';
 import { QUOTER_BED } from '@/bench/configs/quoter';
-import { createUniforms, type BenchUniforms } from './material/uniforms';
+import { useScroll } from '@/scroll/ScrollProvider';
+import { createUniforms, OU_STEPS_PER_SECOND, REDUCED_OU_STEPS_PER_SECOND, type BenchUniforms } from './material/uniforms';
 import { KEY_LIGHT, Lights } from './Lights';
 import { Ground } from './Ground';
 import { Kits } from './Kits';
@@ -61,14 +62,16 @@ export function createOUTexture(seed: number = hashString(BENCH_SEED_TEXT)): THR
 }
 
 /**
- * The registry entries Scene owns: the tier's bed pitch, the key direction, the bench centre, the OU texture. The balance
+ * The registry entries Scene owns: the tier's bed pitch, the key direction, the bench centre, the OU texture and its
+ * playback rate, which reduced motion drops to 1 step a second so the bed steps at 1 Hz (design §11). The balance
  * pivot is the registry's own constant (the post top, uniforms.ts), not the machine's centroid, which the lever pulls off the post.
  */
-export function configureUniforms(u: BenchUniforms, tier: Tier, ou: THREE.Texture): BenchUniforms {
+export function configureUniforms(u: BenchUniforms, tier: Tier, ou: THREE.Texture, reducedMotion = false): BenchUniforms {
   u.uPitch.value = bedPitch(tier);
   u.uKeyDir.value.set(...KEY_LIGHT.position).normalize();
   u.uBenchCenter.value.set(...BENCH_CENTER);
   u.uOU.value = ou;
+  u.uOUInfo.value.w = reducedMotion ? REDUCED_OU_STEPS_PER_SECOND : OU_STEPS_PER_SECOND;
   return u;
 }
 
@@ -147,10 +150,11 @@ export function Scene() {
 
 function GLLayer({ onFail }: { onFail: () => void }) {
   const { tier, dpr, shadows, onDecline } = useTier();
+  const { reducedMotion } = useScroll();
   const result = useMemo(() => buildBench(tier), [tier]);
   const ou = useMemo(() => createOUTexture(), []);
   const ouData = ou.image.data as Uint8Array;   // the tape the shader samples, which Hover's readout reads on the CPU
-  const u = useMemo(() => configureUniforms(createUniforms(), tier, ou), [tier, ou]);
+  const u = useMemo(() => configureUniforms(createUniforms(), tier, ou, reducedMotion), [tier, ou, reducedMotion]);
   useEffect(() => () => ou.dispose(), [ou]);
   const wrapper = useRef<HTMLDivElement>(null);
 

@@ -13,7 +13,7 @@ precision highp float; precision highp sampler3D;
 in vec3 aTarget; in float aTargetBirth; in float aSeed; in float aRow; in float aPartition; in float aTrickle; in vec2 aSpawnUV;
 uniform vec4 uRect[8]; uniform vec3 uCentroid[8]; uniform float uCompile[8]; uniform float uTime; uniform float uVel;
 uniform float uBurst; uniform float uTrickle; uniform float uActiveRect; uniform sampler3D uCurl; uniform float uPixelRatio;
-uniform float uBandPitch; uniform float uBandRows[8]; uniform vec3 uLock; uniform float uGlyph;
+uniform float uBandPitch; uniform float uBandRows[8]; uniform vec3 uLock; uniform float uGlyph; uniform float uInkEnabled;
 out float vAlpha; out float vGlyph;
 const int PART_MACHINE[7] = int[7](0, 1, 0, 2, 3, 4, 7);
 // The compile band's window in uCompile: T0 + 0.35 s and T0 + 0.95 s over TIMING.heroCompileS = 2.2 s (0.35 / 2.2,
@@ -102,7 +102,8 @@ void main() {
   // depth: near the camera in flight, a hair in front of the target once landing
   float z = mix(-0.98, targetDepth - 0.002, smoothstep(0.9, 1.0, t));
   gl_Position = vec4(p, z, 1.0);
-  vAlpha = 0.85 * smoothstep(0.0, 0.03, t) * (1.0 - smoothstep(0.92, 1.0, t)) * step(0.001, t);
+  // uInkEnabled = 0 under reduced motion (design §11: no ink transit): every point hidden, its size 0 below
+  vAlpha = uInkEnabled * 0.85 * smoothstep(0.0, 0.03, t) * (1.0 - smoothstep(0.92, 1.0, t)) * step(0.001, t);
   vGlyph = uGlyph * step(0.85, fract(aSeed * 3.3)) * band;
   gl_PointSize = (vGlyph > 0.5 ? 12.0 : 2.0) * uPixelRatio * step(0.001, vAlpha);
 }

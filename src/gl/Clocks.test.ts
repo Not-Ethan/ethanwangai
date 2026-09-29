@@ -5,7 +5,7 @@ import { createRoot, extend } from '@react-three/fiber';
 import type { RefObject } from 'react';
 import { MACHINE, MACHINE_COUNT, type Tier } from '@/bench/types';
 import { buildBench } from '@/bench/counts';
-import { SECTIONS, sectionRanges, type SectionRange } from '@/bench/sections';
+import { SECTIONS, SECTION_INDEX, sectionRanges, type SectionRange } from '@/bench/sections';
 import { CAMERA_KEYS, evaluatePose } from '@/bench/camera';
 import { createSceneState, mergeBurst, sceneState } from '@/bench/sceneState';
 import { TIMING, lockStart } from '@/bench/timing';
@@ -25,6 +25,7 @@ import {
   travelAxis, fitShadowCamera, createShadowFit, SHADOW_MARGIN, SHADOW_FIT_TAU, SHADOW_DISTANCE,
   sortedBirths, inkedCount, INK_T, INK_THRESHOLD,
   createVisitorClock, requestVisitor, keyVisitor, stepVisitor, slotPeriodFor, SLOT_PERIOD_REST_S, SLOT_PERIOD_TAU_S,
+  REDUCED_COMPILE_S, stationPose,
 } from './Clocks';
 import { planVisitor, uploadVisitor, clearVisitor } from './visitor';
 
@@ -512,10 +513,11 @@ describe('stepFrame', () => {
     expect(uniforms.uFillRate.value[MACHINE.quoter]).toBeCloseTo(3, 2);   // 1 + 2|vel|, at the clamp
   });
 
-  it('under reduced motion the machine clocks run at 0.3×', () => {
+  it('under reduced motion the machine clocks run at 0.3×, the small machines at 0.25×', () => {
     const { d, uniforms } = driver({ reducedMotion: true });
     frames(d, 60);
-    expect(uniforms.uMachineTime.value[MACHINE.bot]).toBeCloseTo(0.3, 6);
+    expect(uniforms.uMachineTime.value[MACHINE.slot]).toBeCloseTo(0.3, 6);
+    expect(uniforms.uMachineTime.value[MACHINE.bot]).toBeCloseTo(0.25, 6);
   });
 
   it('drives the palette lerp: created on the DOM theme, retargeted on themechange, done after 0.3 s', () => {
@@ -652,6 +654,8 @@ describe('the intro', () => {
     const rm = driver({ pinned: 1, reducedMotion: true });
     stepFrame(rm.d, DT, DT);
     expect(rm.uniforms.uCompile.value[MACHINE.quoter]).toBe(1);
+    expect(rm.uniforms.uRun.value[MACHINE.quoter]).toBe(1);        // run = 1 from the first frame: no run-up, no impulse
+    expect(rm.uniforms.uVel.value).toBe(0);
     expect(hud.running).toBe(true);
     expect(rm.uniforms.uCompile.value[MACHINE.intake]).toBe(0);     // only the hero is pinned; the intake still scrubs
   });
@@ -873,6 +877,133 @@ describe('the visitor', () => {
     expect(v).toMatchObject({ built: false, tearing: false, queued: null, keystrokes: 0 });
     expect(upload).not.toHaveBeenCalled();
     expect(clear).not.toHaveBeenCalled();
+  });
+});
+
+// Reduced motion (design §11): the scrubbed compiles become 300 ms fades keyed on the build window, the fill, the
+// velocity and the lean kick are off, the bed steps slowly, the camera's target is the pose table's nearest station.
+describe('reduced motion', () => {
+  const HERON = SECTION_INDEX.heron, B = MACHINE.balance;
+  const { ranges } = pageRanges('desktop');
+  const at = (section: number, u: number) => gAt(ranges, section, u);
+  const heronBuild = SECTIONS[HERON].build!;
+
+  it('fades a scrubbed compile to 1 over 300 ms when its build window is entered, whatever u does inside it', () => {
+    expect(REDUCED_COMPILE_S).toBe(0.3);
+    const { d, uniforms } = driver({ reducedMotion: true, g: at(HERON, heronBuild.from - 0.05) });
+    let t = frames(d, 10);
+    expect(uniforms.uCompile.value[B]).toBe(0);
+    d.scroll.current!.g = at(HERON, heronBuild.from + 0.02);        // scrubbed, this would be 0.06
+    stepFrame(d, DT, (t += DT));                                     // the fade starts here, from 0
+    expect(uniforms.uCompile.value[B]).toBe(0);
+    d.scroll.current!.g = at(HERON, heronBuild.from + 0.1);         // deeper into the window: no restart
+    stepFrame(d, DT, t + 0.15);
+    expect(uniforms.uCompile.value[B]).toBeCloseTo(0.5, 6);
+    expect(uniforms.uRun.value[B]).toBe(0);                          // not yet locked
+    stepFrame(d, DT, t + REDUCED_COMPILE_S);
+    expect(uniforms.uCompile.value[B]).toBe(1);
+    expect(uniforms.uRun.value[B]).toBe(1);                          // locked: it runs at once, with no impulse
+    expect(uniforms.uVel.value).toBe(0);
+    d.scroll.current!.g = at(HERON, 0.9);                            // past the window: still 1, nothing restarts
+    stepFrame(d, DT, t + 1);
+    expect(uniforms.uCompile.value[B]).toBe(1);
+  });
+
+  it('fades it back to 0 over 300 ms, from where it stands, when the window is left above', () => {
+    const { d, uniforms } = driver({ reducedMotion: true, g: at(HERON, heronBuild.from - 0.05) });
+    let t = frames(d, 2);
+    d.scroll.current!.g = at(HERON, 0.3);
+    stepFrame(d, DT, (t += DT));
+    stepFrame(d, DT, t + 0.15);                                      // half way in
+    d.scroll.current!.g = at(HERON, heronBuild.from - 0.05);         // and back out above the window
+    stepFrame(d, DT, (t += 0.15));
+    expect(uniforms.uCompile.value[B]).toBeCloseTo(0.5, 6);
+    stepFrame(d, DT, t + 0.15);
+    expect(uniforms.uCompile.value[B]).toBeCloseTo(0.25, 6);
+    stepFrame(d, DT, t + REDUCED_COMPILE_S);
+    expect(uniforms.uCompile.value[B]).toBe(0);
+  });
+
+  it('snaps on the first frame: a load deep in the page shows what is behind it built and what is ahead of it pencil', () => {
+    const { d, uniforms } = driver({ reducedMotion: true, g: at(HERON, 0.3) });
+    stepFrame(d, DT, DT);
+    expect(uniforms.uCompile.value[MACHINE.intake]).toBe(1);        // 03 is behind
+    expect(uniforms.uCompile.value[B]).toBe(1);                      // inside heron's window
+    expect(uniforms.uCompile.value[MACHINE.splitter]).toBe(0);      // 05 is ahead
+    expect(uniforms.uCompile.value[MACHINE.quoter]).toBe(0);        // the hero is not a scrubbed compile: its pin is null here
+  });
+
+  it('writes no fill rate, no velocity and no lean kick; the merge clicks still follow the scroll', () => {
+    const more = SECTION_INDEX.more;
+    const { d, uniforms } = driver({ reducedMotion: true, velocity: 1, g: at(more, 0.9) });
+    frames(d, 60);
+    expect(Array.from(uniforms.uFillRate.value)).toEqual(new Array(MACHINE_COUNT).fill(0));
+    expect(uniforms.uVel.value).toBe(0);
+    expect(uniforms.uLean.value).toBe(0);
+    const s = sceneState(at(more, 0.9), ranges, 'desktop', createSceneState());
+    expect(s.lean).toBeGreaterThan(0.5);                             // what the full-motion page kicks with
+    expect(uniforms.uMerge.value).toBe(s.merge);
+    d.scroll.current!.g = at(more, 0.375);
+    frames(d, 1);
+    expect(uniforms.uMerge.value).toBeGreaterThan(2);
+  });
+
+  it('hands CameraRig the pose table\'s nearest station, not the scrubbed curve', () => {
+    const { d } = driver({ reducedMotion: true, g: at(0, 0.5) });   // mid-rise: the scrubbed pose is between the keys
+    frames(d, 1);
+    const [hero, , risen] = CAMERA_KEYS.desktop;
+    expect(hud.pose.position).toEqual(hero.pose.position);
+    expect(hud.pose.lookAt).toEqual(hero.pose.lookAt);
+    d.scroll.current!.g = at(0, 0.6);                                // past the rise's midpoint (0.575)
+    frames(d, 1);
+    expect(hud.pose.position).toEqual(risen.pose.position);
+    expect(hud.pose.lookAt).toEqual(risen.pose.lookAt);
+    const full = driver({ g: at(0, 0.5) });
+    frames(full.d, 1);
+    const scrubbed = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 };
+    evaluatePose(0, 0.5, 'desktop', scrubbed);
+    hud.pose.position.forEach((x, k) => expect(x).toBeCloseTo(scrubbed.position[k], 9));   // full motion keeps the curve
+    expect(hud.pose.position[1]).not.toBeCloseTo(hero.pose.position[1], 3);
+  });
+
+  it('stationPose: each key is its own station; between two keys the nearer one in section + u', () => {
+    const out = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 };
+    for (const tier of ['desktop', 'phone'] as const) {
+      const keys = CAMERA_KEYS[tier];
+      keys.forEach((k, i) => {
+        stationPose(k.section, k.u, tier, out);
+        expect(out, `${tier} key ${i}`).toEqual({ position: [...k.pose.position], lookAt: [...k.pose.lookAt], fov: k.pose.fov });
+        const next = keys[i + 1];
+        if (!next) return;
+        const mid = (k.section + k.u + next.section + next.u) / 2;
+        stationPose(0, mid - 1e-6, tier, out);
+        expect(out.position, `${tier} before the midpoint after key ${i}`).toEqual([...k.pose.position]);
+        stationPose(0, mid + 1e-6, tier, out);
+        expect(out.position, `${tier} past the midpoint after key ${i}`).toEqual([...next.pose.position]);
+      });
+      const last = keys[keys.length - 1];
+      stationPose(last.section, 1, tier, out);
+      expect(out.position).toEqual([...last.pose.position]);
+    }
+  });
+
+  it('compiles the visitor over 300 ms and tears it down over 300 ms', () => {
+    const { d, uniforms } = driver({ reducedMotion: true });
+    const V = MACHINE.visitor;
+    const plan = planVisitor('build a thing that runs.', 'desktop')!;
+    requestVisitor(d.visitor, plan);
+    let t = frames(d, 1);
+    stepFrame(d, DT, t + 0.15);
+    expect(uniforms.uCompile.value[V]).toBeCloseTo(0.5, 6);
+    stepFrame(d, DT, (t += REDUCED_COMPILE_S));
+    expect(uniforms.uCompile.value[V]).toBe(1);
+    expect(uniforms.uRun.value[V]).toBe(1);
+    requestVisitor(d.visitor, null);
+    stepFrame(d, DT, (t += DT));
+    stepFrame(d, DT, t + 0.15);
+    expect(uniforms.uCompile.value[V]).toBeCloseTo(0.5, 6);
+    stepFrame(d, DT, t + REDUCED_COMPILE_S);
+    expect(d.visitor.built).toBe(false);
   });
 });
 

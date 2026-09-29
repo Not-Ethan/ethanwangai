@@ -31,6 +31,43 @@ describe('clocksLogic constants', () => {
     expect(motionScale(false)).toBe(1);
     expect(motionScale(true)).toBe(0.3);
   });
+
+  it('under reduced motion the small machines (balance, splitter, watch, bot) run at 0.25, the rest at 0.3 (design §11)', () => {
+    for (const m of [MACHINE.balance, MACHINE.splitter, MACHINE.watch, MACHINE.bot]) {
+      expect(motionScale(true, m), `machine ${m}`).toBe(0.25);
+      expect(motionScale(false, m), `machine ${m}`).toBe(1);
+    }
+    for (const m of [MACHINE.quoter, MACHINE.intake, MACHINE.slot, MACHINE.visitor]) {
+      expect(motionScale(true, m), `machine ${m}`).toBe(0.3);
+      expect(motionScale(false, m), `machine ${m}`).toBe(1);
+    }
+  });
+});
+
+describe('stepClocks under reduced motion (design §11)', () => {
+  it('advances each machine\'s mt at its own reduced pace', () => {
+    const s = createClockState();
+    for (let n = 0; n < 60; n++) stepClocks(s, baseInputs({ reducedMotion: true }));
+    expect(s.mt[MACHINE.bot]).toBeCloseTo(0.25, 6);
+    expect(s.mt[MACHINE.slot]).toBeCloseTo(0.3, 6);
+  });
+
+  it('runs a locked machine from the step it locks and stops it the step it unlocks: no damped run-up, no still beat', () => {
+    const s = createClockState();
+    stepClocks(s, baseInputs({ reducedMotion: true, heroCompile: 1, compileTarget: withTarget(MACHINE.quoter, null) }));
+    expect(s.run[MACHINE.quoter]).toBe(1);
+    expect(s.mt[MACHINE.quoter]).toBeCloseTo((1 / 60) * 0.3, 9);
+    stepClocks(s, baseInputs({ reducedMotion: true, heroCompile: 0.5, compileTarget: withTarget(MACHINE.quoter, null) }));
+    expect(s.run[MACHINE.quoter]).toBe(0);
+  });
+
+  it('fires no impulse and no rate spike on a lock crossing', () => {
+    const s = createClockState();
+    stepClocks(s, baseInputs({ reducedMotion: true, compileTarget: withTarget(MACHINE.watch, 1) }));
+    expect(s.locked[MACHINE.watch]).toBe(1);
+    expect(s.impulse).toBe(0);
+    expect(s.rateSpike).toBe(0);
+  });
 });
 
 describe('createClockState', () => {

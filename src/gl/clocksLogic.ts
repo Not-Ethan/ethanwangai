@@ -25,9 +25,13 @@ export const VEL_TAU = 0.18;
 export const IMPULSE_TAU = 0.13;
 export const SPIKE_TAU = 0.35;
 
-/** Machine time's pace: full, or 0.3 under reduced motion. Clocks scans the slot bar at the same pace. */
-export function motionScale(reducedMotion: boolean): number {
-  return reducedMotion ? 0.3 : 1;
+/** The small machines (design §3.1 · 08): under reduced motion they run at 0.25, the quoter and the rest at 0.3 (§11). */
+const SMALL = new Set<number>([MACHINE.balance, MACHINE.splitter, MACHINE.watch, MACHINE.bot]);
+
+/** Machine `m`'s pace: full, or under reduced motion 0.25 for a small machine and 0.3 for the rest. Clocks scans the slot bar at the slot's. */
+export function motionScale(reducedMotion: boolean, m?: number): number {
+  if (!reducedMotion) return 1;
+  return m !== undefined && SMALL.has(m) ? 0.25 : 0.3;
 }
 
 /** Machines with no lever: they run from load and are always locked. */
@@ -67,16 +71,17 @@ export function stepClocks(s: ClockState, i: ClockInputs): void {
     s.locked[m] = nowLocked;
   }
 
-  // Decay first, then re-arm on this step's crossing so a fresh lock reads exactly TIMING.impulse / 1.
+  // Decay first, then re-arm on this step's crossing so a fresh lock reads exactly TIMING.impulse / 1. Reduced motion
+  // has no impulse and no rate spike (§11).
   s.impulse *= Math.exp(-dt / IMPULSE_TAU);
   s.rateSpike *= Math.exp(-dt / SPIKE_TAU);
-  if (crossed) { s.impulse = TIMING.impulse; s.rateSpike = 1; }
+  if (crossed && !i.reducedMotion) { s.impulse = TIMING.impulse; s.rateSpike = 1; }
 
+  // Reduced motion runs a machine from the step its lever locks (the quoter from the first frame): no damped run-up.
   const runGain = 1 - Math.exp(-dt / RUN_TAU);
-  const pace = motionScale(i.reducedMotion);
   for (let m = 0; m < MACHINE_COUNT; m++) {
-    s.run[m] += (s.locked[m] - s.run[m]) * runGain;
-    s.mt[m] += dt * s.run[m] * pace;
+    s.run[m] = i.reducedMotion ? s.locked[m] : s.run[m] + (s.locked[m] - s.run[m]) * runGain;
+    s.mt[m] += dt * s.run[m] * motionScale(i.reducedMotion, m);
   }
 
   s.vel += (i.velocity - s.vel) * (1 - Math.exp(-dt / VEL_TAU));

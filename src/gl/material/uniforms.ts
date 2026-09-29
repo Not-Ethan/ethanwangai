@@ -24,7 +24,7 @@ export interface BenchUniforms {
   uLean: { value: number };
   uHover: { value: THREE.Vector2 };         // (machine, col), −1 = none
   uOU: { value: THREE.Texture | null };
-  uOUInfo: { value: THREE.Vector4 };        // markets, steps, rows, stepsPerSecond
+  uOUInfo: { value: THREE.Vector4 };        // markets, steps, rows, stepsPerSecond (1 under reduced motion: Scene writes it)
   uCellH: { value: number };                // quoter cell hBase
   uPitch: { value: number };                // quoter bed pitch (desktop; phone doubles it)
   uTravelAxis: { value: THREE.Vector3 };    // unit camera travel axis for velocity stretch
@@ -48,6 +48,7 @@ export interface BenchUniforms {
   uCentroid: { value: Float32Array };       // [8 × vec3] bench-space centroid of each partition's target machine
   uActiveRect: { value: number };           // uRect slot the trickle spawns from
   uTrickle: { value: number };              // 0/1: the trickle is off in 08 and under reduced motion
+  uInkEnabled: { value: number };           // 0/1: multiplies every point's alpha; 0 under reduced motion (no ink transit)
   uBurst: { value: number };                // 0..1 merge burst-back progress, the merge partition's clock
   uCurl: { value: THREE.Data3DTexture | null };   // the baked 32³ curl volume
   uPixelRatio: { value: number };           // renderer DPR, for gl_PointSize
@@ -57,7 +58,9 @@ export interface BenchUniforms {
 }
 
 /** OU texture playback rate in steps per second. */
-const OU_STEPS_PER_SECOND = 8;
+export const OU_STEPS_PER_SECOND = 8;
+/** The same under reduced motion: the bed steps at 1 Hz (design §11). */
+export const REDUCED_OU_STEPS_PER_SECOND = 1;
 /** The slot's baked scan period (src/bench/configs/slot.ts, aParam[1]); keystrokes reseed it at runtime. */
 const SLOT_SCAN_PERIOD_S = 3;
 
@@ -141,6 +144,7 @@ export function createUniforms(): BenchUniforms {
     uCentroid: { value: new Float32Array(MACHINE_COUNT * 3) },
     uActiveRect: { value: 0 },
     uTrickle: { value: 1 },
+    uInkEnabled: { value: 1 },
     uBurst: { value: 0 },
     uCurl: { value: null },
     uPixelRatio: { value: 1 },

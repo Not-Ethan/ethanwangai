@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import * as THREE from 'three';
 import { CAMERA_KEYS } from '@/bench/camera';
 import type { HudPose } from './hud';
-import { createRig, normalizePointer, orbit, stepRig, PARALLAX_RAD, PARALLAX_TAU } from './CameraRig';
+import { createRig, normalizePointer, orbit, stepRig, PARALLAX_RAD, PARALLAX_TAU, POSE_TAU } from './CameraRig';
 
 const hero = CAMERA_KEYS.desktop[0].pose;
 function pose(fov = hero.fov): HudPose {
@@ -69,6 +69,28 @@ describe('stepRig', () => {
     const toLook = v3(hp.lookAt).sub(cam.position).normalize();
     expect(forward(cam).distanceTo(toLook)).toBeLessThan(1e-9);
     expect(rig.parallax.toArray()).toEqual([0, 0]);   // the pointer never reaches a disabled rig
+  });
+
+  it('damped (reduced motion): takes the first pose exactly, then eases to a new one with τ 0.13 s, 95% there by 400 ms', () => {
+    expect(POSE_TAU).toBe(0.13);
+    const risen = CAMERA_KEYS.desktop[2].pose;
+    const a = pose(), b: HudPose = { position: [...risen.position], lookAt: [...risen.lookAt], fov: risen.fov };
+    const pa = v3(a.position), pb = v3(b.position), la = v3(a.lookAt), lb = v3(b.lookAt);
+    const rig = createRig(false, true), cam = camera();
+    rig.pointer.set(1, 1);
+    stepRig(rig, cam, a, 1 / 60);
+    expect(cam.position.toArray()).toEqual(a.position);              // the first frame is framed, not eased into
+    stepRig(rig, cam, b, POSE_TAU);                                  // one τ: 63.2% of the way, position and lookAt alike
+    expect(cam.position.distanceTo(pa) / pb.distanceTo(pa)).toBeCloseTo(1 - Math.exp(-1), 9);
+    expect(rig.lookAt.distanceTo(la) / lb.distanceTo(la)).toBeCloseTo(1 - Math.exp(-1), 9);
+    const toLook = rig.lookAt.clone().sub(cam.position).normalize();
+    expect(forward(cam).distanceTo(toLook)).toBeLessThan(1e-9);     // looking at the eased lookAt
+    const lerp = createRig(false, true);
+    stepRig(lerp, cam, a, 1 / 60);
+    for (let i = 0; i < 24; i++) stepRig(lerp, cam, b, 1 / 60);      // 400 ms
+    expect(cam.position.distanceTo(pb) / pb.distanceTo(pa)).toBeLessThan(0.05);
+    expect(lerp.lookAt.distanceTo(lb) / lb.distanceTo(la)).toBeLessThan(0.05);
+    expect(rig.parallax.toArray()).toEqual([0, 0]);                  // no parallax under reduced motion
   });
 
   it('updates the projection matrix only when the fov changes', () => {

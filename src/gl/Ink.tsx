@@ -162,12 +162,16 @@ export function bindInkUniforms(u: BenchUniforms, curl: THREE.Data3DTexture, res
   writeCentroids(result, u.uCentroid.value);
 }
 
-/** One frame's registry writes, from the section Clocks placed this frame and the cached rects. */
+/**
+ * One frame's registry writes, from the section Clocks placed this frame and the cached rects. Reduced motion has no
+ * ink transit (design §11): the trickle is off and uInkEnabled hides every point, the compile partitions with it.
+ */
 export function writeInkFrame(u: BenchUniforms, tracker: RectTracker, scrollY: number, vw: number, vh: number, pixelRatio: number, reducedMotion: boolean): void {
   tracker.write(scrollY, vw, vh, u.uRect.value);
   const slot = trickleSlot(hud.section);
   if (slot >= 0) u.uActiveRect.value = slot;
   u.uTrickle.value = slot >= 0 && !reducedMotion ? 1 : 0;
+  u.uInkEnabled.value = reducedMotion ? 0 : 1;
   u.uBurst.value = mergeBurst(hud.section, hud.u);
   u.uPixelRatio.value = pixelRatio;
   u.uBandPitch.value = (BAND_PITCH_PX / vh) * 2;

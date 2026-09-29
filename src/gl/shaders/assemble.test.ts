@@ -6,6 +6,7 @@ import { KIND_LANE } from './kinds/lane.glsl';
 import { KIND_SCAN } from './kinds/scan.glsl';
 import { KIND_TILT } from './kinds/tilt.glsl';
 import { KIND_STACK } from './kinds/stack.glsl';
+import { KIND_CAP } from './kinds/cap.glsl';
 import { SPLITTER } from '@/bench/configs/splitter';
 import { WATCH } from '@/bench/configs/watch';
 import { SLOT } from '@/bench/configs/slot';
@@ -99,6 +100,15 @@ describe('assembleFragment', () => {
     expect(f.roughness).toContain('roughnessFactor = clamp(');
     expect(f.emissive).toContain('totalEmissiveRadiance +=');
     expect(f.output).toContain('gl_FragColor.rgb = mix(uPencil * contact, gl_FragColor.rgb, inkMix);');
+  });
+});
+
+describe('reduced motion in the kits (design §11)', () => {
+  it('never flips a cap while uFillRate is 0: the fill guard zeroes isTraded before the flip angle reads it', () => {
+    const cap = KIND_CAP.replace(/\/\/.*$/gm, '').replace(/\s+/g, '');
+    const guard = cap.indexOf('isTraded*=step(0.5,uFillRate[m]);');
+    expect(guard).toBeGreaterThan(cap.indexOf('floatisTraded='));
+    expect(guard).toBeLessThan(cap.indexOf('floatang=flipProfile(t)*isTraded'));
   });
 });
 

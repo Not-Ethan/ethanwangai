@@ -8,7 +8,7 @@ import { BAND_ROWS } from '@/gl/inkGeometry';
 import { PLACEMENT } from '@/bench/bench';
 import { MACHINE } from '@/bench/types';
 import { buildBench } from '@/bench/counts';
-import { createUniforms, applyPalette, hexToColor, type BenchUniforms } from './uniforms';
+import { createUniforms, applyPalette, hexToColor, OU_STEPS_PER_SECOND, REDUCED_OU_STEPS_PER_SECOND, type BenchUniforms } from './uniforms';
 
 /** Palette key → uniform name, the eight colors the shaders consume (`ink` is the type color and the ink dots'). */
 const COLOR_KEYS = [
@@ -62,6 +62,12 @@ describe('createUniforms', () => {
     expect(u.uBalancePivot.value.toArray()).toEqual([-4.2, 0.9, 4.6]);
   });
 
+  it('plays the OU tape at 8 steps a second, 1 under reduced motion (Scene writes that one)', () => {
+    expect(u.uOUInfo.value.w).toBe(OU_STEPS_PER_SECOND);
+    expect(OU_STEPS_PER_SECOND).toBe(8);
+    expect(REDUCED_OU_STEPS_PER_SECOND).toBe(1);
+  });
+
   it('scans the slot every 3 s until a keystroke reseeds it, from phase 0', () => {
     expect(u.uSlotPeriod.value).toBe(3);
     expect(u.uSlotPhase.value).toBe(0);
@@ -82,6 +88,7 @@ describe('createUniforms', () => {
     expect(Array.from(u.uBandRows.value)).toEqual([40, 8, 8, 8, 8, 8, 8, 0]);
     expect(u.uActiveRect.value).toBe(0);
     expect(u.uTrickle.value).toBe(1);
+    expect(u.uInkEnabled.value).toBe(1);   // the ink shows until reduced motion turns it off
     expect(u.uBurst.value).toBe(0);
     expect(u.uCurl.value).toBeNull();
     expect(u.uPixelRatio.value).toBe(1);

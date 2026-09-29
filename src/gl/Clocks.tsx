@@ -5,14 +5,17 @@
 // compile is a 2.2 s tween Scene starts at T0, the end of the cross-fade, and the rebuild control restarts. It owns the
 // visitor's switch-on too (§3.1 · 09): Yours dispatches dbso:visitor:build / :clear / :key, the next frame tears a
 // built sentence down over 0.6 s, uploads the new one into the reserve (visitor.ts) and compiles it over 1.4 s, and
-// keystrokes reseed the slot's scan period, which the frame integrates into the bar's phase. No React state is set on
-// this path; every write lands in an object allocated once. stepFrame is the whole frame as a function of (driver, dt,
-// elapsed), so the tests drive it without a renderer.
+// keystrokes reseed the slot's scan period, which the frame integrates into the bar's phase. Under reduced motion (§11)
+// the scrubbed compiles become 300 ms fades keyed on their build windows, the visitor compiles over 300 ms, the fill,
+// velocity and lean kick are off, and the pose it hands CameraRig is the pose table's nearest station, not the scrubbed
+// curve. No React state is set on this path; every write lands in an object allocated once. stepFrame is the whole
+// frame as a function of (driver, dt, elapsed), so the tests drive it without a renderer.
 import { useEffect, useMemo, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { MACHINE, MACHINE_COUNT, type LayoutResult, type MachineSummary, type Tier } from '@/bench/types';
 import { createSceneState, sceneState, type SceneState } from '@/bench/sceneState';
+import { CAMERA_KEYS } from '@/bench/camera';
 import { TIMING } from '@/bench/timing';
 import { PALETTES, type Palette, type ThemeName } from '@/theme/palettes';
 import { useScroll, type ScrollState } from '@/scroll/ScrollProvider';
@@ -21,7 +24,7 @@ import { applyPalette, type BenchUniforms } from './material/uniforms';
 import { createTween, type Tween } from './tween';
 import { KEY_LIGHT } from './Lights';
 import { lightRef } from './registry';
-import { hud } from './hud';
+import { hud, type HudPose } from './hud';
 import { dbso, exposeDebug } from './debug';
 import { planVisitor, uploadVisitor, clearVisitor, type VisitorPlan } from './visitor';
 
@@ -188,6 +191,56 @@ export function startIntro(): void {
   intro.pending = true;
 }
 
+// ---- reduced motion (design §11): the scrubbed compiles as fades, the camera on the pose table's stations -----------
+
+/** Reduced motion's compile fade, s: a scrubbed compile, and the visitor's build and teardown, each run this long. */
+export const REDUCED_COMPILE_S = 0.3;
+
+export interface CompileFades { to: Int8Array; tweens: Tween[]; out: (number | null)[] }
+export function createCompileFades(): CompileFades {
+  return {
+    to: new Int8Array(MACHINE_COUNT).fill(-1),   // −1 until the first frame, which snaps
+    tweens: Array.from({ length: MACHINE_COUNT }, () => createTween(REDUCED_COMPILE_S)),
+    out: new Array<number | null>(MACHINE_COUNT).fill(null),
+  };
+}
+
+/**
+ * The compile targets reduced motion hands stepClocks in place of the scrubbed ones: a 300 ms fade to 1 when a
+ * machine's build window is entered (its scrubbed target leaves 0) and to 0 when it is left above, from wherever
+ * `compile` stands; a machine whose section is behind holds 1. The first frame snaps, so a load mid-page shows the
+ * bench as the scroll left it. Null targets (the quoter, the visitor) pass through: they have clocks of their own.
+ */
+export function stepCompileFades(f: CompileFades, target: readonly (number | null)[], compile: Float32Array, nowS: number): (number | null)[] {
+  for (let m = 0; m < MACHINE_COUNT; m++) {
+    const t = target[m];
+    if (t === null) { f.out[m] = null; continue; }
+    const to = t > 0 ? 1 : 0;
+    if (f.to[m] !== to) {
+      f.tweens[m].start(nowS, f.to[m] < 0 ? to : compile[m], to);
+      f.to[m] = to;
+    }
+    f.out[m] = f.tweens[m].value(nowS);
+  }
+  return f.out;
+}
+
+/**
+ * Reduced motion's camera target (§11: camera moves become 400 ms crossfades between poses): of the two keys around
+ * `section + u`, the nearer one, so the camera holds at the table's stations and each move lands at its midpoint in
+ * one step, which CameraRig damps. Writes into `out`; allocates nothing.
+ */
+export function stationPose(section: number, u: number, tier: Tier, out: HudPose): void {
+  const keys = CAMERA_KEYS[tier];
+  const t = section + u;
+  let i = 0;
+  while (i < keys.length - 1 && keys[i + 1].section + keys[i + 1].u <= t) i++;
+  const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)];
+  const k = t - (a.section + a.u) < b.section + b.u - t ? a : b;
+  for (let j = 0; j < 3; j++) { out.position[j] = k.pose.position[j]; out.lookAt[j] = k.pose.lookAt[j]; }
+  out.fov = k.pose.fov;
+}
+
 // ---- the visitor (design §3.1 · 09, §8 clock 2): Enter builds, Enter again rebuilds, Escape clears --------------------
 
 /** The slot's resting scan period, s: the one configs/slot.ts bakes and the registry starts on. */
@@ -212,9 +265,11 @@ export interface VisitorClock {
   slotPhase: number;                             // uSlotPhase: the scan bar's phase in cycles, wrapped to [0, 1)
 }
 
-export function createVisitorClock(): VisitorClock {
+/** Under reduced motion the build and the teardown are both 300 ms fades (§11: the visitor's compile is a 300 ms fade). */
+export function createVisitorClock(reducedMotion = false): VisitorClock {
   return {
-    build: createTween(TIMING.visitorCompileS), teardown: createTween(TIMING.visitorTeardownS),
+    build: createTween(reducedMotion ? REDUCED_COMPILE_S : TIMING.visitorCompileS),
+    teardown: createTween(reducedMotion ? REDUCED_COMPILE_S : TIMING.visitorTeardownS),
     built: false, tearing: false, queued: null, compile: 0, keystrokes: 0, parts: 0, slotPeriod: SLOT_PERIOD_REST_S, slotPhase: 0,
   };
 }
@@ -276,6 +331,7 @@ export interface ClocksDriver {
   result: LayoutResult; uniforms: BenchUniforms; tier: Tier;
   scroll: RefObject<ScrollState | null>; reducedMotion: boolean; built: boolean; pinned: number | null; intro: Intro;
   visitor: VisitorClock;   // per driver: a tier change rebuilds the kits with an empty reserve, and this with them
+  fades: CompileFades;     // reduced motion's compile targets
   clocks: ClockState; scene: SceneState; inputs: ClockInputs; births: Float64Array[];
   fit: ShadowFit; palette: PaletteLerp;
   pos: THREE.Vector3; prevPos: THREE.Vector3; hasPrev: boolean;
@@ -288,7 +344,7 @@ export function createClocksDriver(o: {
 }): ClocksDriver {
   return {
     result: o.result, uniforms: o.uniforms, tier: o.tier, scroll: o.scroll, reducedMotion: o.reducedMotion, built: o.built,
-    pinned: o.pinned, intro: o.intro ?? intro, visitor: createVisitorClock(),
+    pinned: o.pinned, intro: o.intro ?? intro, visitor: createVisitorClock(o.reducedMotion), fades: createCompileFades(),
     clocks: createClockState(), scene: createSceneState(),
     inputs: { dt: 0, compileTarget: BUILT, heroCompile: 0, visitorCompile: 0, velocity: 0, reducedMotion: o.reducedMotion },
     births: sortedBirths(o.result), fit: createShadowFit(), palette: createPaletteLerp(o.uniforms, o.theme),
@@ -313,10 +369,10 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
 
   const i = d.inputs;
   i.dt = dt;
-  i.compileTarget = d.built ? BUILT : s.compileTarget;
+  i.compileTarget = d.built ? BUILT : d.reducedMotion ? stepCompileFades(d.fades, s.compileTarget, d.clocks.compile, elapsed) : s.compileTarget;
   i.heroCompile = d.pinned ?? it.tween.value(elapsed);
   // The slot has no lever: its run is 1 from load, so last frame's run is this frame's (clocksLogic.ts, NO_LEVER).
-  i.visitorCompile = stepVisitor(d.visitor, elapsed, dt, d.clocks.run[MACHINE.slot] * motionScale(d.reducedMotion));
+  i.visitorCompile = stepVisitor(d.visitor, elapsed, dt, d.clocks.run[MACHINE.slot] * motionScale(d.reducedMotion, MACHINE.slot));
   i.velocity = sc.velocity;
   i.reducedMotion = d.reducedMotion;
   stepClocks(d.clocks, i);
@@ -325,12 +381,14 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
   u.uCompile.value.set(c.compile);
   u.uMachineTime.value.set(c.mt);
   u.uRun.value.set(c.run);
-  u.uFillRate.value.set(c.fillRate);
+  // Reduced motion: no fill rate (the caps never flip), no velocity, no lean kick; the merge clicks still follow scroll.
+  if (d.reducedMotion) u.uFillRate.value.fill(0);
+  else u.uFillRate.value.set(c.fillRate);
   u.uTilt.value = c.tilt;
   u.uTime.value = elapsed;
-  u.uVel.value = c.vel + c.impulse;
+  u.uVel.value = d.reducedMotion ? 0 : c.vel + c.impulse;
   u.uMerge.value = s.merge;
-  u.uLean.value = s.lean;
+  u.uLean.value = d.reducedMotion ? 0 : s.lean;
   u.uSlotPeriod.value = d.visitor.slotPeriod;
   u.uSlotPhase.value = d.visitor.slotPhase;
 
@@ -340,8 +398,11 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
   d.hasPrev = true;
 
   const pose = hud.pose;
-  for (let k = 0; k < 3; k++) { pose.position[k] = s.pose.position[k]; pose.lookAt[k] = s.pose.lookAt[k]; }
-  pose.fov = s.pose.fov;
+  if (d.reducedMotion) stationPose(s.section, s.u, d.tier, pose);
+  else {
+    for (let k = 0; k < 3; k++) { pose.position[k] = s.pose.position[k]; pose.lookAt[k] = s.pose.lookAt[k]; }
+    pose.fov = s.pose.fov;
+  }
 
   const light = lightRef.current;
   if (light && light.castShadow) fitShadowCamera(light, d.result.machines[s.active], d.fit, dt);

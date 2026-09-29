@@ -82,6 +82,15 @@ describe('the ink rows band (design §3.1: T0 + 0.35 → 0.95 s)', () => {
   });
 });
 
+describe('reduced motion (design §11: no ink transit)', () => {
+  it('hides every point through uInkEnabled, a multiplier on vAlpha, so the point size and the fragment both drop it', () => {
+    expect(code).toMatch(/uniform\s+float\s+uInkEnabled\s*;/);
+    const [alpha] = assigned('vAlpha');
+    expect(alpha.startsWith('uInkEnabled*')).toBe(true);
+    expect(assigned('gl_PointSize')[0]).toMatch(/step\(0\.001,vAlpha\)$/);
+  });
+});
+
 /** GLSL's smoothstep. */
 function smooth(e0: number, e1: number, x: number): number {
   const k = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));

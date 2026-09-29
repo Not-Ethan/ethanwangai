@@ -26,6 +26,7 @@ void kind_cap(inout vec3 p, inout vec3 n, inout vec3 world, float a, float mt, i
   float side = step(0.5, hash21(vec2(leaderCol, floor(mt * uFillRate[m] / span0 * uOUInfo.w) - since)));
   float tradedRow = mix(mid - ft.g * 255.0, mid + ft.b * 255.0, side);
   float isTraded = step(abs(row - tradedRow), 0.5) * step(since, 6.0);
+  isTraded *= step(0.5, uFillRate[m]);                          // reduced motion writes uFillRate = 0: no cap flips
   float ang = flipProfile(t) * isTraded * a;
   mat3 R = rotX(ang);
   vec3 pivot = vec3(0.0, 0.0, -0.4);
