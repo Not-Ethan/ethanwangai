@@ -1,12 +1,14 @@
 // Watch field cells: aParam = [col, row, hashBase, cols], w = the field's column count on this tier (48 desktop, 24 phone).
 // Rails: aParam = [fieldWidth, period, 0, -1]; w < 0 marks a rail (see configs/watch.ts and configs/slot.ts).
-// The slot bar (machine 6) is a rail whose period comes from uSlotPeriod.
+// The slot bar (machine 6) is a rail whose phase is uSlotPhase: its period (uSlotPeriod) changes per keystroke, so Clocks
+// integrates rate / period on the CPU. mt / uSlotPeriod would jump the bar on every key and alias it backward, since
+// the slot has no lever and its mt has run since load.
 export const KIND_SCAN = /* glsl */`
 void kind_scan(inout vec3 p, inout vec3 n, inout vec3 world, float a, float mt, int m) {
   bool isRail = aParam.w < -0.5;
   if (isRail) {
-    float period = (m == 6) ? uSlotPeriod : aParam.y;
-    float tri = abs(fract(mt / period) * 2.0 - 1.0);
+    float phase = (m == 6) ? uSlotPhase : mt / aParam.y;
+    float tri = abs(fract(phase) * 2.0 - 1.0);
     world.x += tri * aParam.x;
     return;
   }

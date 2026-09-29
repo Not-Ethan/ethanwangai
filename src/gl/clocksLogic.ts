@@ -25,6 +25,11 @@ export const VEL_TAU = 0.18;
 export const IMPULSE_TAU = 0.13;
 export const SPIKE_TAU = 0.35;
 
+/** Machine time's pace: full, or 0.3 under reduced motion. Clocks scans the slot bar at the same pace. */
+export function motionScale(reducedMotion: boolean): number {
+  return reducedMotion ? 0.3 : 1;
+}
+
 /** Machines with no lever: they run from load and are always locked. */
 const NO_LEVER = new Set<number>([MACHINE.bot, MACHINE.slot]);
 
@@ -68,10 +73,10 @@ export function stepClocks(s: ClockState, i: ClockInputs): void {
   if (crossed) { s.impulse = TIMING.impulse; s.rateSpike = 1; }
 
   const runGain = 1 - Math.exp(-dt / RUN_TAU);
-  const motionScale = i.reducedMotion ? 0.3 : 1;
+  const pace = motionScale(i.reducedMotion);
   for (let m = 0; m < MACHINE_COUNT; m++) {
     s.run[m] += (s.locked[m] - s.run[m]) * runGain;
-    s.mt[m] += dt * s.run[m] * motionScale;
+    s.mt[m] += dt * s.run[m] * pace;
   }
 
   s.vel += (i.velocity - s.vel) * (1 - Math.exp(-dt / VEL_TAU));

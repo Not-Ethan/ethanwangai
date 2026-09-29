@@ -5,9 +5,9 @@
 // compile is a 2.2 s tween Scene starts at T0, the end of the cross-fade, and the rebuild control restarts. It owns the
 // visitor's switch-on too (§3.1 · 09): Yours dispatches dbso:visitor:build / :clear / :key, the next frame tears a
 // built sentence down over 0.6 s, uploads the new one into the reserve (visitor.ts) and compiles it over 1.4 s, and
-// keystrokes reseed the slot's scan period. No React state is set on this path; every write lands in an object
-// allocated once. stepFrame is the whole frame as a function of (driver, dt, elapsed), so the tests drive it without
-// a renderer.
+// keystrokes reseed the slot's scan period, which the frame integrates into the bar's phase. No React state is set on
+// this path; every write lands in an object allocated once. stepFrame is the whole frame as a function of (driver, dt,
+// elapsed), so the tests drive it without a renderer.
 import { useEffect, useMemo, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -16,7 +16,7 @@ import { createSceneState, sceneState, type SceneState } from '@/bench/sceneStat
 import { TIMING } from '@/bench/timing';
 import { PALETTES, type Palette, type ThemeName } from '@/theme/palettes';
 import { useScroll, type ScrollState } from '@/scroll/ScrollProvider';
-import { createClockState, stepClocks, type ClockInputs, type ClockState } from './clocksLogic';
+import { createClockState, motionScale, stepClocks, type ClockInputs, type ClockState } from './clocksLogic';
 import { applyPalette, type BenchUniforms } from './material/uniforms';
 import { createTween, type Tween } from './tween';
 import { KEY_LIGHT } from './Lights';
@@ -208,12 +208,13 @@ export interface VisitorClock {
   compile: number;                               // the visitor's compile this frame, 0..1
   keystrokes: number;                            // since the last build or clear
   slotPeriod: number;                            // uSlotPeriod, s
+  slotPhase: number;                             // uSlotPhase: the scan bar's phase in cycles, wrapped to [0, 1)
 }
 
 export function createVisitorClock(): VisitorClock {
   return {
     build: createTween(TIMING.visitorCompileS), teardown: createTween(TIMING.visitorTeardownS),
-    built: false, tearing: false, queued: null, compile: 0, keystrokes: 0, slotPeriod: SLOT_PERIOD_REST_S,
+    built: false, tearing: false, queued: null, compile: 0, keystrokes: 0, slotPeriod: SLOT_PERIOD_REST_S, slotPhase: 0,
   };
 }
 
@@ -246,9 +247,12 @@ function landVisitor(v: VisitorClock, nowS: number): void {
 /**
  * One frame of the visitor on the renderer's clock: a request tears a built sentence down from where its compile
  * stands to 0 over 0.6 s (reverse birth order, in the shader) and lands when that ends, or lands at once on an empty
- * slot; then the scan period relaxes toward rest. Returns the visitor's compile for stepClocks.
+ * slot; then the scan period relaxes toward rest and the bar's phase advances by `slotRate` · dt / period. `slotRate`
+ * is the slot's machine seconds per second (its run times the motion pace), so an untouched bar sits at mt / 3 s as it
+ * always has, and a keystroke changes how fast the bar moves, never where it is. Returns the visitor's compile for
+ * stepClocks.
  */
-export function stepVisitor(v: VisitorClock, nowS: number, dt: number): number {
+export function stepVisitor(v: VisitorClock, nowS: number, dt: number, slotRate: number): number {
   if (v.queued && !v.tearing) {
     if (v.built) { v.teardown.start(nowS, v.compile, 0); v.tearing = true; }
     else landVisitor(v, nowS);
@@ -256,6 +260,8 @@ export function stepVisitor(v: VisitorClock, nowS: number, dt: number): number {
   if (v.tearing && v.teardown.done(nowS)) { v.tearing = false; landVisitor(v, nowS); }
   v.compile = v.tearing ? v.teardown.value(nowS) : v.built ? v.build.value(nowS) : 0;
   v.slotPeriod += (SLOT_PERIOD_REST_S - v.slotPeriod) * (1 - Math.exp(-dt / SLOT_PERIOD_TAU_S));
+  v.slotPhase += (dt * slotRate) / v.slotPeriod;
+  v.slotPhase -= Math.floor(v.slotPhase);
   return v.compile;
 }
 
@@ -306,7 +312,8 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
   i.dt = dt;
   i.compileTarget = d.built ? BUILT : s.compileTarget;
   i.heroCompile = d.pinned ?? it.tween.value(elapsed);
-  i.visitorCompile = stepVisitor(d.visitor, elapsed, dt);
+  // The slot has no lever: its run is 1 from load, so last frame's run is this frame's (clocksLogic.ts, NO_LEVER).
+  i.visitorCompile = stepVisitor(d.visitor, elapsed, dt, d.clocks.run[MACHINE.slot] * motionScale(d.reducedMotion));
   i.velocity = sc.velocity;
   i.reducedMotion = d.reducedMotion;
   stepClocks(d.clocks, i);
@@ -322,6 +329,7 @@ export function stepFrame(d: ClocksDriver, delta: number, elapsed: number): void
   u.uMerge.value = s.merge;
   u.uLean.value = s.lean;
   u.uSlotPeriod.value = d.visitor.slotPeriod;
+  u.uSlotPhase.value = d.visitor.slotPhase;
 
   d.pos.fromArray(s.pose.position);
   if (d.hasPrev) travelAxis(d.prevPos, d.pos, u.uTravelAxis.value);

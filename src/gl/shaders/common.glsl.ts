@@ -23,6 +23,7 @@ uniform vec3 uTravelAxis;
 uniform vec3 uBenchCenter;
 uniform vec3 uBalancePivot;
 uniform float uSlotPeriod;
+uniform float uSlotPhase;
 uniform vec3 uLock;
 varying float vA;
 varying float vHot;

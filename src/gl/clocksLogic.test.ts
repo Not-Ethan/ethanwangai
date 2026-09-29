@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { MACHINE, MACHINE_COUNT } from '@/bench/types';
 import { TIMING } from '@/bench/timing';
 import {
-  createClockState, stepClocks, RUN_TAU, VEL_TAU, IMPULSE_TAU, SPIKE_TAU,
+  createClockState, stepClocks, motionScale, RUN_TAU, VEL_TAU, IMPULSE_TAU, SPIKE_TAU,
   type ClockState, type ClockInputs,
 } from './clocksLogic';
 
@@ -25,6 +25,11 @@ describe('clocksLogic constants', () => {
     expect(VEL_TAU).toBe(0.18);
     expect(IMPULSE_TAU).toBe(0.13);
     expect(SPIKE_TAU).toBe(0.35);
+  });
+
+  it('machine time runs at full pace, or 0.3 under reduced motion (Clocks scans the slot bar at the same pace)', () => {
+    expect(motionScale(false)).toBe(1);
+    expect(motionScale(true)).toBe(0.3);
   });
 });
 

@@ -780,6 +780,64 @@ describe('the visitor', () => {
     expect(d.visitor.slotPeriod).toBeCloseTo(slotPeriodFor(1), 12);
   });
 
+  // The slot's scan bar is a triangle wave of uSlotPhase (scan.glsl.ts). The slot has no lever, so its mt has run since
+  // load: fract(mt / period) with a period that changes per keystroke would jump the bar and alias it backward.
+  describe('the slot bar\'s scan phase', () => {
+    const S = MACHINE.slot;
+    const wrapHalf = (x: number) => x - Math.round(x);   // a phase step, in cycles, taken in (−0.5, 0.5]
+    const fract = (x: number) => x - Math.floor(x);
+
+    it('90 s in, twenty keystrokes speed the bar up with no jump and no reversal, and it eases back to 3 s', () => {
+      const { d, uniforms } = driver();
+      let t = frames(d, 1800, 0.05);                                  // 90 s: the slot's clock is far from 0
+      expect(uniforms.uMachineTime.value[S]).toBeGreaterThan(89);
+      // untouched, the bar is where it always was: mt / 3 s
+      expect(uniforms.uSlotPhase.value).toBeCloseTo(fract(uniforms.uMachineTime.value[S] / SLOT_PERIOD_REST_S), 2);
+      const step = () => {
+        const before = uniforms.uSlotPhase.value;
+        stepFrame(d, DT, (t += DT));
+        return wrapHalf(uniforms.uSlotPhase.value - before);
+      };
+      let last = step();
+      expect(last).toBeCloseTo(DT / SLOT_PERIOD_REST_S, 9);
+      for (let k = 1; k <= 20; k++) {
+        keyVisitor(d.visitor);
+        const dp = step();
+        expect(dp, `key ${k}`).toBeCloseTo(DT / uniforms.uSlotPeriod.value, 9);   // forward, one frame at this period
+        expect(dp, `key ${k}`).toBeGreaterThan(last);                             // faster with every key
+        last = dp;
+      }
+      expect(last).toBeGreaterThan(DT / 0.45);                        // near the 0.4 s floor
+      for (let f = 0; f < 600; f++) {                                 // 10 s with no typing: it slows, still forward
+        const dp = step();
+        expect(dp, `frame ${f}`).toBeGreaterThan(0);
+        expect(dp, `frame ${f}`).toBeLessThanOrEqual(last);
+        last = dp;
+      }
+      expect(uniforms.uSlotPeriod.value).toBeGreaterThan(2);
+      expect(uniforms.uSlotPhase.value).toBeGreaterThanOrEqual(0);    // wrapped, so the float uniform keeps its precision
+      expect(uniforms.uSlotPhase.value).toBeLessThan(1);
+    });
+
+    it('under reduced motion the bar scans at the machines\' reduced pace, in step with the slot\'s mt', () => {
+      const { d, uniforms } = driver({ reducedMotion: true });
+      frames(d, 60);
+      expect(uniforms.uSlotPhase.value).toBeCloseTo((60 * DT * 0.3) / SLOT_PERIOD_REST_S, 9);
+      expect(uniforms.uSlotPhase.value).toBeCloseTo(uniforms.uMachineTime.value[S] / SLOT_PERIOD_REST_S, 6);
+    });
+
+    it('stepVisitor advances the phase by rate · dt / period, at the period this frame relaxed to', () => {
+      const v = createVisitorClock();
+      expect(v.slotPhase).toBe(0);
+      stepVisitor(v, 1, DT, 1);
+      expect(v.slotPhase).toBeCloseTo(DT / v.slotPeriod, 12);
+      keyVisitor(v);
+      const before = v.slotPhase;
+      stepVisitor(v, 1 + DT, DT, 0.5);
+      expect(v.slotPhase - before).toBeCloseTo((0.5 * DT) / v.slotPeriod, 12);
+    });
+  });
+
   it('?built=1 pins the visitor at 1: Enter still uploads, and the sentence shows built at once', () => {
     const { d, uniforms } = driver({ built: true });
     requestVisitor(d.visitor, first);
@@ -790,7 +848,7 @@ describe('the visitor', () => {
 
   it('a fresh clock is empty and parked', () => {
     const v = createVisitorClock();
-    expect(stepVisitor(v, 5, DT)).toBe(0);
+    expect(stepVisitor(v, 5, DT, 1)).toBe(0);
     expect(v).toMatchObject({ built: false, tearing: false, queued: null, keystrokes: 0 });
     expect(upload).not.toHaveBeenCalled();
     expect(clear).not.toHaveBeenCalled();

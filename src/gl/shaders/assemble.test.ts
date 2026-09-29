@@ -17,7 +17,8 @@ import { mulberry32 } from '@/bench/hash';
 // uShadow, uGlyph and uLines belong to the ground, ink and leader-line programs, not the kit material.
 const VERTEX_UNIFORMS = [
   'uCompile', 'uMachineTime', 'uRun', 'uFillRate', 'uTilt', 'uTime', 'uVel', 'uMerge', 'uLean', 'uHover',
-  'uOU', 'uOUInfo', 'uCellH', 'uPitch', 'uTravelAxis', 'uBenchCenter', 'uBalancePivot', 'uSlotPeriod', 'uLock',
+  'uOU', 'uOUInfo', 'uCellH', 'uPitch', 'uTravelAxis', 'uBenchCenter', 'uBalancePivot', 'uSlotPeriod', 'uSlotPhase',
+  'uLock',
 ];
 const FRAGMENT_UNIFORMS = ['uPaper', 'uInkTop', 'uInkKey', 'uInkShade', 'uPencil', 'uHot', 'uKeyDir'];
 const KINDS = ['static', 'sweep', 'spin', 'cell', 'cap', 'lever', 'lane', 'scan', 'ping', 'stack', 'tilt'];
@@ -147,6 +148,14 @@ describe('shader constants match the configs', () => {
       expect(Math.max(...cells.map((c) => c.param[0])) + 1, ctx.tier).toBe(cols);
       for (const c of cells) expect(c.param[3], ctx.tier).toBe(cols);
     }
+  });
+
+  it('the slot bar (machine 6) scans on uSlotPhase, the phase Clocks integrates, never on mt / uSlotPeriod', () => {
+    // The slot has no lever, so its mt runs from load; dividing it by a period that changes per keystroke jumps the bar.
+    expect(KIND_SCAN).toContain('float phase = (m == 6) ? uSlotPhase : mt / aParam.y;');
+    expect(KIND_SCAN).toContain('float tri = abs(fract(phase) * 2.0 - 1.0);');
+    expect(KIND_SCAN).not.toMatch(/mt\s*\/\s*uSlotPeriod/);
+    expect(KIND_SCAN).not.toMatch(/\?\s*uSlotPeriod/);
   });
 
   it('the field cells\' hot-ring period is the watch rail\'s sweep period on both tiers', () => {

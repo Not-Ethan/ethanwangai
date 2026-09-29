@@ -31,6 +31,7 @@ export interface BenchUniforms {
   uBenchCenter: { value: THREE.Vector3 };
   uBalancePivot: { value: THREE.Vector3 };  // bench-space point the balance rail tilts about: the post top
   uSlotPeriod: { value: number };           // scanning-bar period, reseeded per keystroke
+  uSlotPhase: { value: number };            // scanning-bar phase in cycles, [0, 1): Clocks integrates the period into it
   uLock: { value: THREE.Vector3 };          // lock0, lockSpan, lockW
   uKeyDir: { value: THREE.Vector3 };        // unit light direction for three-tone key faces
   uPaper: { value: THREE.Color };
@@ -124,6 +125,7 @@ export function createUniforms(): BenchUniforms {
     uBenchCenter: { value: new THREE.Vector3() },
     uBalancePivot: { value: new THREE.Vector3(balance[0], balance[1] + BALANCE_POST_H, balance[2]) },
     uSlotPeriod: { value: SLOT_SCAN_PERIOD_S },
+    uSlotPhase: { value: 0 },
     uLock: { value: new THREE.Vector3(TIMING.lock0, TIMING.lockSpan, TIMING.lockW) },
     uKeyDir: { value: new THREE.Vector3(-1, 1, 1).normalize() },   // upper-left-front, matching the key light
     uPaper: { value: new THREE.Color() },

@@ -62,8 +62,9 @@ describe('createUniforms', () => {
     expect(u.uBalancePivot.value.toArray()).toEqual([-4.2, 0.9, 4.6]);
   });
 
-  it('scans the slot every 3 s until a keystroke reseeds it', () => {
+  it('scans the slot every 3 s until a keystroke reseeds it, from phase 0', () => {
     expect(u.uSlotPeriod.value).toBe(3);
+    expect(u.uSlotPhase.value).toBe(0);
   });
 
   it('starts on the light palette', () => {
