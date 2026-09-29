@@ -75,8 +75,8 @@ const P: CameraKey[] = [
   { section: 6, u: 1.00, pose: { position: [3.5, 11.2, 21.1], lookAt: [3.8, 3.8, 4.7], fov: 38 } },
   { section: 7, u: 0.60, pose: { position: [10.0, 22.0, 38.0], lookAt: [-2.0, 3.5, -5.0], fov: 38 } },   // poster
   { section: 7, u: 1.00, pose: { position: [10.0, 22.0, 38.0], lookAt: [-2.0, 3.5, -5.0], fov: 38 } },
-  { section: 8, u: 0.25, pose: { position: [4.3, 1.9, 12.5], lookAt: [6.5, 1.2, 2.5], fov: 38 } },       // low on the slot, tilted up (Task 5.4) so the slot and the visitor's build sit under 09's input and plate
-  { section: 8, u: 1.00, pose: { position: [4.3, 1.9, 12.5], lookAt: [6.5, 1.2, 2.5], fov: 38 } },
+  { section: 8, u: 0.25, pose: { position: [3.0, 2.5, 16.0], lookAt: [7.5, 2.8, 5.0], fov: 38 } },       // re-authored (Task 5.5 fix): the old low, close pose (13°, position [4.3, 1.9, 12.5]) put the quoter's own overhead rail — a 7.9-unit gantry beam whose end sits almost directly behind and above the slot at this compact bench's scale — in the same shot as the slot, above the links, along with the visitor's own build (its lever, present and the same height at any non-empty sentence, spec §3.1 · 09); pulled back and round to a near-level, wider vantage (−1° elevation, 22° azimuth) the slot and the build still clear the copy, and now so does every other machine — none of them lands in frame above the −0.55 line (cameraClearance.test.ts)
+  { section: 8, u: 1.00, pose: { position: [3.0, 2.5, 16.0], lookAt: [7.5, 2.8, 5.0], fov: 38 } },
 ];
 
 export const CAMERA_KEYS: Record<Tier, CameraKey[]> = { desktop: D, phone: P };

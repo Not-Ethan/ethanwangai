@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { Quaternion, Vector3 } from 'three';
 import { MACHINE, type MachineId, type Tier, type Vec3 } from './types';
 import { buildBench } from './counts';
+import { layout } from './layout';
+import { visitorConfig } from './visitorLayout';
+import { hashString } from './hash';
+import { BENCH_SEED_TEXT } from './bench';
 import { CAMERA_KEYS, evaluatePose, type Pose } from './camera';
 import { SECTIONS, sectionRanges, locate } from './sections';
 import { DWELL, projectBounds, projectPoint, elevationDeg, azimuthDeg, type NdcBounds } from './cameraClearance';
@@ -331,6 +335,47 @@ describe('phone clearance at the dwells (aspect 390/844)', () => {
     const s = at(8, 0.6, [slot], 'phone');
     expect(s.top, 'slot top').toBeLessThanOrEqual(-0.55);
     expect(s.bottom, 'slot bottom').toBeGreaterThanOrEqual(-0.95);
+  });
+
+  it('yours (8, 0.25) and (8, 0.6): the visitor\'s actual build — not just the empty slot — also stays clear of the links and the footer', () => {
+    // Task 5.5 review fix: the empty slot (checked above) is a flat rail assembly barely off the bench floor, so it
+    // cleared the copy with room to spare, but MACHINE.visitor (built once a sentence is submitted, spec §3.1 · 09)
+    // adds a motor and a lever that stand well above it — the lever is the tallest part of any non-empty build, at a
+    // fixed height regardless of word count or row count (visitorLayout.ts), so one short submission is as tall as
+    // the longest. Checked against the same −0.55 line as the slot: below it is 09's copy (heading through footer),
+    // which on a phone runs the full 656 of 844 px (comment above) and includes the mailto, github, linkedin and
+    // resume links this gate's review found the build painting over.
+    const seed = hashString(BENCH_SEED_TEXT);
+    for (const text of ['hi', 'check the gate.']) {
+      const built = layout({ tier: 'phone', seed, configs: [visitorConfig(text)] });
+      for (const u of [0.25, 0.6]) {
+        const out = { position: [0, 0, 0], lookAt: [0, 0, 0], fov: 0 };
+        evaluatePose(8, u, 'phone', out);
+        const pose: Pose = { position: out.position as unknown as Vec3, lookAt: out.lookAt as unknown as Vec3, fov: out.fov };
+        const b = projectBounds(built, [MACHINE.visitor], pose, ASPECT.phone);
+        expect(b, `visitor build in front of the camera at (8, ${u})`).not.toBeNull();
+        expect(b!.top, `(8, ${u}) "${text}" visitor top`).toBeLessThanOrEqual(-0.55);
+      }
+    }
+  });
+
+  it('yours (8, 0.25) and (8, 0.6): every OTHER machine — the rest of the bench, already built by the time a visitor reaches 09 — also stays clear of the copy', () => {
+    // Task 5.5 review fix, continued. The slot and the visitor checks above pin the pose's own subject under the
+    // copy, but at the old pose the quoter's topRailsZ — a 7.9-unit gantry beam this compact bench places almost
+    // directly behind and above the slot — was independently visible above the −0.55 line, on screen at the same
+    // time and not part of either check above. This walks every part of every already-built machine but the slot and
+    // checks the same line: anything that lands inside the frame's width must sit at or below it, matching the phone
+    // DWELL loop above (top ≤ 0.10) but at the tighter line 09's own long copy actually needs.
+    const OTHER: MachineId[] = [quoter, intake, balance, splitter, watch, bot];
+    for (const u of [0.25, 0.6]) {
+      const pose = poseAt(8, u, 'phone');
+      for (const p of BENCH.phone.parts) {
+        if (!OTHER.includes(p.machine)) continue;
+        const q = projectPoint(p.position, pose, ASPECT.phone);
+        if (!q || q[0] < -1 || q[0] > 1) continue;
+        expect(q[1], `(8, ${u}) machine ${p.machine} ${p.module} at x=${q[0].toFixed(2)}`).toBeLessThanOrEqual(-0.55);
+      }
+    }
   });
 });
 
