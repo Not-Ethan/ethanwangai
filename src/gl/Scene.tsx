@@ -27,6 +27,7 @@ import { Terrain } from './Terrain';
 import { River } from './River';
 import { Mist } from './Mist';
 import { Buildings } from './Buildings';
+import { Hillside } from './Hillside';
 import { Windows } from './Windows';
 import { Glow } from './Glow';
 
@@ -122,6 +123,7 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
           <River uniforms={uniforms} />
           {tier === 'desktop' && <Mist uniforms={uniforms} />}
           <Buildings shadows={shadows} />
+          <Hillside />
           <Windows refs={refs} />
           <Glow refs={refs} />
           <CameraRig rig={rig} tier={tier} reducedMotion={reducedMotion} />
