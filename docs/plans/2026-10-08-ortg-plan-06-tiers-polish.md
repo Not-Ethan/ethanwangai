@@ -314,7 +314,7 @@ git commit -m "Re-tune useTier: tier/dpr/shadows/antialias, DPR floor 0.85, the 
 
 ### Task 5.2: Portrait recomposition by aspect, not tier **[parallel-safe]**
 
-Spec §11 ("Portrait recomposition is by aspect (vw < vh), not tier, so a small landscape laptop keeps the landscape camera"), §4 (hero camera landscape (0, 14, 70) → (0, 2, −10) fov 36; portrait (0, 22, 96) → (0, 0, −12) fov 44; near 1, far 260), §3 (portrait yaw column), §6 (`CameraRig.tsx`: fixed position per aspect, recomposition on aspect change), index Review Focus 2 (resize or rotation mid-visit).
+Spec §11 ("Portrait recomposition is by aspect (vw < vh), not tier, so a small landscape laptop keeps the landscape camera"), §4 (hero camera landscape (0, 14, 70) → (0, 2, −10) fov 36; portrait (0, 22, 96) → (0, 0, −12) fov 70; near 1, far 260), §3 (portrait yaw column), §6 (`CameraRig.tsx`: fixed position per aspect, recomposition on aspect change), index Review Focus 2 (resize or rotation mid-visit).
 
 Stage 2 already recomposes: `cameraCore.ts` exports `isPortrait`, `CAMERA_NEAR`, `CAMERA_FAR` and `setRigMode`; `CameraRig.tsx` calls `setRigMode(rig, isPortrait(width, height), parallaxOn)` on every size change; `Driver.tsx` passes `rig.portrait` to `setFrameInputs`; `composeCamera` (called once per frame by the Driver) is the only writer of the camera. This task adds no second camera writer and redefines nothing. It adds a thin `composition.ts` that re-exports Stage 2's names plus `cameraFor`, pins the aspect rule in tests, and checks that nothing in `src/gl/` decides portrait by tier. A square viewport (vw = vh) is landscape: the spec says portrait is aspect < 1.
 
