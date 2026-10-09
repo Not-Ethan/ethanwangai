@@ -71,7 +71,7 @@ describe('houseMeshData', () => {
     expect(d.max[1] - d.min[1]).toBeGreaterThan(1.2);
   });
 
-  it('colours every part from the palette wall or roof colour, scaled 0.9 to 1.1', () => {
+  it('colours every part from the palette wall or roof colour, scaled 1.15 to 1.4', () => {
     const values = flatValues(PALETTE);
     expect(values).toContain(HOUSE_WALL);
     expect(values).toContain(HOUSE_ROOF);
@@ -81,8 +81,8 @@ describe('houseMeshData', () => {
       const o = p * 24 * 3;
       const base = house.parts[p].kind === 'slat' || house.parts[p].kind === 'chimney' ? roof : wall;
       const k = d.colors[o] / base.r;
-      expect(k).toBeGreaterThanOrEqual(0.9 - 1e-5);
-      expect(k).toBeLessThanOrEqual(1.1 + 1e-5);
+      expect(k).toBeGreaterThanOrEqual(1.15 - 1e-5);
+      expect(k).toBeLessThanOrEqual(1.4 + 1e-5);
       expect(d.colors[o + 1]).toBeCloseTo(base.g * k, 5);
       expect(d.colors[o + 2]).toBeCloseTo(base.b * k, 5);
     }
