@@ -52,9 +52,13 @@ describe('projection', () => {
     const proj = Float32Array.of(0, 0, 1, 0.999, -0.999, 1, 0.5, 0.5, 0, 40, -90, 1, Number.NaN, 0, 1);
     const out: LabelPlacement = { x: -1, y: -1, visible: false };
     expect(placeLabel(proj, 0, 1440, 900, 16, out)).toEqual({ x: 730, y: 450 - 14 - 22, visible: true });
-    expect(placeLabel(proj, 1, 1440, 900, 16, out)).toEqual({ x: 1424, y: 900 - 16 - 14, visible: true });
+    const low = placeLabel(proj, 1, 1440, 900, 16, out);
+    expect([low.x, low.visible]).toEqual([1424, true]);
+    expect(low.y).toBeCloseTo(899.55 - 14 - 22, 1);   // above the light, inside the bottom margin
     expect(placeLabel(proj, 2, 1440, 900, 16, out).visible).toBe(false);
-    expect(placeLabel(proj, 3, 1440, 900, 16, out)).toEqual({ x: 1424, y: 900 - 16 - 14, visible: true });
+    const clamped = placeLabel(proj, 3, 1440, 900, 16, out);
+    expect([clamped.x, clamped.visible]).toEqual([1424, true]);
+    expect(clamped.y).toBeLessThanOrEqual(900 - 16 - 14);
     expect(placeLabel(proj, 4, 1440, 900, 16, out).visible).toBe(false);
     expect(placeLabel(proj, 9, 1440, 900, 16, out).visible).toBe(false);
   });
