@@ -128,12 +128,12 @@ body {
 }
 @media (min-width: 48rem) {
   .scrim::before {
-    inset: -12rem -28rem -12rem -100vw;
+    inset: -2rem -16rem -5rem -100vw;
     background: linear-gradient(to bottom,
-      transparent 0%, color-mix(in srgb, var(--scrim) 25%, transparent) 4rem, color-mix(in srgb, var(--scrim) 65%, transparent) 8rem, var(--scrim) 12rem,
-      var(--scrim) calc(100% - 12rem), color-mix(in srgb, var(--scrim) 65%, transparent) calc(100% - 8rem), color-mix(in srgb, var(--scrim) 25%, transparent) calc(100% - 4rem), transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 26rem), rgba(0,0,0,0.75) calc(100% - 19rem), rgba(0,0,0,0.4) calc(100% - 12rem), rgba(0,0,0,0.15) calc(100% - 6rem), transparent 100%);
-    mask-image: linear-gradient(to right, black calc(100% - 26rem), rgba(0,0,0,0.75) calc(100% - 19rem), rgba(0,0,0,0.4) calc(100% - 12rem), rgba(0,0,0,0.15) calc(100% - 6rem), transparent 100%);
+      transparent 0%, color-mix(in srgb, var(--scrim) 30%, transparent) 2.5rem, color-mix(in srgb, var(--scrim) 70%, transparent) 5rem, var(--scrim) 8rem,
+      var(--scrim) calc(100% - 8rem), color-mix(in srgb, var(--scrim) 70%, transparent) calc(100% - 5rem), color-mix(in srgb, var(--scrim) 30%, transparent) calc(100% - 2.5rem), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 16rem), rgba(0,0,0,0.7) calc(100% - 11rem), rgba(0,0,0,0.35) calc(100% - 6rem), rgba(0,0,0,0.12) calc(100% - 2.5rem), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 16rem), rgba(0,0,0,0.7) calc(100% - 11rem), rgba(0,0,0,0.35) calc(100% - 6rem), rgba(0,0,0,0.12) calc(100% - 2.5rem), transparent 100%);
   }
 }
 
