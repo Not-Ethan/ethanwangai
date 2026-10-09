@@ -36,7 +36,7 @@ export const SHADOW_MAP_SIZE = 1024;
 const SHADOW_EXTENT = 70;
 
 const HIDDEN = { opacity: 0 } as const;
-const SHADOW_MAP = { type: THREE.PCFShadowMap } as const;
+const SHADOW_MAP = { type: THREE.PCFSoftShadowMap } as const;
 const CAMERA_OPTIONS = {
   position: [CAMERA_LANDSCAPE.position[0], CAMERA_LANDSCAPE.position[1], CAMERA_LANDSCAPE.position[2]] as [number, number, number],
   fov: CAMERA_LANDSCAPE.fov,
@@ -169,6 +169,8 @@ function SceneLights({ uniforms, refs, shadows }: { uniforms: ValleyUniforms; re
         shadow-camera-near={1}
         shadow-camera-far={200}
         shadow-bias={-0.0005}
+        shadow-intensity={0.45}
+        shadow-radius={4}
       />
       {POINT_LIGHTS.map((p, k) => {
         const at = PLACES[p.place];

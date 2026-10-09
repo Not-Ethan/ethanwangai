@@ -11,10 +11,10 @@ export const EAST_DIR: Vec3 = [1, 0, 0];
 
 /** Per-keyframe values the palette does not hold. moonPos is a world point on a 200-unit dome around the origin. */
 export const LIGHT: Record<SkyName, { fogNear: number; fogFar: number; sunDir: Vec3; starAlpha: number; moonPos: Vec3; moonAlpha: number }> = {
-  dusk:    { fogNear: 50, fogFar: 230, sunDir: [-0.85, 0.18, -0.5], starAlpha: 0,    moonPos: [120, 15, -155], moonAlpha: 0 },
-  blue:    { fogNear: 40, fogFar: 200, sunDir: [-0.6, 0.35, -0.7],  starAlpha: 0.35, moonPos: [90, 32, -173],  moonAlpha: 0.6 },
-  night:   { fogNear: 30, fogFar: 180, sunDir: [0.3, 0.8, -0.5],    starAlpha: 1,    moonPos: [40, 42, -191],  moonAlpha: 1 },
-  predawn: { fogNear: 40, fogFar: 200, sunDir: [0.75, 0.3, -0.6],   starAlpha: 0.4,  moonPos: [-60, 45, -185], moonAlpha: 0.5 },
+  dusk:    { fogNear: 40, fogFar: 190, sunDir: [-0.85, 0.18, -0.5], starAlpha: 0,    moonPos: [120, 15, -155], moonAlpha: 0 },
+  blue:    { fogNear: 32, fogFar: 170, sunDir: [-0.4, 0.75, -0.5],  starAlpha: 0.35, moonPos: [90, 32, -173],  moonAlpha: 0.6 },
+  night:   { fogNear: 24, fogFar: 150, sunDir: [0.25, 0.92, -0.3],    starAlpha: 1,    moonPos: [40, 42, -191],  moonAlpha: 1 },
+  predawn: { fogNear: 32, fogFar: 170, sunDir: [0.6, 0.6, -0.5],   starAlpha: 0.4,  moonPos: [-60, 45, -185], moonAlpha: 0.5 },
 };
 
 function hexToRgb(hex: string): [number, number, number] {

@@ -77,9 +77,11 @@ export function groundColor(x: number, z: number, out: Color): Color {
   const dhdx = heightAt(x + 0.5, z) - heightAt(x - 0.5, z);
   const dhdz = heightAt(x, z + 0.5) - heightAt(x, z - 0.5);
   const slope = 1 - 1 / Math.sqrt(1 + dhdx * dhdx + dhdz * dhdz);   // 1 − normal.y
-  out.copy(C_LOW).lerp(C_MID, smoothstep(0.5, 6, h));
+  const patch = valueNoise(x / 9, z / 9, 0x31) * 0.6 + valueNoise(x / 3, z / 3, 0x77) * 0.4;   // two octaves, scales 9 and 3 units
+  out.copy(C_LOW).lerp(C_MID, clamp01(smoothstep(0.5, 6, h) + (patch * 2 - 1) * 0.18));
   out.lerp(C_SLOPE, smoothstep(0.08, 0.3, slope));
   out.lerp(C_CREST, smoothstep(13, 17, h));
+  if (dhdz < 0) out.multiplyScalar(1 + 0.06 * smoothstep(0, 0.4, -dhdz));   // north-facing slopes catch a little moon
   return out;
 }
 

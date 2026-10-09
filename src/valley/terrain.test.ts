@@ -122,6 +122,6 @@ describe('buildTerrain', () => {
     expect(Math.abs(c.r - crest.r) + Math.abs(c.g - crest.g) + Math.abs(c.b - crest.b)).toBeLessThan(0.02);
     let maxLum = 0;
     for (let i = 0; i < terrain.colors.length; i += 3) maxLum = Math.max(maxLum, terrain.colors[i], terrain.colors[i + 1], terrain.colors[i + 2]);
-    expect(maxLum).toBeLessThanOrEqual(new Color(PALETTE.terrainSlope).b + 1e-6);
+    expect(maxLum).toBeLessThanOrEqual(new Color(PALETTE.terrainSlope).b * 1.06 + 1e-6);
   });
 });
