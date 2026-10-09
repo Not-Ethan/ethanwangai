@@ -1,7 +1,7 @@
 // Section 05's arrival trigger (spec §3 row 05): arriving in summers shows the two cabin labels (nist, wvu) again,
 // with the same strings and the same fade timing as the ignition labels. The gate fires on the rising edge into the
 // section and re-arms on leaving. The Driver merges the result into LABEL_ALPHA after writeLabelAlpha. Allocation-free.
-import { labelEnvelope } from './chain';
+import { LABEL_FADE_OUT, LABEL_HOLD, labelEnvelope } from './chain';
 import { EMITTER_INDEX } from './projection';
 
 export const ARRIVAL_SPAN = LABEL_HOLD + LABEL_FADE_OUT;
