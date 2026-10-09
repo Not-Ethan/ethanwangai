@@ -24,7 +24,7 @@ const WINDOW_OUT = 0.03;              // quads sit this far outside the wall so 
 const SINK = 0.25;                    // seat below the lowest wall corner so no edge floats on the slope
 const POST_SINK = 0.2;                // porch posts end this far below the ground at their own (x, z)
 /** Uniform world scale of every grammar house, about its seat point. */
-export const HOUSE_SCALE = 0.5;
+export const HOUSE_SCALE = 0.7;
 export const SCAFFOLD_BARS = 18;      // §5.5, §6
 export const SCAFFOLD_THICKNESS = 0.1;
 
@@ -114,7 +114,7 @@ export function houseMeshData(house: House, x: number, z: number): HouseMeshData
     if (p.kind === 'post') y0 = Math.min(y0, heightAt(mx, mz) - POST_SINK);
     const sy = y1 - y0;
     const my = (y0 + y1) / 2;
-    c.copy(p.kind === 'slat' || p.kind === 'chimney' ? roof : wall).multiplyScalar(0.9 + 0.2 * rand());
+    c.copy(p.kind === 'slat' || p.kind === 'chimney' ? roof : wall).multiplyScalar(1.15 + 0.25 * rand());   // a touch lighter than the far-bank boxes: these sit outside the fog
     const vb = i * BOX_VERTS;
     for (let v = 0; v < BOX_VERTS; v++) {
       const o = (vb + v) * 3;
