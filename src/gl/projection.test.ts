@@ -100,4 +100,15 @@ describe('projection', () => {
     const belowFirst = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, null, 'below');
     expect(belowFirst.y).toBeCloseTo(ay + 14, 3);
   });
+
+  it('applies the lift on either side and can centre a label on its light', () => {
+    const proj = Float32Array.of(0, 0, 1);
+    const out: LabelPlacement = { x: 0, y: 0, visible: false };
+    const up = placeLabel(proj, 0, 1440, 900, 16, out, 200, 14, null, 'above', 30);
+    expect(up.y).toBeCloseTo(450 - 14 - 22 - 30, 3);
+    const down = placeLabel(proj, 0, 1440, 900, 16, out, 200, 14, null, 'below', 30);
+    expect(down.y).toBeCloseTo(450 + 14 + 30, 3);
+    const mid = placeLabel(proj, 0, 1440, 900, 16, out, 200, 14, null, 'above', 0, true);
+    expect(mid.x).toBeCloseTo(720 - 100, 3);
+  });
 });

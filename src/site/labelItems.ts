@@ -16,12 +16,17 @@ export interface LabelItem { key: IgnitionLabelKey; anchor: EmitterId; text: str
 
 /** Extra lift in CSS px above the light, per label: the hillside label clears the house roofs. */
 export const LABEL_LIFT_PX: Readonly<Record<IgnitionLabelKey, number>> = {
-  hut: 0, nist: 0, mill: 16, kalshiLamp: 0, wvu: 0, bars: 0, hillside: 70,
+  hut: 20, nist: 0, mill: 16, kalshiLamp: 0, wvu: 0, bars: 30, hillside: 40,
+};
+
+/** Labels centred on their light rather than set to its right: the mill's label sits over the middle of its facade. */
+export const LABEL_CENTER: Readonly<Record<IgnitionLabelKey, boolean>> = {
+  hut: false, nist: false, mill: true, kalshiLamp: false, wvu: false, bars: false, hillside: false,
 };
 
 /** Which side of its light a label prefers: the hut and the bars have open ground below them. */
 export const LABEL_SIDE: Readonly<Record<IgnitionLabelKey, 'above' | 'below'>> = {
-  hut: 'below', nist: 'above', mill: 'above', kalshiLamp: 'above', wvu: 'above', bars: 'below', hillside: 'above',
+  hut: 'below', nist: 'above', mill: 'above', kalshiLamp: 'above', wvu: 'above', bars: 'below', hillside: 'below',
 };
 
 export function ignitionLabelItems(labels: Readonly<Record<IgnitionLabelKey, string>>): LabelItem[] {

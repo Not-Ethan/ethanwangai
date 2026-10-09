@@ -92,6 +92,7 @@ function clearOf(x: number, y: number, w: number, h: number, avoid: readonly Avo
 export function placeLabel(
   projected: Float32Array, i: number, vw: number, vh: number, margin: number, out: LabelPlacement,
   labelW = 0, labelH = 0, avoid: readonly AvoidRect[] | null = null, side: LabelSide = 'above',
+  lift = 0, center = false,
 ): LabelPlacement {
   const o = i * 3;
   const nx = projected[o];
@@ -103,10 +104,10 @@ export function placeLabel(
   const ax = ((nx + 1) / 2) * vw;
   const ay = ((1 - ny) / 2) * vh;
   const h = labelH > 0 ? labelH : 14;
-  const right = ax + 10 + labelW <= vw - margin ? ax + 10 : ax - 10 - labelW;
-  const left = ax - 10 - labelW;
-  const above = ay - h - 22;   // clearly above the light, never across its window
-  const below = ay + 14;
+  const right = center ? ax - labelW / 2 : ax + 10 + labelW <= vw - margin ? ax + 10 : ax - 10 - labelW;
+  const left = center ? ax - labelW / 2 : ax - 10 - labelW;
+  const above = ay - h - 22 - lift;   // clearly above the light, never across its window; `lift` clears a tall light
+  const below = ay + 14 + lift;       // under the light; `lift` clears a door-height pane or a house body
   const first = side === 'above' ? above : below;
   const second = side === 'above' ? below : above;
   let x = right;
