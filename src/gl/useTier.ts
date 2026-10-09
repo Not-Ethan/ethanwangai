@@ -73,7 +73,7 @@ export function settingsAt(tier: Tier, rung: number): { settings: TierSettings; 
 
 /**
  * Main-pass draws at rest (spec §6): sky, stars, moon, terrain, river, buildings, windows, glow, wheel, ridge points,
- * crest line, hedge lines, hillside, visitor = 14, plus mist and rain when mounted, plus the scaffold during a build.
+ * crest, hedge, hillside, visitor = 14, plus mist and rain when mounted, plus the scaffold during a build.
  * The visitor's mesh holds an empty BufferGeometry until a sentence exists, and three issues no draw for it, so the
  * count is one lower with no visitor house.
  */
