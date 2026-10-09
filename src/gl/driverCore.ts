@@ -244,7 +244,7 @@ export interface PointLightSpec {
 /** Spec §6: four point lights at the hut, the mill, the kalshi lamp and the visitor house. */
 export const POINT_LIGHTS: readonly PointLightSpec[] = [
   { id: 'hut', place: 'hut', lift: 1.4, forward: 2.2, base: 6, distance: 14 },
-  { id: 'mill', place: 'mill', lift: 4.5, forward: 5, base: 20, distance: 30 },
+  { id: 'mill', place: 'mill', lift: 1.2, forward: 7, base: 8, distance: 22 },
   { id: 'kalshiLamp', place: 'kalshiLamp', lift: 1.3, forward: 0.4, base: 4, distance: 10 },
   { id: 'visitor', place: 'lot', lift: 1.6, forward: 2, base: 6, distance: 14 },
 ];

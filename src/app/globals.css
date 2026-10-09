@@ -120,15 +120,15 @@ body {
    carries a faint halo in the scrim colour for the block's corners, which the ellipse covers only partly. (spec §9) */
 .scrim::before {
   content: ''; position: absolute; z-index: -1; pointer-events: none;
-  inset: -3rem -3rem -3rem -100vw;
-  background: radial-gradient(ellipse 30rem 36rem at calc(100% - 14rem) 50%,
+  inset: -40rem -34rem -40rem -100vw;
+  background: radial-gradient(ellipse 30rem 36rem at calc(100% - 34rem - 10rem) 50%,
     color-mix(in srgb, var(--scrim) 55%, transparent) 0%, color-mix(in srgb, var(--scrim) 55%, transparent) 40%, color-mix(in srgb, var(--scrim) 30%, transparent) 68%, color-mix(in srgb, var(--scrim) 10%, transparent) 88%, transparent 100%);
 }
 .scrim > * { text-shadow: 0 1px 3px var(--scrim), 0 0 12px var(--scrim), 0 0 28px var(--scrim); }
 @media (min-width: 48rem) {
   .scrim::before {
-    inset: -4rem -14rem -6rem -100vw;
-    background: radial-gradient(ellipse 36rem 40rem at calc(100% - 32rem) 50%,
+    inset: -44rem -48rem -44rem -100vw;
+    background: radial-gradient(ellipse 36rem 40rem at calc(100% - 48rem - 18rem) 50%,
       color-mix(in srgb, var(--scrim) 55%, transparent) 0%, color-mix(in srgb, var(--scrim) 55%, transparent) 42%, color-mix(in srgb, var(--scrim) 30%, transparent) 68%, color-mix(in srgb, var(--scrim) 10%, transparent) 88%, transparent 100%);
   }
 }

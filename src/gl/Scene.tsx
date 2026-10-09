@@ -4,6 +4,8 @@
 // records T0. No WebGL2 (or ?nogl=1, read by webgl2Available), a renderer error, or a lost context unmounts the canvas
 // and leaves the still and the DOM. Sky, stars, moon, terrain, river, mist (desktop), buildings, windows, glow, the lights, the
 // camera rig and the driver are the scene for this stage.
+import { EMITTERS } from '@/valley/lights';
+import { EMITTER_INDEX } from './projection';
 import { Component, useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Canvas, type RootState } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
@@ -181,6 +183,7 @@ function SceneLights({ uniforms, refs, shadows }: { uniforms: ValleyUniforms; re
             key={p.id}
             ref={(light) => { points.current[k] = light; }}
             position={[at[0], at[1] + p.lift, at[2] + p.forward]}
+            color={EMITTERS[EMITTER_INDEX[p.id]].color}
             distance={p.distance}
             decay={2}
             intensity={0}

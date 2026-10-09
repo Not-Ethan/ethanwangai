@@ -6,8 +6,8 @@ const lc = (s: string) => s.toLowerCase();
 const rgb = (h: string) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
 
 describe('environmentAt', () => {
-  it('has the four keyframes at tod 0, 0.18, 0.6, 1 (dusk, blue, night, predawn)', () => {
-    expect(SKY_KEYFRAMES.map((k) => [k.name, k.tod])).toEqual([['dusk', 0], ['blue', 0.18], ['night', 0.6], ['predawn', 1]]);
+  it('has the four keyframes at tod 0, 0.10, 0.6, 1 (dusk, blue, night, predawn)', () => {
+    expect(SKY_KEYFRAMES.map((k) => [k.name, k.tod])).toEqual([['dusk', 0], ['blue', 0.1], ['night', 0.6], ['predawn', 1]]);
   });
   it.each(SKY_KEYFRAMES.map((k) => [k.name, k] as const))('equals the palette exactly at the %s keyframe', (_n, k) => {
     const e = environmentAt(k.tod);
@@ -25,8 +25,8 @@ describe('environmentAt', () => {
       return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255);
     };
     for (const f of ['horizon', 'zenith'] as const) {
-      expect(lum(environmentAt(0)[f])).toBeGreaterThan(lum(environmentAt(0.18)[f]));
-      expect(lum(environmentAt(0.18)[f])).toBeGreaterThan(lum(environmentAt(0.6)[f]));
+      expect(lum(environmentAt(0)[f])).toBeGreaterThan(lum(environmentAt(0.1)[f]));
+      expect(lum(environmentAt(0.1)[f])).toBeGreaterThan(lum(environmentAt(0.6)[f]));
     }
     expect(lum(environmentAt(1).east)).toBeGreaterThan(lum(environmentAt(0.6).horizon) * 1.5);
   });
@@ -39,7 +39,7 @@ describe('environmentAt', () => {
     }
   });
   it('blends linearly between keyframes (midway dusk → blue)', () => {
-    const e = environmentAt(0.09);
+    const e = environmentAt(0.05);
     const a = rgb(SKY_KEYFRAMES[0].horizon), b = rgb(SKY_KEYFRAMES[1].horizon), m = rgb(e.horizon);
     for (let i = 0; i < 3; i++) expect(Math.abs(m[i] - (a[i] + b[i]) / 2)).toBeLessThanOrEqual(1);
     expect(e.sunIntensity).toBeCloseTo((10 + 12) / 2, 9);
