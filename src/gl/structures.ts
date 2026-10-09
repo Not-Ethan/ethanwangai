@@ -7,14 +7,20 @@ import type { EmitterId, Vec3 } from '@/valley/types';
 import { PLACES } from '@/valley/layout';
 import { EMITTERS } from '@/valley/lights';
 import { PALETTE } from '@/valley/palette';
+import { heightAt } from '@/valley/terrain';
 import { EMITTER_INDEX } from './projection';
 
 export interface BuildingSize { w: number; h: number; d: number; rise: number }
 
 export const BUILDING_SIZES = {
-  hut: { w: 3, h: 2.5, d: 3, rise: 1.2 },
+  hut: { w: 3, h: 2.5, d: 3, rise: 1.5 },
   cabin: { w: 2.5, h: 2, d: 2.5, rise: 1.0 },
+  cabinB: { w: 2.5, h: 2, d: 2.5, rise: 0.7 },
   bar: { w: 5, h: 3, d: 4, rise: 0.6 },
+  bar1: { w: 4.4, h: 2.8, d: 3.6, rise: 0.5 },
+  bar2: { w: 5.8, h: 3.3, d: 4.2, rise: 0.8 },
+  bar3: { w: 4.8, h: 2.6, d: 4.0, rise: 0.4 },
+  bar4: { w: 5.2, h: 3.1, d: 3.6, rise: 0.7 },
   mill: { w: 14, h: 5.5, d: 7, rise: 1.6 },
 } as const satisfies Record<string, BuildingSize>;
 
@@ -25,16 +31,47 @@ export const WINDOW_OFFSET = 0.03;
 const OVERHANG_X = 0.3;
 const OVERHANG_Z = 0.4;
 
-const BODIES: readonly { place: Vec3; size: BuildingSize }[] = [
-  { place: PLACES.hut, size: BUILDING_SIZES.hut },
-  { place: PLACES.nist, size: BUILDING_SIZES.cabin },
-  { place: PLACES.wvu, size: BUILDING_SIZES.cabin },
-  { place: PLACES.bar1, size: BUILDING_SIZES.bar },
-  { place: PLACES.bar2, size: BUILDING_SIZES.bar },
-  { place: PLACES.bar3, size: BUILDING_SIZES.bar },
-  { place: PLACES.bar4, size: BUILDING_SIZES.bar },
-  { place: PLACES.mill, size: BUILDING_SIZES.mill },
+const DEG = Math.PI / 180;
+/** Seat the base this far below the lowest footprint corner. */
+const SEAT = 0.15;
+
+export interface Body { key: string; place: Vec3; size: BuildingSize; yaw: number; setback: number }
+
+const BODIES: readonly Body[] = [
+  { key: 'hut', place: PLACES.hut, size: BUILDING_SIZES.hut, yaw: 0, setback: 0 },
+  { key: 'nist', place: PLACES.nist, size: BUILDING_SIZES.cabin, yaw: 0, setback: 0 },
+  { key: 'wvu', place: PLACES.wvu, size: BUILDING_SIZES.cabinB, yaw: 0, setback: 0 },
+  { key: 'bar1', place: PLACES.bar1, size: BUILDING_SIZES.bar1, yaw: -9 * DEG, setback: 1.2 },
+  { key: 'bar2', place: PLACES.bar2, size: BUILDING_SIZES.bar2, yaw: 6 * DEG, setback: -0.8 },
+  { key: 'bar3', place: PLACES.bar3, size: BUILDING_SIZES.bar3, yaw: -4 * DEG, setback: 0.4 },
+  { key: 'bar4', place: PLACES.bar4, size: BUILDING_SIZES.bar4, yaw: 11 * DEG, setback: -1.4 },
+  { key: 'mill', place: PLACES.mill, size: BUILDING_SIZES.mill, yaw: 0, setback: 0 },
 ];
+
+/** World x, z of a body-local offset (lx, lz) from the body centre, after yaw about +y and the z setback. */
+function bodyPoint(b: Body, lx: number, lz: number): [number, number] {
+  const c = Math.cos(b.yaw);
+  const s = Math.sin(b.yaw);
+  return [b.place[0] + lx * c + lz * s, b.place[2] + b.setback - lx * s + lz * c];
+}
+
+/** The body's four footprint corners on the ground plane (roof overhang excluded). */
+export function footprintCorners(b: Body): [number, number][] {
+  const hw = b.size.w / 2;
+  const hd = b.size.d / 2;
+  return [bodyPoint(b, -hw, -hd), bodyPoint(b, hw, -hd), bodyPoint(b, hw, hd), bodyPoint(b, -hw, hd)];
+}
+
+/** Base y of a body: the lowest ground under its footprint corners, less SEAT. */
+export function bodyBase(b: Body): number {
+  let low = Infinity;
+  for (const [x, z] of footprintCorners(b)) low = Math.min(low, heightAt(x, z));
+  return low - SEAT;
+}
+
+export function buildingBodies(): readonly Body[] {
+  return BODIES;
+}
 
 function paint(g: THREE.BufferGeometry, color: THREE.Color): THREE.BufferGeometry {
   const n = g.getAttribute('position').count;
@@ -74,10 +111,19 @@ export function buildingsGeometry(): THREE.BufferGeometry {
   const wall = new THREE.Color(PALETTE.wall);
   const roof = new THREE.Color(PALETTE.roof);
   const parts: THREE.BufferGeometry[] = [];
-  for (const { place, size } of BODIES) {
-    const [x, y, z] = place;
-    parts.push(box(size.w, size.h + PLINTH, size.d, x, y + (size.h - PLINTH) / 2, z, wall));
-    parts.push(prism(size.w + OVERHANG_X, size.d + OVERHANG_Z, size.rise, x, y + size.h, z, roof));
+  for (const b of BODIES) {
+    const { size } = b;
+    const [x, y] = b.place;
+    const z = b.place[2] + b.setback;
+    const bottom = bodyBase(b) - PLINTH;
+    const top = y + size.h;
+    const walls = box(size.w, top - bottom, size.d, 0, (top + bottom) / 2, 0, wall);
+    const gable = prism(size.w + OVERHANG_X, size.d + OVERHANG_Z, size.rise, 0, top, 0, roof);
+    for (const g of [walls, gable]) {
+      g.rotateY(b.yaw);
+      g.translate(x, 0, z);
+      parts.push(g);
+    }
   }
   const [lx, ly, lz] = PLACES.kalshiLamp;
   parts.push(box(LAMP_POST.w, LAMP_POST.h + PLINTH, LAMP_POST.w, lx, ly + (LAMP_POST.h - PLINTH) / 2, lz, wall));
@@ -89,7 +135,7 @@ export function buildingsGeometry(): THREE.BufferGeometry {
   return merged;
 }
 
-export interface WindowSpec { emitter: EmitterId; center: Vec3; w: number; h: number; color: string; row: number }
+export interface WindowSpec { emitter: EmitterId; center: Vec3; w: number; h: number; color: string; row: number; yaw?: number; dim?: boolean }
 
 const colorOf = (id: EmitterId) => EMITTERS[EMITTER_INDEX[id]].color;
 
@@ -106,20 +152,27 @@ export function staticWindows(): WindowSpec[] {
     out.push({ emitter: id, center: [p[0], p[1] + 1.1, front(p, BUILDING_SIZES.cabin.d)], w: 0.7, h: 0.6, color: colorOf(id), row: -1 });
   }
 
-  for (const id of ['bar1', 'bar2', 'bar3', 'bar4'] as const) {
-    const p = PLACES[id];
-    const z = front(p, BUILDING_SIZES.bar.d);
-    out.push({ emitter: id, center: [p[0] - 0.8, p[1] + 1.5, z], w: 2.4, h: 1.0, color: colorOf(id), row: -1 });
-    out.push({ emitter: id, center: [p[0] + 1.7, p[1] + 2.55, z], w: 0.3, h: 0.3, color: colorOf(id), row: -1 });
+  for (const body of BODIES.filter((x) => x.key.startsWith('bar'))) {
+    const id = body.key as 'bar1' | 'bar2' | 'bar3' | 'bar4';
+    const { w, h, d } = body.size;
+    const spec = (lx: number, ly: number, qw: number, qh: number, color: string): WindowSpec => {
+      const [wx, wz] = bodyPoint(body, lx, d / 2 + WINDOW_OFFSET);
+      return { emitter: id, center: [wx, body.place[1] + ly, wz], w: qw, h: qh, color, row: -1, yaw: body.yaw };
+    };
+    out.push(spec(-0.6, 1.4, 0.9, 1.1, PALETTE.warm));
+    out.push(spec(w / 2 - 0.6, h - 0.35, 0.3, 0.3, PALETTE.porch));
   }
 
   const mill = PLACES.mill;
+  const MILL_W = [0.55, 0.8, 0.65, 0.9, 0.6];
+  const MILL_H = [0.8, 0.7, 0.85, 0.75, 0.8];
   for (let r = 0; r < 4; r++) {
     for (let c = 0; c < 5; c++) {
       out.push({
         emitter: 'mill',
-        center: [mill[0] + (c - 2) * 2.4, mill[1] + 0.9 + r * 1.05, front(mill, BUILDING_SIZES.mill.d)],
-        w: 0.7, h: 0.8, color: colorOf('mill'), row: r,
+        center: [mill[0] + (c - 2) * 2.4 + (r % 2 === 1 ? 1.2 : 0), mill[1] + 0.9 + r * 1.05, front(mill, BUILDING_SIZES.mill.d)],
+        w: MILL_W[c], h: MILL_H[c], color: colorOf('mill'), row: r,
+        dim: (r === 3 && c === 4) || (r === 0 && c === 0),
       });
     }
   }
@@ -147,12 +200,17 @@ export interface WindowSet {
 
 const _m = new THREE.Matrix4();
 const _c = new THREE.Color();
+const _s = new THREE.Vector3();
+/** A dim window keeps its instance (so a mill row still has five) at this fraction of its colour. */
+const DIM = 0.25;
 
 export function pushWindow(set: WindowSet, spec: WindowSpec): number {
   if (set.count >= WINDOW_CAPACITY) return -1;
   const i = set.count;
-  _m.makeScale(spec.w, spec.h, 1).setPosition(spec.center[0], spec.center[1], spec.center[2]).toArray(set.matrices, i * 16);
-  _c.set(spec.color).toArray(set.colors, i * 3);
+  _m.makeRotationY(spec.yaw ?? 0).scale(_s.set(spec.w, spec.h, 1)).setPosition(spec.center[0], spec.center[1], spec.center[2]).toArray(set.matrices, i * 16);
+  _c.set(spec.color);
+  if (spec.dim) _c.multiplyScalar(DIM);
+  _c.toArray(set.colors, i * 3);
   set.rows[i] = spec.row;
   set.lit[i] = 0;
   set.emitterOf[i] = EMITTER_INDEX[spec.emitter];

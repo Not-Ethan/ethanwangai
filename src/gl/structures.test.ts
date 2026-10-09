@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { PLACES } from '@/valley/layout';
+import { heightAt } from '@/valley/terrain';
 import { EMITTERS } from '@/valley/lights';
 import { PALETTE } from '@/valley/palette';
 import { EMITTER_INDEX } from './projection';
 import {
-  BUILDING_SIZES, buildingsGeometry, createWindowSet, pushWindow, STATIC_WINDOW_COUNT, staticWindows,
+  BUILDING_SIZES, bodyBase, buildingBodies, buildingsGeometry, footprintCorners, createWindowSet, pushWindow, STATIC_WINDOW_COUNT, staticWindows,
   WINDOW_CAPACITY,
 } from './structures';
 
@@ -45,6 +46,23 @@ describe('buildingsGeometry', () => {
   });
 });
 
+describe('building bodies', () => {
+  it('seats every body in the ground: base at or below the terrain at all four footprint corners', () => {
+    for (const b of buildingBodies()) {
+      const base = bodyBase(b);
+      for (const [x, z] of footprintCorners(b)) expect(base, b.key).toBeLessThanOrEqual(heightAt(x, z) - 0.15 + 1e-9);
+    }
+  });
+
+  it('gives the bars four different silhouettes and the cabins different rises', () => {
+    const bars = ['bar1', 'bar2', 'bar3', 'bar4'] as const;
+    expect(new Set(bars.map((k) => JSON.stringify(BUILDING_SIZES[k]))).size).toBe(4);
+    const yaws = buildingBodies().filter((b) => b.key.startsWith('bar')).map((b) => b.yaw);
+    expect(new Set(yaws).size).toBe(4);
+    expect(BUILDING_SIZES.cabin.rise).not.toBe(BUILDING_SIZES.cabinB.rise);
+  });
+});
+
 describe('staticWindows', () => {
   const w = staticWindows();
   it('has 32 lit quads: hut 1, cabins 2, bars 4 x (window + porch), mill 20, lamp 1', () => {
@@ -69,13 +87,36 @@ describe('staticWindows', () => {
     w.filter((x) => x.emitter !== 'mill').forEach((x) => expect(x.row).toBe(-1));
   });
 
-  it("puts every window on the +z face of a registered emitter, in that emitter's colour", () => {
+  it("puts every window on the +z face of a registered emitter, in that emitter's colour (bar porch quads keep the porch colour)", () => {
     for (const x of w) {
       expect(EMITTER_INDEX[x.emitter]).toBeGreaterThanOrEqual(0);
       const place = PLACES[x.emitter as keyof typeof PLACES];
-      expect(x.center[2]).toBeGreaterThan(place[2]);
-      expect(x.color).toBe(EMITTERS[EMITTER_INDEX[x.emitter]].color);
+      expect(x.center[2]).toBeGreaterThan(place[2] - 1.5);
+      const porch = x.emitter.startsWith('bar') && x.w === 0.3;
+      expect(x.color).toBe(porch ? PALETTE.porch : EMITTERS[EMITTER_INDEX[x.emitter]].color);
     }
+  });
+
+  it('makes bar windows door-height warm panes and porch quads 0.3 square', () => {
+    for (const b of ['bar1', 'bar2', 'bar3', 'bar4']) {
+      const [win, porch] = w.filter((x) => x.emitter === b);
+      expect([win.w, win.h, win.color]).toEqual([0.9, 1.1, PALETTE.warm]);
+      expect([porch.w, porch.h, porch.color]).toEqual([0.3, 0.3, PALETTE.porch]);
+      expect(EMITTERS[EMITTER_INDEX[b as 'bar1']].color).toBe(PALETTE.warm);
+    }
+  });
+
+  it('dims exactly two mill panes to 25% in the instance colour, keeping 20 instances', () => {
+    const set = createWindowSet();
+    const full = new THREE.Color(PALETTE.millWindow);
+    const dimmed: number[] = [];
+    for (let i = 0; i < set.count; i++) {
+      if (set.emitterOf[i] !== EMITTER_INDEX.mill) continue;
+      if (Math.abs(set.colors[i * 3] - full.r * 0.25) < 1e-6) dimmed.push(i);
+      else expect(set.colors[i * 3]).toBeCloseTo(full.r, 6);
+    }
+    expect(dimmed.length).toBe(2);
+    expect(w.filter((x) => x.emitter === 'mill' && x.dim).length).toBe(2);
   });
 });
 
