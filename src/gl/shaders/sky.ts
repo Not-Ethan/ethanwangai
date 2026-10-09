@@ -77,8 +77,11 @@ uniform float uMoonAlpha;
 varying vec2 vUv;
 void main() {
   float r = length( vUv - 0.5 ) * 2.0;
-  float a = uMoonAlpha * ( 1.0 - smoothstep( 0.86, 1.0, r ) );
-  if ( a <= 0.0 ) discard;
+  // a soft-edged disc inside a faint wide halo: never a hard circle against the sky
+  float disc = 1.0 - smoothstep( 0.30, 0.46, r );
+  float halo = ( 1.0 - smoothstep( 0.30, 1.0, r ) ) * 0.22;
+  float a = uMoonAlpha * ( disc * 0.8 + halo );
+  if ( a <= 0.002 ) discard;
   gl_FragColor = vec4( uMoonColor, a );
   #include <colorspace_fragment>
 }
