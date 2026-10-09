@@ -63,6 +63,7 @@ export function sectionRanges(tops: number[], docHeight: number, vh: number): Se
 export function locate(g: number, ranges: SectionRange[]): { section: SectionId; s: number; index: number };
 // src/valley/timeline.ts
 export function timelineAt(g: number, ranges: SectionRange[], portrait?: boolean): Timeline;   // portrait picks viewPortrait yaw
+// sections.ts also exports `interface Located { section: SectionId; s: number; index: number }` and `locateInto(g, ranges, out: Located): Located` (allocation-free locate; added in Stage 2 Task 2.2).
 // src/valley/environment.ts
 export function environmentAt(tod: number): Environment;
 // src/valley/ignition.ts
