@@ -10,6 +10,7 @@ import { applyFrame, setFrameInputs, syncScene, type SceneRefs } from './driverC
 import { composeCamera, type Rig } from './cameraCore';
 import { EMITTER_POSITIONS, LABEL_ALPHA, projectEmitters } from './projection';
 import { writeLabelAlpha } from './chain';
+import { createArrivalGate, mergeArrivalLabels, stepArrivalGate, type ArrivalGate } from './arrival';
 import { frame } from './frame';
 import { LIVE } from './live';
 import { wheelRef } from './wheelRef';
@@ -30,6 +31,7 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
   }, [reducedMotion, still]);
 
   const pulseGate = useRef<PulseGate>(createPulseGate());
+  const arrival = useRef<ArrivalGate>(createArrivalGate());
   const flicker = useRef<FlickerClock>(createFlickerClock());
   useEffect(() => {
     const clock = flicker.current;
@@ -61,6 +63,7 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
     inputs.flickerT = stepFlicker(flicker.current, t);
     applyFrame(inputs, targets);
     writeLabelAlpha(inputs.introT, LABEL_ALPHA);
+    mergeArrivalLabels(stepArrivalGate(arrival.current, inSection(inputs.g, inputs.ranges, 'summers'), t), LABEL_ALPHA);
     LIVE.ridge = targets.latched.ridge;
     const wheel = wheelRef.current;
     if (wheel) wheel.rotation.z = -u.uWheelAngle.value;
