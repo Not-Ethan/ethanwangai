@@ -24,11 +24,13 @@ export const RIDGE_FRAG = /* glsl */ `
 #include <fog_pars_fragment>
 uniform sampler2D uMap;
 uniform vec3 uColor;
+uniform float uLit;
+uniform float uAlpha;
 varying float vShown;
 void main() {
   if ( vShown < 0.5 ) discard;
   float a = texture2D( uMap, gl_PointCoord ).a;
-  gl_FragColor = vec4( uColor * a, 1.0 );
+  gl_FragColor = vec4( uColor * a * uAlpha * uLit, 1.0 );
   #include <colorspace_fragment>
   ${ADDITIVE_FOG}
 }
