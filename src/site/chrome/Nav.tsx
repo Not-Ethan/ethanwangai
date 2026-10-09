@@ -8,12 +8,12 @@ export function Nav() {
   const n = copy.nav;
   return (
     <header className="nav">
-      <button type="button" className="mono link" onClick={() => scrollTo('open')}>{n.home}</button>
+      <button type="button" className="mono link nav-home" onClick={() => scrollTo('open')}>{n.home}</button>
       <nav className="flex flex-wrap justify-end gap-x-2 gap-y-1">
         {n.items.map((it) => (
           <span key={it.section} className="flex items-center gap-2">
             <button type="button" className="mono link" onClick={() => scrollTo(it.section)}>{it.label}</button>
-            <span className="mono ink-dim" aria-hidden="true">{n.separator}</span>
+            <span className="mono ink-dim nav-sep" aria-hidden="true">{n.separator}</span>
           </span>
         ))}
         <a className="mono link" href={RESUME_HREF} target="_blank" rel="noopener noreferrer">{n.resume}</a>
