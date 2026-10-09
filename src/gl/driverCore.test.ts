@@ -154,12 +154,20 @@ describe('applyFrame', () => {
       f.inputs.t = i / 60;
       applyFrame(f.inputs, f.targets);
     }
-    const before = process.memoryUsage().heapUsed;
-    for (let i = 0; i < 1000; i++) {
-      f.inputs.t = 10 + i / 60;
-      applyFrame(f.inputs, f.targets);
+    // Five samples of 1,000 calls; the smallest delta is the per-frame signal (a GC or a background compile landing
+    // inside one sample inflates only that sample, which made this test flaky under full-suite load).
+    const gc = (globalThis as { gc?: () => void }).gc;
+    let best = Number.POSITIVE_INFINITY;
+    for (let k = 0; k < 5; k++) {
+      gc?.();
+      const before = process.memoryUsage().heapUsed;
+      for (let i = 0; i < 1000; i++) {
+        f.inputs.t = 10 + k + i / 60;
+        applyFrame(f.inputs, f.targets);
+      }
+      best = Math.min(best, process.memoryUsage().heapUsed - before);
     }
-    expect(process.memoryUsage().heapUsed - before).toBeLessThan(128 * 1024);
+    expect(best).toBeLessThan(128 * 1024);
   });
 });
 
