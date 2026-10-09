@@ -6,7 +6,7 @@ import { EMITTERS } from '@/valley/lights';
 import { PALETTE } from '@/valley/palette';
 import { EMITTER_INDEX } from './projection';
 import {
-  BUILDING_SIZES, bodyBase, buildingBodies, buildingsGeometry, footprintCorners, createWindowSet, pushWindow, STATIC_WINDOW_COUNT, staticWindows,
+  BUILDING_SIZES, PLINTH, bodyBase, buildingBodies, buildingsGeometry, createWindowSet, pushWindow, STATIC_WINDOW_COUNT, staticWindows,
   WINDOW_CAPACITY,
 } from './structures';
 
@@ -47,10 +47,30 @@ describe('buildingsGeometry', () => {
 });
 
 describe('building bodies', () => {
-  it('seats every body in the ground: base at or below the terrain at all four footprint corners', () => {
+  it('seats every body: the merged geometry reaches below the ground at four independently computed corners', () => {
+    const g = buildingsGeometry();
+    const pos = g.getAttribute('position');
     for (const b of buildingBodies()) {
-      const base = bodyBase(b);
-      for (const [x, z] of footprintCorners(b)) expect(base, b.key).toBeLessThanOrEqual(heightAt(x, z) - 0.15 + 1e-9);
+      const hw = b.size.w / 2;
+      const hd = b.size.d / 2;
+      const c = Math.cos(b.yaw);
+      const s = Math.sin(b.yaw);
+      // Independent of footprintCorners/bodyBase: world = centre + setback + rotateY(yaw) of the local offset.
+      const corners = [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].map(([lx, lz]) => [
+        b.place[0] + lx * c + lz * s,
+        b.place[2] + b.setback - lx * s + lz * c,
+      ]);
+      let low = Infinity;
+      for (let i = 0; i < pos.count; i++) {
+        const dx = pos.getX(i) - b.place[0];
+        const dz = pos.getZ(i) - (b.place[2] + b.setback);
+        const lx = dx * c - dz * s;
+        const lz = dx * s + dz * c;
+        if (Math.abs(lx) <= hw + 1e-3 && Math.abs(lz) <= hd + 1e-3 && pos.getY(i) < b.place[1] + b.size.h - 0.01) low = Math.min(low, pos.getY(i));
+      }
+      expect(Number.isFinite(low), b.key).toBe(true);
+      for (const [x, z] of corners) expect(low, b.key).toBeLessThanOrEqual(heightAt(x, z) - 0.15 + 1e-6);
+      expect(low, b.key).toBeLessThanOrEqual(bodyBase(b) - PLINTH + 1e-6);
     }
   });
 
