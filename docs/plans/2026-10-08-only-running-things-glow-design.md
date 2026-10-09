@@ -9,7 +9,7 @@
 
 One river valley seen from one spot at blue hour. The only light in the world comes from things Ethan built.
 
-The page opens on rolling dark ridges with a bare treeline, a pale river, a peach horizon, and no lights anywhere. The headline sits over the sky in large lowercase type: *now is the best time in history to build things.* Under it, in small mono: *everything lit here is something i built that people used.* Then, on the near bank, one small hut window catches, labelled *discord bots, middle school. my classmates used them.* From it a chain of ignitions runs across the valley, each light catching from the last in 60% of the previous gap: a window on the hill (nist), the mill floods with light and holds and then goes dark row by row (darch, which ended), a signal lamp at the foot of the far ridge (kalshi), a second hill window (wvu), four bar windows across the river (heron), and at the end of the chain the hillside houses on the near slope. Last, a thin trickle of lights appears at the left end of the far ridge: the first trades of january 2026. All of it in five seconds, before anyone scrolls.
+The page opens on rolling dark ridges with a bare treeline, a pale river, a peach horizon, and no lights anywhere. The headline sits over the sky in large lowercase type: *now is the best time in history to build things.* Under it, in small mono: *everything lit here is something i built that people used.* Then, on the near bank, one small hut window catches, labelled *discord bots, middle school. my classmates used them.* From it a chain of ignitions runs across the valley, each light catching from the last in 60% of the previous gap: a window on the hill (nist), the mill floods with light and holds and then goes dark row by row (darch, which ended), a signal lamp at the foot of the far ridge (kalshi), a second hill window (wvu), four bar windows across the river (heron). Then the hillside houses on the near slope light together. Last, a thin trickle of lights appears at the left end of the far ridge: the first trades of january 2026. All of it in five seconds, before anyone scrolls.
 
 The camera never travels. Scroll moves the clock from dusk through night to pre-dawn, and each section turns the view a few degrees toward the thing it is about. The ridge fills with about thirty thousand lights, one per trade. Hedge lines draw from each bar to the lamp. The mill's year replays under the thumb and goes out again in may 2026. On the thesis section the whole valley pulses once in the order he built it. Near the end the visitor types one sentence and the only construction on the page happens: a house assembles on the empty lot from their words, with scaffolding and a clock, and its window lights. The page ends before dawn with the first light still on.
 
@@ -58,10 +58,12 @@ Eight sections, each a DOM `<section id>` with a minimum height, copy in a fixed
 | 04 | `darch` | 180vh | 0.60 | +7, 0, 0.95 | the mill's year: flood, run, go out | nothing |
 | 05 | `summers` | 100vh | 0.65 | −6, +3, 0.97 | nothing | the two cabin labels (same strings as the ignition labels) |
 | 06 | `alive` | 120vh | 0.72 | 0, +1, 1.04 | nothing | one pulse through every lit thing, build order |
-| 07 | `yours` | 140vh | 0.80 | −4, −2, 0.97 | nothing | nothing; the build is triggered by Enter |
+| 07 | `yours` | 140vh | 0.80 | +4, −2, 0.97 | nothing | nothing; the build is triggered by Enter |
 | 08 | `contact` | 150vh | 1.00 | −3, −1, 1.00 | nothing | email hover or focus flickers the hut once |
 
-Conventions: yaw positive turns the view right (toward +x), pitch positive looks up, `fovScale` multiplies the base fov (1.04 is a pull-back, 0.95 a push). The camera position never changes; only the look direction and fov. `tod` is piecewise linear between the breakpoints above and 0 through all of 01. View values ease between sections with smoothstep over the last 25% of each section. On phone, yaw and pitch are halved.
+Conventions: yaw turns the view toward the section's subject; positive yaw moves the look-at toward +x (the right of the frame), negative toward −x. It is implemented as a look-at offset, `lookAt.x += tan(yaw) · d` where `d` is the distance from the camera to the base look-at, never as `camera.rotation.y`. Pitch positive looks up, same construction on y. `fovScale` multiplies the base fov (1.04 is a pull-back, 0.95 a push). The camera position never changes; only the look direction and fov. `tod` is piecewise linear between the breakpoints above and 0 through all of 01. View values ease between sections with smoothstep over the last 25% of each section.
+
+Portrait (aspect < 1) uses its own yaw column so each subject comes into the narrow frame; pitch and `fovScale` are shared: open 0, kalshi 0, heron 0, darch +12, summers −12, alive 0, yours +3, contact −6.
 
 ### 3.1 Copy (verbatim; `src/site/copy.ts`)
 
@@ -84,7 +86,7 @@ Ignition labels (mono hairline, near each light as it catches, fade out after 1.
 
 **02 · kalshi.**
 h2: `every light on that ridge is a trade my algorithm made.`
-Body: `about thirty thousand of them since january 2026. i built the whole thing: the feeds, the quoting, the risk checks, the replay stack i use to find out what went wrong. somewhere in there it climbed into the top 100 in the world.`
+Body: `about thirty thousand of them since january 2026. i built the whole thing: the feeds, the quoting, the risk checks, the replay stack i use to find out what went wrong. somewhere in there it climbed into the top 100 all-time on kalshi's crypto leaderboard.`
 Figures (oversized mono, in the copy column): `about 30,000 trades` · `top 100 all-time, crypto`.
 Mono: `jan 2026 → oct 2026 · as of oct 2026 · not live`.
 Counter (mono, under the ridge figure, counts with the reveal): `{n} trades`, where n = round(reveal × facts.kalshi.trades / 10) × 10 formatted with `toLocaleString('en-US')`, capped at the fact.
@@ -133,13 +135,13 @@ Mono: `ethan wang · cleveland · as of oct 2026`.
 4. `a help-desk assistant that reads the docs for you`
 5. `a pricing model for free-drinks promos at bars`
 
-Each is built once at load with the house grammar (§5.4) and sits on the hillside above the lot. Their windows light at the end of the ignition chain (§5.3).
+Each is built once at load with the house grammar (§5.4) and sits on the near slope above the lot, between the lot and the camera. Their windows light at the end of the ignition chain (§5.3).
 
 ## 4. The valley
 
-Scene units: 1 unit ≈ 1 m. The terrain is 160 × 100 units, centred at the origin, the river running along +x at z ≈ 0 (the ribbon spans z −6..6). All positions live in `src/valley/layout.ts` as named constants; nothing is hand-placed in a component. Every emitter's x lies in [−36, 40] and z in [−38, 32] so the whole lit valley fits one frame.
+Scene units: 1 unit ≈ 1 m. The terrain is 160 × 100 units, centred at the origin, the river running along +x at z ≈ 0 (the ribbon spans z −6..6). All positions live in `src/valley/layout.ts` as named constants; nothing is hand-placed in a component. Every emitter's x lies in [−36, 40] and z in [−38, 26] so the whole lit valley fits one landscape frame.
 
-**Hero camera (desktop, landscape):** position (0, 14, 70), look-at (0, 2, −10), fov 36, near 1, far 260. **Portrait (aspect < 1):** position (0, 22, 96), look-at (0, 0, −12), fov 44, so the valley sits in the lower 60% of the frame and the copy sits in the sky band. A unit test projects every emitter in `layout.ts` through both cameras with three's `PerspectiveCamera` + `Vector3.project` at 1440 × 900 and 390 × 844 and asserts |x|, |y| ≤ 0.85 NDC.
+**Hero camera (desktop, landscape):** position (0, 14, 70), look-at (0, 2, −10), fov 36, near 1, far 260. **Portrait (aspect < 1):** position (0, 22, 96), look-at (0, 0, −12), fov 44, so the valley sits in the lower 60% of the frame and the copy sits in the sky band; the portrait frame is too narrow to hold the whole valley at once, which is why portrait has its own yaw column (§3). A unit test projects every emitter in `layout.ts` through both cameras with three's `PerspectiveCamera` + `Vector3.project` (emitter y taken as `heightAt(x, z)` plus 1..6) and asserts: at 1440 × 900, |x|, |y| ≤ 0.85 NDC for every emitter; at 390 × 844 with yaw 0, |y| ≤ 0.85 for every emitter and |x| ≤ 0.85 for `hut`, `kalshiLamp`, `bar1`, `bar2`, `bar3`, `hill1`…`hill5`, `visitor`; and at 390 × 844 with each section's portrait yaw applied, that section's subject (kalshi: `kalshiLamp`; heron: `bar2`; darch: `mill`; summers: `nist` and `wvu`; yours: `visitor`; contact: `hut`) has |x| ≤ 0.85.
 
 ### 4.1 Ground, river, sky
 
@@ -151,7 +153,7 @@ Scene units: 1 unit ≈ 1 m. The terrain is 160 × 100 units, centred at the ori
 
 ### 4.2 The hut (discord bots)
 
-Near bank, left, (−30, h, 26). A 3 × 2.5 × 3 box with a pitched roof and one window (0.8 × 0.6 emissive quad, warm). The first light. Lit from the chain onward and never goes out; a `flicker` transient (0.4 s, brightness dipping to 0.6 then back) fires on email hover or focus in 08.
+Near bank, left, (−18, h, 22). A 3 × 2.5 × 3 box with a pitched roof and one window (0.8 × 0.6 emissive quad, warm). The first light. Lit from the chain onward and never goes out; a `flicker` transient (0.4 s, brightness dipping to 0.6 then back) fires on email hover or focus in 08.
 
 ### 4.3 The hill cabins (nist, wvu)
 
@@ -163,7 +165,7 @@ Far bank, (−10, h, −20), (0, h, −22), (10, h, −21), (20, h, −23). Four
 
 ### 4.5 The mill (darch)
 
-Far bank, right end, on the mill pad at (36, h, −10), its wheel side facing the river. The biggest building: 10 × 9 × 7 with a 5 × 4 window grid on the river face (20 instances in `Windows.tsx` with per-instance `aRow` 0–3, bottom row 0) and a wheel (a 3.2-radius ring of 12 paddles) overhanging the river at (36, 2.6, −3). Its state is `darchT` ∈ [0, 1]: 0–0.15 the rows flood bottom-up (row r lights at darchT = 0.03 + 0.03r) and the wheel spins up; 0.15–0.75 lit and turning at 0.5 rad/s; 0.75–1.0 the rows go out top-down (row r goes out at darchT = 0.78 + 0.05(3 − r)) and the wheel coasts to a stop by 1.0. Section 04's `s` drives `darchT` directly. The chain in the hero plays the same curve once over 1.4 s. Scrolling back relights it.
+Far bank, right end, on the mill pad at (30, h, −12), its wheel side facing the river. The biggest building: 10 × 9 × 7 with a 5 × 4 window grid on the river face (20 instances in `Windows.tsx` with per-instance `aRow` 0–3, bottom row 0) and a wheel (a 3.2-radius ring of 12 paddles) overhanging the river at (30, 2.6, −5). Its state is `darchT` ∈ [0, 1]: 0–0.15 the rows flood bottom-up (row r lights at darchT = 0.03 + 0.03r) and the wheel spins up; 0.15–0.75 lit and turning at 0.5 rad/s; 0.75–1.0 the rows go out top-down (row r goes out at darchT = 0.78 + 0.05(3 − r)) and the wheel coasts to a stop by 1.0. Section 04's `s` drives `darchT` directly. The chain in the hero plays the same curve once over 1.4 s. Scrolling back relights it.
 
 ### 4.6 The ridge (kalshi)
 
@@ -175,7 +177,7 @@ The spread along x is uniform with jitter, from the count alone. The copy says t
 
 ### 4.7 The lot and the hillside (visitor)
 
-Near bank, right: the lot at (6, h, 26), and five house sites up the near slope at (14, h, 22), (22, h, 18), (10, h, 16), (28, h, 12), (18, h, 10). The five sites are built at load from the hillside sentences (§3.2) with the house grammar into one merged static mesh (`Hillside.tsx`, one draw). Each house is one emitter driving all of its window instances. The lot is empty until the visitor builds; if `localStorage.visitorSentence` exists it is rebuilt silently at load and lights with the hillside.
+Near bank, right. The near bank rises toward the camera (+z), so "up the slope" is toward larger z. The lot sits low at (6, h, 10), and the five house sites sit above it at (12, h, 15), (18, h, 19), (8, h, 20), (22, h, 13), (15, h, 24). The five sites are built at load from the hillside sentences (§3.2) with the house grammar into one merged static mesh (`Hillside.tsx`, one draw). Each house is one emitter driving all of its window instances. The lot is empty until the visitor builds; if `localStorage.visitorSentence` exists it is rebuilt silently at load and lights with the hillside.
 
 ### 4.8 Light rule enforcement
 
@@ -202,7 +204,7 @@ No React, no DOM, no three renderer. three's math classes are allowed.
 
 ### 5.3 `ignition.ts`
 
-`ignitionSchedule()` returns the hero chain as `[{ target, at, dur, kind }]` with `at` in seconds from T0 and `target` an emitter id or `'ridge'`:
+`ignitionSchedule()` returns the hero chain as `[{ target, at, dur, kind }]` with `at` in seconds from T0 and `target` an emitter id (§4.8):
 
 | target | at | dur | kind |
 |---|---|---|---|
@@ -242,6 +244,8 @@ Sections: the eight ids and heights, `sectionRanges`, `locate`, `SectionRange`. 
 
 One fixed R3F `<Canvas>` behind the DOM (z 0; `main` at z 10). The canvas wrapper is `pointer-events: none`; hover, tap and parallax use window-level pointer listeners with screen-space hit tests against `projection.ts`'s cached projected emitter positions. No R3F pointer events. `gl`: antialias on desktop, `powerPreference: 'high-performance'`, `alpha: false`, `localClippingEnabled: true`, ACES tone mapping, sRGB output. DPR 1.25 desktop, 1 phone. Shadows: one directional shadow map 1024 on desktop from the moon/sun direction; casters are `Buildings`, `Hillside`, `VisitorHouse` and `MillWheel`; the terrain only receives; none on phone.
 
+`Scene.tsx` mounts the Canvas, the warm-up (§7), the error boundary (§11) and the components below; `glowTexture.ts` makes the 64 × 64 radial sprite every glow and ridge point samples (§12).
+
 Components (each one main-pass draw unless stated):
 - `Sky.tsx` (sphere, gradient shader), `Stars.tsx` (points), `Moon.tsx` (sprite)
 - `Terrain.tsx` (vertex-colour mesh with the treeline merged in, `MeshLambertMaterial` with `flatShading`)
@@ -257,7 +261,7 @@ Components (each one main-pass draw unless stated):
 - `Driver.tsx`: the one `useFrame`. It calls `applyFrame(inputs, targets)` from `src/gl/driverCore.ts`, a pure function tested in Node: reads the scroll ref, evaluates `timelineAt` and `environmentAt`, advances the ignition, pulse, flicker and build clocks on wall time, latches the reveals, writes uniforms and instance attributes, updates fog and lights, and writes projected label positions into a typed array the DOM labels read. Nothing else in the GL tree reads scroll.
 - `Labels.tsx` (DOM, in `src/site/`): the ignition, cabin and hillside labels are DOM spans positioned from the driver's projected positions each frame (no `getBoundingClientRect`).
 
-Main-pass draws at rest: sky, stars, moon, terrain, river, mist, buildings, windows, glow, wheel, ridge points, crest line, hedge lines, rain, hillside, visitor = 16 on desktop (+1 scaffold during a build), 13 on phone. Shadow pass on desktop: 4 casters. Lights: one hemisphere, one directional (moon/sun), four point lights parented to the hut, the mill, the kalshi lamp and the visitor house, intensities from their `aLit`.
+Main-pass draws at rest: sky, stars, moon, terrain, river, mist, buildings, windows, glow, wheel, ridge points, crest line, hedge lines, rain, hillside, visitor = 16 on desktop (+1 scaffold during a build); phone drops mist and rain: 14 (+1 scaffold during a build). Shadow pass on desktop: 4 casters. Lights: one hemisphere, one directional (moon/sun), four point lights parented to the hut, the mill, the kalshi lamp and the visitor house, intensities from their `aLit`.
 
 ## 7. Warm-up, first paint and T0
 
@@ -285,7 +289,7 @@ Scrims: each copy column sits on a vertical gradient from the scrim colour at th
 
 Typography: Archivo variable (kept, `next/font/local`, metric fallback), display `clamp(2.5rem, 7vw, 7rem)` weight 700, line-height 0.95, tracking −0.03em, lowercase; h2 `clamp(1.6rem, 3.8vw, 3.2rem)`; body 18–20 px weight 500, max 34ch; JetBrains Mono (kept) 12–14 px for every number, label, nav and link, tabular numerals; oversized mono figures 48–72 px for the evidence numbers. No kinetic type. No font axis animates.
 
-Layout: copy in a left column (grid columns 1–5 of 12, max 34ch), the valley across the whole frame, the active section's subject kept in the right two-thirds by the view offsets. Fixed mono chrome: nav top-right, home mark top-left, scroll cue bottom-left in 01 only. No cards, panels, blur or borders.
+Layout: copy in a left column (grid columns 1–5 of 12, max 34ch), the valley across the whole frame, each section's yaw turning toward its subject; subjects at the far left (the cabins) sit beside the column, whose scrim is only as wide as the text. `Site.tsx` composes `chrome/Nav`, `sections/*` and `Labels`; `Reveal` implements `[data-reveal]`; `Counter` is the ridge counter; `Figure` renders the oversized mono figures. Fixed mono chrome: nav top-right, home mark top-left, scroll cue bottom-left in 01 only. No cards, panels, blur or borders.
 
 DOM motion: triggered line reveals on `[data-reveal]`, translateY 100% → 0 plus opacity, 0.5 s power3.out, stagger 0.06, reversing on scroll-back; the ridge counter scramble-decodes digits only (seeded, deterministic, run only while the value changes); no count-ups on any other figure; no parallax on text.
 
@@ -297,7 +301,7 @@ Both are committed files produced by the visual gate agent with Playwright at 14
 
 **Desktop:** everything in §6.
 
-**Phone tier** (`detectTier`, kept: pointer coarse, width < 820, or `hardwareConcurrency ≤ 4`): DPR 1, no shadows, no rain, no mist, ridge N/5 at ×1.8 size, stars 400; yaw and pitch halved; tap on a hillside house or an emitter shows its label as a bottom-aligned mono line; the input blurs on Enter and the view reframes so the lot sits above the keyboard. **Portrait recomposition is by aspect (vw < vh), not tier**, so a small landscape laptop keeps the landscape camera. drei's `PerformanceMonitor` only walks the step-down ladder and never changes `tier`. Step-down ladder on any tier if frame time exceeds 20 ms for 60 frames: DPR 1.25 → 1 → 0.85 (`DPR_FLOOR` becomes 0.85), then ridge halves, then rain off, then mist off. `TierSettings` keeps `tier`, `dpr`, `shadows`, `antialias`; `stretch`, `lines` and `msaa` are removed.
+**Phone tier** (`detectTier`, kept: pointer coarse, width < 820, or `hardwareConcurrency ≤ 4`): DPR 1, no shadows, no rain, no mist, ridge N/5 at ×1.8 size, stars 400; tap on a hillside house or an emitter shows its label as a bottom-aligned mono line; the input blurs on Enter and the view reframes so the lot sits above the keyboard. **Portrait recomposition is by aspect (vw < vh), not tier**, so a small landscape laptop keeps the landscape camera. drei's `PerformanceMonitor` only walks the step-down ladder and never changes `tier`. Step-down ladder on any tier if frame time exceeds 20 ms for 60 frames: DPR 1.25 → 1 → 0.85 (`DPR_FLOOR` becomes 0.85), then ridge halves, then rain off, then mist off. `TierSettings` keeps `tier`, `dpr`, `shadows`, `antialias`; `stretch`, `lines` and `msaa` are removed.
 
 **Reduced motion:** no chain (final states at T0), no rain, river and mist frozen, wheel still, cuts instead of eases for view offsets and reveals, the house appears built with no scaffolding, the pulse is a single 300 ms brightening.
 
@@ -307,7 +311,7 @@ Both are committed files produced by the visual gate agent with Playwright at 14
 
 ## 12. Performance budget and silent killers
 
-- Main-pass draws ≤ 18 at rest on desktop, ≤ 14 on phone; shadow pass ≤ 6 on desktop. One `useFrame`. No allocation in the frame loop (preallocated vectors, typed arrays; `applyFrame` is tested for zero allocation by comparing `process.memoryUsage().heapUsed` deltas over 1,000 calls in Node, which is coarse, and by review).
+- Main-pass draws ≤ 18 at rest on desktop, ≤ 14 at rest and ≤ 15 during a build on phone; shadow pass ≤ 6 on desktop. One `useFrame`. No allocation in the frame loop (preallocated vectors, typed arrays; `applyFrame` is tested for zero allocation by comparing `process.memoryUsage().heapUsed` deltas over 1,000 calls in Node, which is coarse, and by review).
 - Terrain ≈ 16k vertices built once; buildings merged once; windows and glow instanced; the ridge one points draw; the hillside one mesh; the visitor house rebuilt only on a new sentence.
 - Rain is the first thing dropped, then mist. The ridge is never below N/10.
 - Textures: none except the glow sprite (64 × 64, generated once on a 2D canvas).
@@ -317,6 +321,7 @@ Both are committed files produced by the visual gate agent with Playwright at 14
 ## 13. Module layout
 
 ```
+next.config.ts           output: 'export'
 src/app/                 layout.tsx (fonts, metadata, no theme script), page.tsx, globals.css, fonts/
 src/valley/              types.ts, facts.ts, palette.ts, sections.ts, layout.ts, terrain.ts, ridge.ts,
                          timeline.ts, environment.ts, ignition.ts, lights.ts, house.ts, build.ts, hash.ts, rng.ts
@@ -340,7 +345,7 @@ Each gate is judged by an Opus visual-check agent from Playwright stills against
 | gate | after | passes when | on failure |
 |---|---|---|---|
 | G1 valley still | terrain, river, sky, buildings, windows lit | the lit night view reads as one place with depth and weather, dark and sober, not Kyoto, not a toy town; every light visible is a registered emitter; every emitter is in frame | re-author the layout and the palette keyframes once; on a second failure, simplify the buildings to silhouettes with windows |
-| G2 ignition | chain + labels | stills at T0+1.0, 1.9, 2.6, 3.2, 5.0 show the hut first, the chain accelerating, the mill flooding and going out, the hillside catching, the trickle at the ridge's left end; labels legible and gone by 7 s | retime the gaps; shorten the mill's beat; never reorder |
+| G2 ignition | chain + labels | stills at T0+1.0, 1.9, 2.6, 3.2, 3.7, 5.0 show the hut first, the chain accelerating, the mill flooding (2.6, 3.2) and going out while the hillside catches (3.7), the trickle at the ridge's left end (5.0); labels legible and gone by 7 s | retime the gaps; shorten the mill's beat; never reorder |
 | G3 ridge | ridge reveal + counter | at s = 0.3, 0.6, 1.0 of section 02 the ridge reads as a timeline filling left to right over a crest, not glitter; the counter tracks the reveal | widen the jitter band, reduce the point size |
 | G4 darch | mill scrub | stills at darchT 0.1, 0.5, 0.9 show flood, running, going out; wheel motion visible | retime; raise the wheel |
 | G5 house | visitor build, hillside in frame | stills at 0.5, 2.0, 3.85, 4.4 s show scaffolding, the cut rising, retraction, the window lighting; the tag shows true counts; the same sentence builds the same house twice; the hillside with six houses still reads sober, not a toy town | fix the grammar before anything else; darken the house ramp |
@@ -359,7 +364,7 @@ Each gate is judged by an Opus visual-check agent from Playwright stills against
 
 ## 16. Verification
 
-- Unit (vitest, Node): heightfield has no NaN and the river channel is below both banks; the ridge generator yields exactly N points with monotone `aBirth` in x and all within the crest band; every emitter projects inside ±0.85 NDC through both hero cameras; every section range has width > 0; `timelineAt` is monotone in `tod`, continuous in `view`, and `darchT` is 0 outside section 04; `environmentAt` interpolates exactly at keyframes; the five ignition chain gaps are each 60% of the last (±1 ms) and the chain ends at 5.0 s; the house grammar is deterministic, yields 1–3 tiers and 150–2,200 parts, matches the two worked examples within ±5%, and `houseSvg` has balanced tags; `buildStateAt` latches at 4.4 s and the window lights at 4.25 s; the light registry has exactly the ids in §4.8 with meanings; the palette and `globals.css` agree; the scrim contrast test; copy contains no uppercase letters outside URLs, no `$20`, no `#75`, no `notional`, no `contracts`.
+- Unit (vitest, Node): heightfield has no NaN and the river channel is below both banks; the ridge generator yields exactly N points with monotone `aBirth` in x and all within the crest band; the projection assertions in §4 hold for both cameras; every section range has width > 0; `timelineAt` is monotone in `tod`, continuous in `view`, and `darchT` is 0 outside section 04; `environmentAt` interpolates exactly at keyframes; the five ignition chain gaps are each 60% of the last (±1 ms) and the chain ends at 5.0 s; the house grammar is deterministic, yields 1–3 tiers and 150–2,200 parts, matches the two worked examples within ±5%, and `houseSvg` has balanced tags; `buildStateAt` latches at 4.4 s and the window lights at 4.25 s; the light registry has exactly the ids in §4.8 with meanings; the palette and `globals.css` agree; the scrim contrast test; copy contains no uppercase letters outside URLs, no `$20`, no `#75`, no `notional`, no `contracts`.
 - Integration (vitest, Node): `applyFrame` writes `uReveal` from `g` and latches it; projected label positions are clamped; a lost-context timeout resolves.
 - Visual: the gates in §14, judged by Opus from stills.
 - Build: `npm run build` produces `out/` with no server features; `grep -r "fetch(" src/` returns nothing; no `app/api`.
