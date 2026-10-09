@@ -7,7 +7,8 @@ import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Tier } from '@/valley/types';
 import { PALETTE } from '@/valley/palette';
-import { CAMERA_LANDSCAPE, CAMERA_PORTRAIT } from '@/valley/layout';
+import { CAMERA_LANDSCAPE } from '@/valley/layout';
+import { cameraFor } from './composition';
 import { getGlowTexture } from './glowTexture';
 import { RIDGE_ALPHA, RIDGE_POINT_WORLD, buildRidgeGeometry, crestLinePoints, pointScale, ridgeConfig } from './ridgeGeometry';
 import { RIDGE_FRAG, RIDGE_VERT } from './shaders/ridge';
@@ -54,7 +55,7 @@ export function Ridge({ tier, reveal, lit }: RidgeProps) {
   const dpr = useThree((s) => s.viewport.dpr);
 
   useEffect(() => {
-    setPixelScale(material, height * dpr, width < height ? CAMERA_PORTRAIT.fov : CAMERA_LANDSCAPE.fov, sizeScale);
+    setPixelScale(material, height * dpr, cameraFor(width, height).fov, sizeScale);
   }, [material, width, height, dpr, sizeScale]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   useEffect(() => () => material.dispose(), [material]);

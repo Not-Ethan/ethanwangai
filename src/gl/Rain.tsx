@@ -5,7 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ALPHA, PALETTE } from '@/valley/palette';
-import { CAMERA_LANDSCAPE, CAMERA_PORTRAIT } from '@/valley/layout';
+import { cameraFor } from './composition';
 import { RAIN, buildRainGeometry } from './rainGeometry';
 import { RAIN_FRAG, RAIN_VERT } from './shaders/rain';
 
@@ -32,7 +32,7 @@ export function Rain({ rain, time }: { rain: { value: number }; time: { value: n
   const material = useMemo(() => createRainMaterial(rain, time), [rain, time]);
   const width = useThree((s) => s.size.width);
   const height = useThree((s) => s.size.height);
-  const origin = width < height ? CAMERA_PORTRAIT.position : CAMERA_LANDSCAPE.position;
+  const origin = cameraFor(width, height).position;
   useEffect(() => () => geometry.dispose(), [geometry]);
   useEffect(() => () => material.dispose(), [material]);
   return (
