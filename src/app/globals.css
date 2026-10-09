@@ -90,7 +90,10 @@ body {
 
 /* sections: copy in a left column (grid columns 1–5 of 12) over the valley (spec §9 layout). The section's inline
    min-height is its heightVh; the grid inherits it so the sticky column has room to hold. */
-.section { position: relative; }
+/* the section is a column so its grid stretches to the section's min-height and the sticky copy column rides
+   the whole section (the grid, not the section, is the sticky containing block). */
+.section { position: relative; display: flex; flex-direction: column; }
+.section-grid { flex: 1 0 auto; }
 .section-grid {
   display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem;
   min-height: inherit; padding: 6.5rem 1rem 0;
@@ -108,14 +111,14 @@ body {
    ink-dim on it. */
 .scrim {
   width: fit-content; max-width: calc(100% + 2rem); padding: 2.5rem 1rem; margin-inline: -1rem;
-  position: relative; isolation: isolate;
+  isolation: isolate;
 }
 /* the gradient lives on a pseudo-element behind the copy so the side fade never masks the text itself */
 .scrim::before {
   content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: linear-gradient(to bottom, transparent, var(--scrim) 2.5rem, var(--scrim) calc(100% - 2.5rem), transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 6rem), transparent);
-  mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 6rem), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 10rem), transparent);
+  mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 10rem), transparent);
 }
 
 /* fixed mono chrome (spec §9): home mark top-left, nav top-right. No band, no panel. */
@@ -125,7 +128,7 @@ body {
 }
 .nav-home { white-space: nowrap; flex-shrink: 0; }
 .nav-sep { display: none; }
-@media (min-width: 48rem) { .nav { padding: 1.25rem 3rem; } .nav-sep { display: inline; } .scrim::before { right: -4rem; } }
+@media (min-width: 48rem) { .nav { padding: 1.25rem 3rem; } .nav-sep { display: inline; } .scrim::before { right: -7rem; } }
 
 /* 07's one input: a hairline rule under the text, the palette's rule colour. */
 .yours-input {
