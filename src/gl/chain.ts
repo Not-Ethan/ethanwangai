@@ -49,14 +49,18 @@ const ANCHOR_AT: Float64Array = Float64Array.from(ANCHORS, (a) => stepFor(labelT
 const AT_BY_EMITTER = new Float64Array(N).fill(Number.NaN);
 for (let k = 0; k < ANCHORS.length; k++) AT_BY_EMITTER[ANCHOR_INDEX[k]] = ANCHOR_AT[k];
 
-function alphaAt(at: number, introT: number | null): number {
-  if (introT === null || Number.isNaN(at)) return 0;
-  const dt = introT - at;
+/** The label curve: dt seconds after a label's catch. Shared with arrival.ts. */
+export function labelEnvelope(dt: number): number {
   if (dt < 0) return 0;
   if (dt < LABEL_FADE_IN) return dt / LABEL_FADE_IN;
   if (dt < LABEL_HOLD) return 1;
   if (dt < LABEL_HOLD + LABEL_FADE_OUT) return 1 - (dt - LABEL_HOLD) / LABEL_FADE_OUT;
   return 0;
+}
+
+function alphaAt(at: number, introT: number | null): number {
+  if (introT === null || Number.isNaN(at)) return 0;
+  return labelEnvelope(introT - at);
 }
 
 export function labelAlpha(anchor: EmitterId, introT: number | null): number {
