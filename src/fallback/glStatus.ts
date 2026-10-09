@@ -14,14 +14,22 @@ export function glStatus(): GlStatus {
 }
 
 /** Runs the probe the first time and caches the answer; useSyncExternalStore's getSnapshot, so it never notifies. */
+function flagFailed(): void {
+  if (typeof document !== 'undefined' && document.documentElement) document.documentElement.setAttribute('data-gl', 'failed');
+}
+
 export function probeGl(probe: () => boolean = webgl2Available): GlStatus {
-  if (status === 'unknown') status = probe() ? 'ok' : 'failed';
+  if (status === 'unknown') {
+    status = probe() ? 'ok' : 'failed';
+    if (status === 'failed') flagFailed();
+  }
   return status;
 }
 
 export function markGlFailed(): void {
   if (status === 'failed') return;
   status = 'failed';
+  flagFailed();
   for (const l of [...listeners]) l();
 }
 

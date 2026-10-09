@@ -87,9 +87,12 @@ body {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background-color: var(--sky-night-zenith); background-position: center; background-size: cover; background-repeat: no-repeat;
 }
-/* the static ignition-label list under the deck is the no-WebGL fallback (spec §11); while a canvas is mounted it is
-   kept in the DOM for the exported HTML and screen readers but not drawn. */
-:root:has(.valley-canvas canvas) [data-labels] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* spec §11: the ignition labels show as a static list only on the no-GL tier; with GL they are the projected spans.
+   Visually hidden, not display:none, so the strings stay in the HTML and in the accessibility tree. */
+html:not([data-gl='failed']) [data-labels] {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
 
 /* sections: copy in a left column (grid columns 1–5 of 12) over the valley (spec §9 layout). The section's inline
    min-height is its heightVh; the grid inherits it so the sticky column has room to hold. */

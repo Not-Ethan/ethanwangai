@@ -1,17 +1,18 @@
 'use client';
 // The GL layer's root (spec §6, §7, §11). It mounts inside Stage 0's fixed div.valley-canvas, whose CSS background is
 // the committed still, so the first paint is a picture. The canvas mounts at opacity 0; the warm-up fades it in and
-// records T0. No WebGL2 (or ?nogl=1, read by webgl2Available), a renderer error, or a lost context unmounts the canvas
+// records T0. No WebGL2 (or ?nogl=1, read by probeGl), a renderer error, or a lost context unmounts the canvas
 // and leaves the still and the DOM. Sky, stars, moon, terrain, river, mist (desktop), buildings, windows, glow, the lights, the
 // camera rig and the driver are the scene for this stage.
 import { EMITTERS } from '@/valley/lights';
 import { EMITTER_INDEX } from './projection';
-import { Component, useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Component, useCallback, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Canvas, type RootState } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 import { CAMERA_LANDSCAPE, PLACES } from '@/valley/layout';
-import { webgl2Available } from '@/fallback/glSupport';
+import { useGlStatus } from '@/fallback/Still';
+import { markGlFailed, watchContextLoss } from '@/fallback/glStatus';
 import { useScroll } from '@/scroll/ScrollProvider';
 import { PERF_MONITOR, useTier } from './useTier';
 import {
@@ -61,12 +62,13 @@ export class GLErrorBoundary extends Component<{ onError: () => void; children?:
 }
 
 export function Scene() {
-  const [failed, setFailed] = useState(() => !webgl2Available());
-  const fail = useCallback(() => setFailed(true), []);
-  if (failed) return null;
+  const status = useGlStatus();
+  // The still is div.valley-canvas's own CSS background (Site.tsx), so it is already the picture while the status is
+  // 'unknown' or 'failed'; the canvas mounts only while the probe says it can run.
+  if (status !== 'ok') return null;
   return (
-    <GLErrorBoundary onError={fail}>
-      <ValleyCanvas onFail={fail} />
+    <GLErrorBoundary onError={markGlFailed}>
+      <ValleyCanvas onFail={markGlFailed} />
     </GLErrorBoundary>
   );
 }
@@ -95,7 +97,7 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
     state.gl.outputColorSpace = THREE.SRGBColorSpace;
     state.scene.fog = fog;
     attachFog(refs, fog);
-    state.gl.domElement.addEventListener('webglcontextlost', onFail, { once: true });
+    watchContextLoss(state.gl.domElement, onFail);
     void warmUp({
       fontsReady: document.fonts.ready,
       compile: () => state.gl.compileAsync(state.scene, state.camera),

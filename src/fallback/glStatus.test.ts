@@ -64,3 +64,18 @@ describe('watchContextLoss (index Review Focus 5)', () => {
     expect(onLost).not.toHaveBeenCalled();
   });
 });
+
+describe('the failed tier is flagged on <html> for the CSS (spec §11)', () => {
+  it('sets data-gl="failed" on a failed probe and on markGlFailed', () => {
+    const attrs: Record<string, string> = {};
+    vi.stubGlobal('document', { documentElement: { setAttribute: (k: string, v: string) => { attrs[k] = v; } } });
+    probeGl(() => false);
+    expect(attrs['data-gl']).toBe('failed');
+    resetGlStatusForTests();
+    delete attrs['data-gl'];
+    probeGl(() => true);
+    expect(attrs['data-gl']).toBeUndefined();
+    markGlFailed();
+    expect(attrs['data-gl']).toBe('failed');
+  });
+});

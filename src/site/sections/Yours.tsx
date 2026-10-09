@@ -5,6 +5,8 @@ import { SECTIONS } from '@/valley/sections';
 import { Reveal } from '@/site/Reveal';
 import { useScroll } from '@/scroll/ScrollProvider';
 import { submitYours } from '@/site/yoursSubmit';
+import { useGlFailed } from '@/fallback/Still';
+import { VisitorHouseSvg } from '@/fallback/HouseSvg';
 import { VISITOR_MAX, loadVisitorSentence, yoursDom } from '@/site/visitorSentence';
 
 const HEIGHT_VH = SECTIONS.find((s) => s.id === 'yours')?.heightVh ?? 100;
@@ -28,6 +30,7 @@ export function Yours() {
   const input = useRef<HTMLInputElement>(null);
   const clock = useRef<HTMLParagraphElement>(null);
   const tag = useRef<HTMLParagraphElement>(null);
+  const glFailed = useGlFailed();
 
   useEffect(() => bindYours(input.current, clock.current, tag.current), []);
 
@@ -59,8 +62,9 @@ export function Yours() {
             <button type="submit" className="mono link yours-button">{c.button}</button>
           </form>
           <p className="mono ink-dim mt-3">{c.hint}</p>
-          <p ref={clock} id="yours-clock" className="mono mt-4" aria-live="off" />
-          <p ref={tag} id="yours-tag" className="mono mt-1" aria-live="polite" />
+          {glFailed ? <VisitorHouseSvg /> : null}
+          <p ref={clock} id="yours-clock" hidden={glFailed} className="mono mt-4" aria-live="off" />
+          <p ref={tag} id="yours-tag" hidden={glFailed} className="mono mt-1" aria-live="polite" />
         </Reveal>
       </div>
     </section>
