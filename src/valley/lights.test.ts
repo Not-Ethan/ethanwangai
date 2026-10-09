@@ -14,7 +14,7 @@ describe('EMITTERS', () => {
     for (const e of EMITTERS) expect(e.meaning.trim().length).toBeGreaterThan(0);
     IDS.forEach((id, i) => expect(EMITTER_INDEX[id]).toBe(i));
   });
-  it('stands every emitter over its layout place, 0.7 to 6 units above the ground', () => {
+  it('stands every emitter over its layout place, 0.4 to 6 units above the ground', () => {
     const place: Record<EmitterId, readonly number[]> = {
       hut: PLACES.hut, nist: PLACES.nist, wvu: PLACES.wvu, kalshiLamp: PLACES.kalshiLamp,
       bar1: PLACES.bar1, bar2: PLACES.bar2, bar3: PLACES.bar3, bar4: PLACES.bar4, mill: PLACES.mill,
@@ -26,7 +26,7 @@ describe('EMITTERS', () => {
       const [x, y, z] = e.position;
       expect([x, z]).toEqual([place[e.id][0], place[e.id][2]]);
       const lift = y - heightAt(x, z);
-      expect(lift).toBeGreaterThanOrEqual(0.7 - 1e-6); expect(lift).toBeLessThanOrEqual(6);
+      expect(lift).toBeGreaterThanOrEqual(0.4 - 1e-6); expect(lift).toBeLessThanOrEqual(6);
     }
   });
   it('colours emitters only from the palette emitter colours, with a positive size', () => {

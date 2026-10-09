@@ -7,5 +7,5 @@ import { facts } from '@/valley/facts';
  * × 10, capped at the fact) and adds the digit scramble.
  */
 export function Counter() {
-  return <p className="mono ink-dim mt-2" data-counter>{copy.kalshi.counter(facts.kalshi.trades)}</p>;
+  return <p className="mono mt-2" data-counter>{copy.kalshi.counter(facts.kalshi.trades)}</p>;
 }

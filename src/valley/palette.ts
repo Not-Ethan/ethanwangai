@@ -40,7 +40,7 @@ export interface SkyKeyframe { name: SkyName; tod: number; zenith: string; horiz
  *  is grazing (y 0.18). Modelled up-facing ground brightness is dusk > night > blue, and the screenshots confirm the open view is lighter and warmer than kalshi. */
 export const SKY_KEYFRAMES: readonly SkyKeyframe[] = [
   { name: 'dusk', tod: 0, zenith: '#1B2238', horizon: '#C9825A', east: '#2A2E48', sun: '#E8A070', sunIntensity: 10 },
-  { name: 'blue', tod: 0.10, zenith: '#0E1426', horizon: '#2E4360', east: '#141A2E', sun: '#8FA8D0', sunIntensity: 12 },
+  { name: 'blue', tod: 0.06, zenith: '#0E1426', horizon: '#2E4360', east: '#141A2E', sun: '#8FA8D0', sunIntensity: 12 },
   { name: 'night', tod: 0.6, zenith: '#05070F', horizon: '#101830', east: '#070A14', sun: '#9FB2D8', sunIntensity: 16 },
   { name: 'predawn', tod: 1, zenith: '#0A0F1E', horizon: '#1E2A40', east: '#5A6E8C', sun: '#B8C4D8', sunIntensity: 14 },
 ];
