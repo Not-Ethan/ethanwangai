@@ -285,7 +285,7 @@ One palette object, dark, the only place colour literals exist in `.ts`/`.tsx`; 
 - terrain ramp: low `#1B2C22`, mid `#26402E`, slope `#33404F`, crest `#0E121A`, treeline `#090B10` (lifted one step after G1); river `#6E8AA6`; mist `#8FA3B8`
 - fog colour follows the horizon.
 
-Scrims: each copy column sits on the scrim colour anchored to the left edge of the frame like a vignette, fading out to the right past the text and fading top and bottom (a pseudo-element behind the column; no straight edge, never a card), guaranteeing 4.5:1 on body copy (tested by a contrast unit test against the palette). Amended after G1: a text-wide gradient read as a card over the valley.
+Scrims: each copy column sits in one soft ellipse of the scrim colour at about half strength (a pseudo-element behind the column, centred on the text block, fading out in every direction: no corner, no straight edge, never a card), and every line of copy carries a faint halo in the scrim colour (`text-shadow`), which is what guarantees legibility at the block's corners and over the bright dusk sky. The contrast unit test pins 4.5:1 for ink on the scrim colour. Amended twice after G1: a text-wide gradient read as a card, and a masked left vignette read as a boxed panel over the sky.
 
 Typography: Archivo variable (kept, `next/font/local`, metric fallback), display `clamp(2.5rem, 7vw, 7rem)` weight 700, line-height 0.95, tracking −0.03em, lowercase; h2 `clamp(1.6rem, 3.8vw, 3.2rem)`; body 18–20 px weight 500, max 34ch; JetBrains Mono (kept) 12–14 px for every number, label, nav and link, tabular numerals; oversized mono figures 48–72 px for the evidence numbers. No kinetic type. No font axis animates.
 
