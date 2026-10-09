@@ -1,3 +1,5 @@
+import { Site } from '@/site/Site';
+
 export default function Home() {
-  return <main />;
+  return <Site />;
 }
