@@ -104,7 +104,7 @@ body {
 }
 
 /* scrim (spec §9): a vertical gradient from the scrim colour at the text to transparent above and below, only as
-   wide as the text. No blur, no box-shadow, no border over the canvas. palette.test.ts pins 4.5:1 for ink and
+   wide as the text. No blur, no shadow, no border over the canvas. palette.test.ts pins 4.5:1 for ink and
    ink-dim on it. */
 .scrim {
   width: fit-content; max-width: calc(100% + 1.5rem); padding: 1.25rem 0.75rem; margin-inline: -0.75rem;
