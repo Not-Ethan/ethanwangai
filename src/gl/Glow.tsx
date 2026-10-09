@@ -23,7 +23,7 @@ export function Glow({ refs }: { refs: SceneRefs }) {
 
   useLayoutEffect(() => {
     const attr = mesh.geometry.getAttribute('aLit') as THREE.BufferAttribute;
-    attachSink(refs, 'glow', { lit: data.lit, map: data.map, count: data.count, attr });
+    attachSink(refs, 'glow', { lit: data.lit, map: data.map, source: data, attr });
     return () => attachSink(refs, 'glow', null);
   }, [refs, data, mesh]);
 

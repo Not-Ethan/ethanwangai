@@ -4,6 +4,7 @@
 import { useEffect, useLayoutEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { attachSink, type SceneRefs } from './driverCore';
+import { bindWindowBuffers, windowBuffersFor } from './windowSlots';
 import { createWindowSet, WINDOW_CAPACITY } from './structures';
 import { createWindowsMaterial } from './shaders/windows';
 
@@ -23,9 +24,15 @@ export function Windows({ refs }: { refs: SceneRefs }) {
 
   useLayoutEffect(() => {
     const attr = mesh.geometry.getAttribute('aLit') as THREE.BufferAttribute;
-    attachSink(refs, 'windows', { lit: set.lit, map: set.emitterOf, count: set.count, attr });
+    attachSink(refs, 'windows', { lit: set.lit, map: set.emitterOf, source: set, attr });
     return () => attachSink(refs, 'windows', null);
   }, [refs, set, mesh]);
+
+  // Hillside and visitor windows (spec 4.7, 6) go after the static ones; see src/gl/windowSlots.ts.
+  useEffect(() => {
+    bindWindowBuffers(windowBuffersFor(mesh, set));
+    return () => bindWindowBuffers(null);
+  }, [mesh, set]);
 
   useEffect(() => () => {
     mesh.geometry.dispose();

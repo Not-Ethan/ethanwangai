@@ -229,7 +229,8 @@ export function scatterLit(lit: Float32Array, map: Uint8Array, count: number, ou
 }
 
 /** A per-instance level buffer fed from the per-emitter levels: windows (Task 2.5) and glow (Task 2.6). */
-export interface LitSink { lit: Float32Array; map: Uint8Array; count: number; attr: THREE.BufferAttribute | null }
+/** `source.count` is read every frame, so a WindowSet that grows (hillside and visitor windows, Stage 4) lights its new slots. */
+export interface LitSink { lit: Float32Array; map: Uint8Array; source: { readonly count: number }; attr: THREE.BufferAttribute | null }
 
 export interface PointLightSpec {
   id: EmitterId;
@@ -282,7 +283,7 @@ export const SUN_DISTANCE = 80;
 
 function sinkLit(sink: LitSink | null, lit: Float32Array): void {
   if (!sink) return;
-  if (scatterLit(lit, sink.map, sink.count, sink.lit) && sink.attr) sink.attr.needsUpdate = true;
+  if (scatterLit(lit, sink.map, sink.source.count, sink.lit) && sink.attr) sink.attr.needsUpdate = true;
 }
 
 /** Copies this frame's uniforms and levels onto the scene objects that are not shader uniforms. Allocation-free. */

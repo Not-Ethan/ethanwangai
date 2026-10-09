@@ -207,7 +207,7 @@ describe('helpers', () => {
     attachSun(refs, sun);
     points.forEach((p, k) => attachPointLight(refs, k, p));
     const attr = new THREE.InstancedBufferAttribute(new Float32Array(3), 1);
-    attachSink(refs, 'windows', { lit: attr.array as Float32Array, map: Uint8Array.of(0, 1, 2), count: 3, attr });
+    attachSink(refs, 'windows', { lit: attr.array as Float32Array, map: Uint8Array.of(0, 1, 2), source: { count: 3 }, attr });
     const lit = new Float32Array(EMITTER_COUNT).fill(1);
     lit[EMITTER_INDEX.visitor] = 0;
     const v0 = attr.version;
@@ -219,5 +219,18 @@ describe('helpers', () => {
     expect(attr.version).toBe(v0 + 1);
     syncScene(refs, u, lit);
     expect(attr.version).toBe(v0 + 1);
+  });
+
+  it('a sink follows its source count live (Stage 4 window slots)', () => {
+    const refs = createSceneRefs();
+    const attr = new THREE.InstancedBufferAttribute(new Float32Array(4), 1);
+    const source = { count: 2 };
+    attachSink(refs, 'windows', { lit: attr.array as Float32Array, map: Uint8Array.of(0, 0, 0, 0), source, attr });
+    const lit = new Float32Array(EMITTER_COUNT).fill(1);
+    syncScene(refs, createUniforms(), lit);
+    expect(Array.from(attr.array)).toEqual([1, 1, 0, 0]);
+    source.count = 4;
+    syncScene(refs, createUniforms(), lit);
+    expect(Array.from(attr.array)).toEqual([1, 1, 1, 1]);
   });
 });
