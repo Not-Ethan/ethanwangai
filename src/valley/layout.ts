@@ -9,7 +9,7 @@ export const CAMERA_LANDSCAPE: { position: Vec3; lookAt: Vec3; fov: number } = {
 };
 /** Hero camera, portrait (aspect < 1) (§4). */
 export const CAMERA_PORTRAIT: { position: Vec3; lookAt: Vec3; fov: number } = {
-  position: [0, 22, 96], lookAt: [0, 0, -12], fov: 70,
+  position: [0, 22, 96], lookAt: [0, 7, -12], fov: 70,   // look-at raised after G6 so the valley sits in the lower half under the copy
 };
 export const CAMERA_NEAR = 1;
 export const CAMERA_FAR = 260;

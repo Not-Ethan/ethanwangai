@@ -12,7 +12,7 @@ const SPEC_XZ: Record<keyof typeof PLACES, [number, number]> = {
 describe('layout', () => {
   it('uses the spec §4 cameras exactly', () => {
     expect(CAMERA_LANDSCAPE).toEqual({ position: [0, 14, 70], lookAt: [0, 2, -10], fov: 36 });
-    expect(CAMERA_PORTRAIT).toEqual({ position: [0, 22, 96], lookAt: [0, 0, -12], fov: 70 });
+    expect(CAMERA_PORTRAIT).toEqual({ position: [0, 22, 96], lookAt: [0, 7, -12], fov: 70 });
     expect([CAMERA_NEAR, CAMERA_FAR]).toEqual([1, 260]);
     expect(RIDGE).toEqual({ x0: -36, x1: 40, z: -36 });
   });

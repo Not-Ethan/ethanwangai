@@ -14,7 +14,7 @@ export const SECTIONS: readonly SectionDef[] = [
   { id: 'darch',   heightVh: 180, todEnd: 0.6,  view: view(7, 0, 0.95),  viewPortrait: view(12, 0, 0.95) },
   { id: 'summers', heightVh: 100, todEnd: 0.65, view: view(-6, 3, 0.97), viewPortrait: view(-12, 3, 0.97) },
   { id: 'alive',   heightVh: 120, todEnd: 0.72, view: view(0, 1, 1.04),  viewPortrait: view(0, 1, 1.04) },
-  { id: 'yours',   heightVh: 140, todEnd: 0.8,  view: view(4, -2, 0.97), viewPortrait: view(1, -8, 0.5) },   // portrait: tight on the lot, below the copy (§11 reframe)
+  { id: 'yours',   heightVh: 140, todEnd: 0.8,  view: view(4, -2, 0.97), viewPortrait: view(1, 6, 0.55) },   // portrait: zoomed, looking a little above the lot so the lot sits low, under the copy (§11 reframe)
   { id: 'contact', heightVh: 150, todEnd: 1,    view: view(-3, -1, 1),   viewPortrait: view(-6, -1, 1) },
 ];
 

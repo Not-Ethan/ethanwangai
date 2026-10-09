@@ -35,9 +35,9 @@ describe('SECTIONS (spec §3)', () => {
     expect(SECTIONS.map((s) => s.viewPortrait.yaw)).toEqual([0, 0, 0, 12, -12, 0, 1, -6]);
     for (const s of SECTIONS) {
       if (s.id === 'yours') {
-        // portrait yours looks down at the lot and zooms in so the new house reads under the copy
+        // portrait yours zooms in and looks a touch above the lot so the new house sits low, under the copy
         expect(s.viewPortrait.fovScale).toBeLessThan(s.view.fovScale);
-        expect(s.viewPortrait.pitch).toBeLessThan(s.view.pitch);
+        expect(s.viewPortrait.pitch).toBeGreaterThan(s.view.pitch);   // looks a little higher, so the lot drops low in the frame
         continue;
       }
       expect(s.viewPortrait.pitch, s.id).toBe(s.view.pitch);
