@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import type { FrameInputs, Uniform, ValleyUniforms } from './driverCore';
 import { EMITTER_INDEX } from './projection';
 import { writeChainLevels } from './chain';
+import { latchReveals } from './reveal';
+import type { Timeline } from '@/valley/types';
 
 export interface LightUniforms {
   uRidgeLit: Uniform<number>;            // the ridge emitter's level, pulse included
@@ -24,7 +26,17 @@ export function createLightUniforms(): LightUniforms {
   };
 }
 
-export function applyLights(inputs: FrameInputs, u: ValleyUniforms, lit: Float32Array): void {
+export function applyLights(
+  inputs: FrameInputs,
+  tl: Timeline,
+  u: ValleyUniforms,
+  lit: Float32Array,
+  latched: { ridge: number; hedge: number },
+): void {
   writeChainLevels(inputs.introT, inputs.buildT !== null, lit);
+  latchReveals(tl, inputs.introT, inputs.reducedMotion, latched);
+  u.uRidgeReveal.value = latched.ridge;
+  u.uHedgeReveal.value = latched.hedge;
   u.uRidgeLit.value = lit[EMITTER_INDEX.ridge];
+  u.uRain.value = inputs.reducedMotion ? 0 : tl.rain;
 }

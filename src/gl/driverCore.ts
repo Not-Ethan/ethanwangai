@@ -204,16 +204,10 @@ export function applyFrame(inputs: FrameInputs, targets: FrameTargets): void {
   u.uPitch.value = tl.view.pitch;
   u.uFovScale.value = tl.view.fovScale;
 
-  const latched = targets.latched;
-  if (tl.ridgeReveal > latched.ridge) latched.ridge = tl.ridgeReveal;
-  if (tl.hedgeReveal > latched.hedge) latched.hedge = tl.hedgeReveal;
-  u.uRidgeReveal.value = latched.ridge;
-  u.uHedgeReveal.value = latched.hedge;
   u.uDarchT.value = inputs.darchOverride ?? tl.darchT;
-  u.uRain.value = inputs.reducedMotion ? 0 : tl.rain;
   if (!inputs.reducedMotion) u.uTime.value = inputs.t;
 
-  applyLights(inputs, u, targets.lit);
+  applyLights(inputs, tl, u, targets.lit, targets.latched);
 }
 
 /** out[i] = lit[map[i]] for i < count. Returns true when any slot changed, so the caller uploads only then. */
