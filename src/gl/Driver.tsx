@@ -12,6 +12,7 @@ import { EMITTER_POSITIONS, LABEL_ALPHA, projectEmitters } from './projection';
 import { writeLabelAlpha } from './chain';
 import { frame } from './frame';
 import { LIVE } from './live';
+import { wheelRef } from './wheelRef';
 import { introClock, markIntroPlayed, readIntroPlayed, sessionStore, shouldPlayIntro, stillParams } from './introGate';
 
 export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefObject<number | null> }) {
@@ -42,6 +43,8 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
     applyFrame(inputs, targets);
     writeLabelAlpha(inputs.introT, LABEL_ALPHA);
     LIVE.ridge = targets.latched.ridge;
+    const wheel = wheelRef.current;
+    if (wheel) wheel.rotation.z = -u.uWheelAngle.value;
     syncScene(refs, u, targets.lit);
     composeCamera(rig, u.uYaw.value, u.uPitch.value, u.uFovScale.value, inputs.dt, camera);
     camera.updateMatrixWorld();

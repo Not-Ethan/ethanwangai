@@ -8,19 +8,19 @@ import { bindWindowBuffers, windowBuffersFor } from './windowSlots';
 import { createWindowSet, WINDOW_CAPACITY } from './structures';
 import { createWindowsMaterial } from './shaders/windows';
 
-export function Windows({ refs }: { refs: SceneRefs }) {
+export function Windows({ refs, millRows }: { refs: SceneRefs; millRows?: { value: THREE.Vector4 } }) {
   const set = useMemo(() => createWindowSet(), []);
   const mesh = useMemo(() => {
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.setAttribute('aLit', new THREE.InstancedBufferAttribute(set.lit, 1).setUsage(THREE.DynamicDrawUsage));
     geometry.setAttribute('aRow', new THREE.InstancedBufferAttribute(set.rows, 1));
-    const m = new THREE.InstancedMesh(geometry, createWindowsMaterial(), WINDOW_CAPACITY);
+    const m = new THREE.InstancedMesh(geometry, createWindowsMaterial(millRows), WINDOW_CAPACITY);
     m.instanceMatrix = new THREE.InstancedBufferAttribute(set.matrices, 16);
     m.instanceColor = new THREE.InstancedBufferAttribute(set.colors, 3);
     m.count = set.count;
     m.frustumCulled = false;
     return m;
-  }, [set]);
+  }, [set, millRows]);
 
   useLayoutEffect(() => {
     const attr = mesh.geometry.getAttribute('aLit') as THREE.BufferAttribute;

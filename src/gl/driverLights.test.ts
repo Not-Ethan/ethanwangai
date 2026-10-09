@@ -62,3 +62,46 @@ describe('latched reveals through applyFrame (Review Focus 3, spec §2)', () => 
     expect(targets.uniforms.uHedgeReveal.value).toBe(drawn);
   });
 });
+
+describe('the mill through applyFrame (spec §4.5, §14 G4)', () => {
+  // g -> s -> darchT goes through two divisions, so a row sitting exactly on its ramp end can read 0.9999...
+  const expectRows = (t: ReturnType<typeof createFrameTargets>, want: number[]) => {
+    const v = t.uniforms.uMillRows.value;
+    [v.x, v.y, v.z, v.w].forEach((r, i) => expect(r).toBeCloseTo(want[i], 3));
+  };
+
+  it('scrubs with section 04 and relights on the way back', () => {
+    const targets = createFrameTargets();
+    applyFrame(fixtureInputs(ranges, { g: gAt(ranges, 'darch', 0.1) }), targets);
+    expectRows(targets, [1, 1, 1, 0]);
+    applyFrame(fixtureInputs(ranges, { g: gAt(ranges, 'darch', 0.9) }), targets);
+    expectRows(targets, [1, 0, 0, 0]);
+    applyFrame(fixtureInputs(ranges, { g: gAt(ranges, 'summers', 0.5) }), targets);
+    expect(targets.lit[EMITTER_INDEX.mill]).toBe(0);
+    applyFrame(fixtureInputs(ranges, { g: gAt(ranges, 'darch', 0.5) }), targets);
+    expectRows(targets, [1, 1, 1, 1]);
+    expect(targets.lit[EMITTER_INDEX.mill]).toBe(1);
+  });
+
+  it('floods during the hero chain and is out when it ends', () => {
+    const targets = createFrameTargets();
+    applyFrame(fixtureInputs(ranges, { introT: 2.6 }), targets);
+    expectRows(targets, [1, 1, 1, 1]);
+    applyFrame(fixtureInputs(ranges, { introT: 5.0 }), targets);
+    expect(targets.lit[EMITTER_INDEX.mill]).toBe(0);
+  });
+
+  it('turns the wheel at 0.5 rad/s while running', () => {
+    const targets = createFrameTargets();
+    const g = gAt(ranges, 'darch', 0.5);
+    for (let f = 0; f < 60; f++) applyFrame(fixtureInputs(ranges, { g, dt: 1 / 60 }), targets);
+    expect(targets.uniforms.uWheelAngle.value).toBeCloseTo(0.5, 6);
+  });
+
+  it('honours darchOverride', () => {
+    const targets = createFrameTargets();
+    applyFrame(fixtureInputs(ranges, { g: 0, darchOverride: 0.9 }), targets);
+    expectRows(targets, [1, 0, 0, 0]);
+    expect(targets.uniforms.uDarchT.value).toBe(0.9);
+  });
+});

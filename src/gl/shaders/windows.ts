@@ -3,6 +3,7 @@
 // instance is discarded so the wall shows. aRow (mill rows 0..3) is carried for Stage 3's row lighting.
 import * as THREE from 'three';
 import { inject } from './inject';
+import { patchMillRows } from './millRows';
 
 export const WINDOWS_CACHE_KEY = 'valley-windows';
 
@@ -17,9 +18,12 @@ export function patchWindows(shader: { vertexShader: string; fragmentShader: str
   shader.fragmentShader = f;
 }
 
-export function createWindowsMaterial(): THREE.MeshBasicMaterial {
+export function createWindowsMaterial(millRows?: { value: THREE.Vector4 }): THREE.MeshBasicMaterial {
   const m = new THREE.MeshBasicMaterial({ toneMapped: false });
-  m.onBeforeCompile = (shader) => patchWindows(shader);
-  m.customProgramCacheKey = () => WINDOWS_CACHE_KEY;
+  m.onBeforeCompile = (shader) => {
+    patchWindows(shader);
+    if (millRows) patchMillRows(shader, millRows);
+  };
+  m.customProgramCacheKey = () => (millRows ? `${WINDOWS_CACHE_KEY}-mill` : WINDOWS_CACHE_KEY);
   return m;
 }

@@ -5,6 +5,7 @@ import type { FrameInputs, Uniform, ValleyUniforms } from './driverCore';
 import { EMITTER_INDEX } from './projection';
 import { writeChainLevels } from './chain';
 import { latchReveals } from './reveal';
+import { resolveDarchT, writeMill } from './mill';
 import type { Timeline } from '@/valley/types';
 
 export interface LightUniforms {
@@ -34,6 +35,9 @@ export function applyLights(
   latched: { ridge: number; hedge: number },
 ): void {
   writeChainLevels(inputs.introT, inputs.buildT !== null, lit);
+  const darchT = resolveDarchT(inputs.darchOverride, tl.darchT, inputs.introT);
+  u.uDarchT.value = darchT;
+  writeMill(darchT, inputs.dt, inputs.reducedMotion, u.uMillRows.value, u.uWheelAngle, lit);
   latchReveals(tl, inputs.introT, inputs.reducedMotion, latched);
   u.uRidgeReveal.value = latched.ridge;
   u.uHedgeReveal.value = latched.hedge;

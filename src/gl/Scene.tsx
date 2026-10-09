@@ -126,7 +126,7 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
           {tier === 'desktop' && <Mist uniforms={uniforms} />}
           <Buildings shadows={shadows} />
           <Hillside />
-          <Windows refs={refs} />
+          <Windows refs={refs} millRows={uniforms.uMillRows} />
           <Glow refs={refs} />
           <CameraRig rig={rig} tier={tier} reducedMotion={reducedMotion} />
           <Driver refs={refs} rig={rig} t0={t0} />

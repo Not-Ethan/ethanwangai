@@ -204,7 +204,6 @@ export function applyFrame(inputs: FrameInputs, targets: FrameTargets): void {
   u.uPitch.value = tl.view.pitch;
   u.uFovScale.value = tl.view.fovScale;
 
-  u.uDarchT.value = inputs.darchOverride ?? tl.darchT;
   if (!inputs.reducedMotion) u.uTime.value = inputs.t;
 
   applyLights(inputs, tl, u, targets.lit, targets.latched);
