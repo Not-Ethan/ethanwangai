@@ -27,7 +27,7 @@
   --sky-dusk-east: #2A2E48;
   --sky-dusk-sun: #E8A070;
   --sky-blue-zenith: #0E1426;
-  --sky-blue-horizon: #3E5A7A;
+  --sky-blue-horizon: #2E4360;
   --sky-blue-east: #141A2E;
   --sky-blue-sun: #8FA8D0;
   --sky-night-zenith: #05070F;
@@ -36,7 +36,7 @@
   --sky-night-sun: #9FB2D8;
   --sky-predawn-zenith: #0A0F1E;
   --sky-predawn-horizon: #1E2A40;
-  --sky-predawn-east: #3E5068;
+  --sky-predawn-east: #5A6E8C;
   --sky-predawn-sun: #B8C4D8;
   color-scheme: dark;
 }
@@ -106,8 +106,7 @@ body {
   .open-col { grid-column: 1 / span 8; }
 }
 
-/* scrim (spec §9): a vertical gradient from the scrim colour at the text to transparent above and below, only as
-   wide as the text. No blur, no shadow, no border over the canvas. palette.test.ts pins 4.5:1 for ink and
+/* scrim (spec §9): an elliptical pool of the scrim colour behind the text, fading to transparent in every direction. No blur, no shadow, no border over the canvas. palette.test.ts pins 4.5:1 for ink and
    ink-dim on it. */
 .scrim {
   width: fit-content; max-width: calc(100% + 2rem); padding: 2.5rem 1rem; margin-inline: -1rem;
@@ -115,11 +114,11 @@ body {
 }
 /* the gradient lives on a pseudo-element behind the copy so the side fade never masks the text itself */
 .scrim::before {
-  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(to bottom, transparent, var(--scrim) 2.5rem, var(--scrim) calc(100% - 2.5rem), transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 10rem), transparent);
-  mask-image: linear-gradient(to right, transparent, black 1rem, black calc(100% - 10rem), transparent);
+  content: ''; position: absolute; z-index: -1; pointer-events: none;
+  inset: -3rem -4rem -3rem -2rem;
+  background: radial-gradient(ellipse 62% 58% at 38% 50%, var(--scrim) 0%, var(--scrim) 35%, transparent 100%);
 }
+@media (min-width: 48rem) { .scrim::before { inset: -4rem -8rem -4rem -3rem; } }
 
 /* fixed mono chrome (spec §9): home mark top-left, nav top-right. No band, no panel. */
 .nav {
@@ -128,7 +127,7 @@ body {
 }
 .nav-home { white-space: nowrap; flex-shrink: 0; }
 .nav-sep { display: none; }
-@media (min-width: 48rem) { .nav { padding: 1.25rem 3rem; } .nav-sep { display: inline; } .scrim::before { right: -7rem; } }
+@media (min-width: 48rem) { .nav { padding: 1.25rem 3rem; } .nav-sep { display: inline; } }
 
 /* 07's one input: a hairline rule under the text, the palette's rule colour. */
 .yours-input {
