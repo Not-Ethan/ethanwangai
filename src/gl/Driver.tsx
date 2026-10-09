@@ -12,6 +12,7 @@ import { EMITTER_POSITIONS, LABEL_ALPHA, projectEmitters } from './projection';
 import { writeLabelAlpha } from './chain';
 import { createArrivalGate, mergeArrivalLabels, stepArrivalGate, type ArrivalGate } from './arrival';
 import { frame } from './frame';
+import { visitorBridge } from './visitorBridge';
 import { LIVE } from './live';
 import { wheelRef } from './wheelRef';
 import { createPulseGate, inSection, stepPulseGate, type PulseGate } from './pulse';
@@ -65,7 +66,9 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
     if (still.g !== null) inputs.g = still.g;
     inputs.pulseT = stepPulseGate(pulseGate.current, inSection(inputs.g, inputs.ranges, 'alive'), t);
     inputs.flickerT = stepFlicker(flicker.current, t);
+    inputs.buildT = visitorBridge.beforeFrame(t, reducedMotion);
     applyFrame(inputs, targets);
+    visitorBridge.afterFrame(inputs.buildT);
     writeLabelAlpha(inputs.introT, LABEL_ALPHA);
     mergeArrivalLabels(stepArrivalGate(arrival.current, inSection(inputs.g, inputs.ranges, 'summers'), t), LABEL_ALPHA);
     LIVE.ridge = targets.latched.ridge;

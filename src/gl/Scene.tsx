@@ -30,6 +30,7 @@ import { River } from './River';
 import { Mist } from './Mist';
 import { Buildings } from './Buildings';
 import { Hillside } from './Hillside';
+import { VisitorHouse } from './VisitorHouse';
 import { Windows } from './Windows';
 import { Glow } from './Glow';
 import { Ridge } from './Ridge';
@@ -134,6 +135,7 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
           {tier === 'desktop' && <Mist uniforms={uniforms} />}
           <Buildings shadows={shadows} />
           <Hillside />
+          <VisitorHouse />
           <Windows refs={refs} millRows={uniforms.uMillRows} />
           <Glow refs={refs} />
           <Ridge tier={tier} reveal={uniforms.uRidgeReveal} lit={uniforms.uRidgeLit} />
