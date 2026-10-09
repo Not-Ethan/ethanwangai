@@ -106,19 +106,29 @@ body {
   .open-col { grid-column: 1 / span 8; }
 }
 
-/* scrim (spec §9): an elliptical pool of the scrim colour behind the text, fading to transparent in every direction. No blur, no shadow, no border over the canvas. palette.test.ts pins 4.5:1 for ink and
-   ink-dim on it. */
+/* scrim (spec §9): the scrim colour behind the copy column, fading to transparent. No blur, no shadow, no border
+   over the canvas. palette.test.ts pins 4.5:1 for ink and ink-dim on it. */
 .scrim {
   width: fit-content; max-width: calc(100% + 2rem); padding: 2.5rem 1rem; margin-inline: -1rem;
   isolation: isolate;
 }
-/* the gradient lives on a pseudo-element behind the copy so the side fade never masks the text itself */
+/* the scrim lives on a pseudo-element behind the copy: anchored to the frame's left edge like a vignette, fading
+   out to the right past the text and top and bottom. No straight edge, no card (spec §9). */
 .scrim::before {
   content: ''; position: absolute; z-index: -1; pointer-events: none;
-  inset: -3rem -4rem -3rem -2rem;
-  background: radial-gradient(ellipse closest-side at 50% 50%, var(--scrim) 0%, var(--scrim) 35%, transparent 100%);
+  inset: -3rem -3rem -3rem -100vw;
+  background: linear-gradient(to bottom, transparent, var(--scrim) 3rem, var(--scrim) calc(100% - 3rem), transparent);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 10rem), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 10rem), transparent);
 }
-@media (min-width: 48rem) { .scrim::before { inset: -4rem -8rem -4rem -3rem; } }
+@media (min-width: 48rem) {
+  .scrim::before {
+    inset: -8rem -18rem -8rem -100vw;
+    background: linear-gradient(to bottom, transparent, var(--scrim) 8rem, var(--scrim) calc(100% - 8rem), transparent);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 14rem), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 14rem), transparent);
+  }
+}
 
 /* fixed mono chrome (spec §9): home mark top-left, nav top-right. No band, no panel. */
 .nav {
