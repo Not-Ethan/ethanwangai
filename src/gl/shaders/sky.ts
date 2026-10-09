@@ -12,7 +12,8 @@ export const SKY_VERT = /* glsl */ `
 varying vec3 vDir;
 void main() {
   vDir = position;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  // centred on the camera so the whole dome stays inside the far plane
+  gl_Position = projectionMatrix * viewMatrix * vec4( position + cameraPosition, 1.0 );
 }
 `;
 
@@ -41,7 +42,7 @@ varying float vAlpha;
 void main() {
   vAlpha = uStarAlpha * ( 0.7 + 0.3 * sin( uTime * 1.3 + aPhase ) );
   gl_PointSize = aSize;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  gl_Position = projectionMatrix * viewMatrix * vec4( position + cameraPosition, 1.0 );
 }
 `;
 
@@ -64,7 +65,7 @@ varying vec2 vUv;
 void main() {
   vUv = uv;
   vec3 dir = length( uMoonPos ) > 0.0001 ? normalize( uMoonPos ) : vec3( 0.0, 1.0, 0.0 );
-  vec4 mv = viewMatrix * vec4( dir * uMoonDistance, 1.0 );
+  vec4 mv = viewMatrix * vec4( dir * uMoonDistance + cameraPosition, 1.0 );
   mv.xy += position.xy * uMoonSize;
   gl_Position = projectionMatrix * mv;
 }

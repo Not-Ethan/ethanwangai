@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { createUniforms } from '../driverCore';
 import {
   createMoonMaterial, createSkyMaterial, createStarsMaterial,
-  MOON_FRAG, MOON_VERT, SKY_FRAG, STARS_FRAG, STARS_VERT,
+  MOON_FRAG, MOON_VERT, SKY_FRAG, SKY_VERT, STARS_FRAG, STARS_VERT,
 } from './sky';
 
 describe('sky materials', () => {
@@ -41,5 +41,9 @@ describe('sky materials', () => {
     expect(m.blending).toBe(THREE.NormalBlending);
     expect(MOON_VERT).toContain('length( uMoonPos ) > 0.0001');
     expect(MOON_FRAG).toContain('uMoonAlpha');
+  });
+
+  it('centres the dome, stars and moon on the camera so nothing passes the far plane', () => {
+    for (const v of [SKY_VERT, STARS_VERT, MOON_VERT]) expect(v).toContain('cameraPosition');
   });
 });
