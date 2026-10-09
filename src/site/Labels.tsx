@@ -121,7 +121,7 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
   }, [items]);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-20 overflow-hidden" aria-hidden>
+    <div className="pointer-events-none fixed inset-0 z-20 overflow-hidden" aria-hidden data-still-hide="">
       {items.map((it, k) => (
         <span
           key={it.key}

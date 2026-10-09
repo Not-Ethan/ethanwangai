@@ -7,7 +7,7 @@ export function Nav() {
   const { scrollTo } = useScroll();
   const n = copy.nav;
   return (
-    <header className="nav">
+    <header className="nav" data-still-hide="">
       <button type="button" className="mono link nav-home" onClick={() => scrollTo('open')}>{n.home}</button>
       <nav className="flex flex-wrap justify-end gap-x-2 gap-y-1">
         {n.items.map((it) => (

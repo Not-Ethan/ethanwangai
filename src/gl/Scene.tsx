@@ -6,7 +6,7 @@
 // camera rig and the driver are the scene for this stage.
 import { EMITTERS } from '@/valley/lights';
 import { EMITTER_INDEX } from './projection';
-import { Component, useCallback, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
+import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Canvas, type RootState } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
@@ -38,6 +38,8 @@ import { Ridge } from './Ridge';
 import { HedgeLines } from './HedgeLines';
 import { MillWheel } from './MillWheel';
 import { Rain } from './Rain';
+import { stillParams } from './introGate';
+import { attachPerfProbe, setPerfContext } from './perfProbe';
 
 /** Tuned by eye under ACES (G1 remedy): the hemisphere sky is the horizon colour, so 8 gives a visible but modest ambient fill; shading comes from the key light. */
 export const HEMI_INTENSITY = 5.5;
@@ -74,12 +76,19 @@ export function Scene() {
 }
 
 function ValleyCanvas({ onFail }: { onFail: () => void }) {
-  const { tier, dpr, shadows, antialias, ridgeCount, ridgeSizeScale, stars, rain, mist, onDecline } = useTier();
+  const { tier, dpr, shadows, antialias, ridgeCount, ridgeSizeScale, stars, rain, mist, rung, onDecline } = useTier();
   const { reducedMotion } = useScroll();
   const uniforms = frame.targets.uniforms;
   const refs = useMemo(() => createSceneRefs(), []);
   const rig = useMemo(() => createRig(), []);
   const t0 = useRef<number | null>(null);
+  const query = useMemo(() => stillParams(typeof window === 'undefined' ? '' : window.location.search), []);
+  const detachPerf = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (query.still) document.documentElement.dataset.still = '1';   // spec §10: hides the DOM for the capture
+    return () => detachPerf.current?.();
+  }, [query]);
+  useEffect(() => setPerfContext(tier, rung), [tier, rung]);
   const fade = useRef<HTMLDivElement>(null);
   const fog = useMemo(() => {
     const f = new THREE.Fog(uniforms.uFogColor.value, uniforms.uFogNear.value, uniforms.uFogFar.value);
@@ -98,6 +107,7 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
     state.scene.fog = fog;
     attachFog(refs, fog);
     watchContextLoss(state.gl.domElement, onFail);
+    if (query.debug) detachPerf.current = attachPerfProbe(state.gl, state.scene);
     void warmUp({
       fontsReady: document.fonts.ready,
       compile: () => state.gl.compileAsync(state.scene, state.camera),
@@ -115,7 +125,7 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
       // T0 marker for the visual gates and debugging: the ignition clock starts here (spec §7).
       try { document.documentElement.dataset.t0 = String(t * 1000); } catch { /* no DOM */ }   // ms, like performance.now()
     });
-  }, [fog, refs, onFail, reducedMotion]);
+  }, [fog, refs, onFail, reducedMotion, query]);
 
   return (
     <div ref={fade} data-valley-fade="" className="absolute inset-0" style={HIDDEN}>

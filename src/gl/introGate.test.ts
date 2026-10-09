@@ -82,3 +82,45 @@ describe('introClock', () => {
     expect(introClock(true, 1, 99, 3.7)).toBe(3.7);
   });
 });
+
+import { holdsFrame, pinnedG } from './introGate';
+import type { SectionRange } from '@/valley/types';
+
+const R: SectionRange[] = [
+  { id: 'open', start: 0, end: 0.1 }, { id: 'kalshi', start: 0.1, end: 0.3 }, { id: 'heron', start: 0.3, end: 0.4 },
+  { id: 'darch', start: 0.4, end: 0.6 }, { id: 'summers', start: 0.6, end: 0.66 }, { id: 'alive', start: 0.66, end: 0.78 },
+  { id: 'yours', start: 0.78, end: 0.9 }, { id: 'contact', start: 0.9, end: 1 },
+];
+
+describe('stillParams with ?debug=1 (spec §14 G7, Task 5.8)', () => {
+  it('reads debug and a clamped g with debug=1, never t without still', () => {
+    expect(stillParams('?debug=1&g=1')).toEqual({ still: false, debug: true, g: 1, t: null });
+    expect(stillParams('?debug=1&g=7&t=2')).toEqual({ still: false, debug: true, g: 1, t: null });
+    expect(stillParams('?debug=1&g=-2')).toEqual({ still: false, debug: true, g: 0, t: null });
+    expect(stillParams('?still=1&debug=1&g=0.5')).toEqual({ still: true, debug: true, g: 0.5, t: null });
+  });
+  it('without still or debug nothing is pinned', () => {
+    expect(stillParams('?g=0.5')).toEqual({ still: false, g: null, t: null });
+    expect(stillParams('?still=0&debug=0&g=0.5')).toEqual({ still: false, g: null, t: null });
+  });
+});
+
+describe('pinnedG (spec §10: still pins the alive midpoint unless ?g= says otherwise)', () => {
+  it('a given g wins; still alone pins the alive midpoint; otherwise nothing is pinned', () => {
+    expect(pinnedG({ still: true, g: 0.25, t: null }, R)).toBe(0.25);
+    expect(pinnedG({ still: true, g: null, t: null }, R)).toBeCloseTo(0.72, 10);
+    expect(pinnedG({ still: false, debug: true, g: 0.5, t: null }, R)).toBe(0.5);
+    expect(pinnedG({ still: false, debug: true, g: null, t: null }, R)).toBeNull();
+    expect(pinnedG({ still: false, g: null, t: null }, R)).toBeNull();
+    expect(pinnedG({ still: true, g: null, t: null }, [])).toBeNull();
+  });
+});
+
+describe('holdsFrame (spec §10 "holds the frame")', () => {
+  it('freezes ambient time in still mode only when no chain time is pinned', () => {
+    expect(holdsFrame({ still: true, g: null, t: null })).toBe(true);
+    expect(holdsFrame({ still: true, g: 0, t: 2.6 })).toBe(false);
+    expect(holdsFrame({ still: false, debug: true, g: 0.5, t: null })).toBe(false);
+    expect(holdsFrame({ still: false, g: null, t: null })).toBe(false);
+  });
+});

@@ -71,11 +71,12 @@ export function HillsideLabel() {
   return (
     <>
       <span
+        data-still-hide=""
         ref={hover}
         className="mono pointer-events-none fixed left-0 top-0 z-20 whitespace-nowrap opacity-0"
         aria-hidden="true"
       />
-      <p ref={tap} className="mono pointer-events-none fixed inset-x-4 bottom-4 z-20 opacity-0" aria-live="polite" />
+      <p ref={tap} data-still-hide="" className="mono pointer-events-none fixed inset-x-4 bottom-4 z-20 opacity-0" aria-live="polite" />
     </>
   );
 }

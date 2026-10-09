@@ -2,6 +2,7 @@
 // (?still=1 with ?g= and ?t=), and the chain clock the Driver passes as FrameInputs.introT. Every storage access is
 // inside try/catch: with storage blocked the chain plays every load and nothing throws.
 import { CHAIN_END } from '@/valley/ignition';
+import type { SectionRange } from '@/valley/types';
 
 export const INTRO_KEY = 'introPlayed';
 /** Seconds after CHAIN_END until the clock returns null (the last label is gone at 5.6 s). */
@@ -35,6 +36,7 @@ export function markIntroPlayed(get: StorageGetter): void {
 
 export interface StillParams {
   still: boolean;
+  debug?: boolean;   // ?debug=1 (Task 5.8): the perf overlay; honours ?g= too
   g: number | null;
   t: number | null;
 }
@@ -48,10 +50,30 @@ function num(q: URLSearchParams, key: string): number | null {
 
 export function stillParams(search: string): StillParams {
   const q = new URLSearchParams(search);
-  if (q.get('still') !== '1') return { still: false, g: null, t: null };
+  const still = q.get('still') === '1';
+  const debug = q.get('debug') === '1';
+  if (!still && !debug) return { still: false, g: null, t: null };
   const g = num(q, 'g');
-  const t = num(q, 't');
-  return { still: true, g: g === null ? null : Math.min(1, Math.max(0, g)), t: t === null ? null : Math.max(0, t) };
+  const t = still ? num(q, 't') : null;
+  const out: StillParams = { still, g: g === null ? null : Math.min(1, Math.max(0, g)), t: t === null ? null : Math.max(0, t) };
+  if (debug) out.debug = true;
+  return out;
+}
+
+/** The g the driver uses instead of the scroll's, or null: ?g= when still or debug, else the alive midpoint in
+ *  still mode (spec §10). Allocation-free: it runs every frame. */
+export function pinnedG(p: StillParams, ranges: readonly SectionRange[]): number | null {
+  if (p.g !== null) return p.g;
+  if (!p.still) return null;
+  for (let i = 0; i < ranges.length; i++) {
+    if (ranges[i].id === 'alive') return (ranges[i].start + ranges[i].end) / 2;
+  }
+  return null;
+}
+
+/** Still mode "holds the frame" by freezing ambient time, except when ?t= pins the chain clock for a G2 still. */
+export function holdsFrame(p: StillParams): boolean {
+  return p.still && p.t === null;
 }
 
 export function shouldPlayIntro(o: { reducedMotion: boolean; introPlayed: boolean; still: StillParams }): boolean {

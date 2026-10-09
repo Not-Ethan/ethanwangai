@@ -154,3 +154,13 @@ html:not([data-gl='failed']) [data-labels] {
 }
 .yours-input::placeholder { color: var(--ink-dim); }
 .yours-button { padding: 0.5rem 0; text-decoration: underline; text-underline-offset: 0.2em; }
+
+/* spec §10: ?still=1 hides the DOM so the capture is the valley alone */
+html[data-still] main,
+html[data-still] [data-still-hide] { visibility: hidden !important; }
+
+/* ?debug=1 perf overlay (spec §14 G7) */
+#perf {
+  position: fixed; left: 8px; bottom: 8px; z-index: 50; margin: 0;
+  font-size: 11px; line-height: 1.4; white-space: pre; pointer-events: none;
+}

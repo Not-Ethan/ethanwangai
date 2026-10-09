@@ -17,7 +17,7 @@ import { LIVE } from './live';
 import { wheelRef } from './wheelRef';
 import { createPulseGate, inSection, stepPulseGate, type PulseGate } from './pulse';
 import { createFlickerClock, isEmailTarget, stepFlicker, type FlickerClock } from './flicker';
-import { introClock, markIntroPlayed, readIntroPlayed, sessionStore, shouldPlayIntro, stillParams } from './introGate';
+import { introClock, markIntroPlayed, readIntroPlayed, sessionStore, shouldPlayIntro, stillParams, holdsFrame, pinnedG } from './introGate';
 
 export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefObject<number | null> }) {
   const { state, reducedMotion } = useScroll();
@@ -62,8 +62,9 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
       if (!still.still) markIntroPlayed(sessionStore);
     }
     const introT = introClock(playIntro.current === true, start, t, still.t);
-    setFrameInputs(inputs, s.g, s.ranges, t, delta, introT, reducedMotion, rig.portrait);
-    if (still.g !== null) inputs.g = still.g;
+    setFrameInputs(inputs, s.g, s.ranges, t, delta, introT, reducedMotion || holdsFrame(still), rig.portrait);
+    const pin = pinnedG(still, inputs.ranges);
+    if (pin !== null) inputs.g = pin;
     inputs.pulseT = stepPulseGate(pulseGate.current, inSection(inputs.g, inputs.ranges, 'alive'), t);
     inputs.flickerT = stepFlicker(flicker.current, t);
     inputs.buildT = visitorBridge.beforeFrame(t, reducedMotion);
