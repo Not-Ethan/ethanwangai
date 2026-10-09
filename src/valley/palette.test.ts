@@ -36,10 +36,10 @@ describe('PALETTE (spec §9)', () => {
   });
   it('has the four sky keyframes at tod 0, 0.3, 0.6, 1', () => {
     expect(SKY_KEYFRAMES).toEqual([
-      { name: 'dusk', tod: 0, zenith: '#1B2238', horizon: '#C9825A', east: '#2A2E48', sun: '#E8A070', sunIntensity: 1.6 },
-      { name: 'blue', tod: 0.3, zenith: '#0E1426', horizon: '#2E4360', east: '#141A2E', sun: '#8FA8D0', sunIntensity: 2.2 },
-      { name: 'night', tod: 0.6, zenith: '#05070F', horizon: '#101830', east: '#070A14', sun: '#9FB2D8', sunIntensity: 4 },
-      { name: 'predawn', tod: 1, zenith: '#0A0F1E', horizon: '#1E2A40', east: '#5A6E8C', sun: '#B8C4D8', sunIntensity: 3 },
+      { name: 'dusk', tod: 0, zenith: '#1B2238', horizon: '#C9825A', east: '#2A2E48', sun: '#E8A070', sunIntensity: 10 },
+      { name: 'blue', tod: 0.3, zenith: '#0E1426', horizon: '#2E4360', east: '#141A2E', sun: '#8FA8D0', sunIntensity: 12 },
+      { name: 'night', tod: 0.6, zenith: '#05070F', horizon: '#101830', east: '#070A14', sun: '#9FB2D8', sunIntensity: 16 },
+      { name: 'predawn', tod: 1, zenith: '#0A0F1E', horizon: '#1E2A40', east: '#5A6E8C', sun: '#B8C4D8', sunIntensity: 14 },
     ]);
   });
 });

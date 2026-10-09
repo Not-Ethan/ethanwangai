@@ -115,10 +115,10 @@ body {
 /* the gradient lives on a pseudo-element behind the copy so the side fade never masks the text itself */
 .scrim::before {
   content: ''; position: absolute; z-index: -1; pointer-events: none;
-  inset: -3rem -3rem -3rem -3rem;
-  background: radial-gradient(ellipse closest-side at 50% 50%, var(--scrim) 0%, var(--scrim) 70%, transparent 100%);
+  inset: -3rem -4rem -3rem -2rem;
+  background: radial-gradient(ellipse closest-side at 50% 50%, var(--scrim) 0%, var(--scrim) 35%, transparent 100%);
 }
-@media (min-width: 48rem) { .scrim::before { inset: -5rem -6rem -5rem -6rem; } }
+@media (min-width: 48rem) { .scrim::before { inset: -4rem -8rem -4rem -3rem; } }
 
 /* fixed mono chrome (spec §9): home mark top-left, nav top-right. No band, no panel. */
 .nav {

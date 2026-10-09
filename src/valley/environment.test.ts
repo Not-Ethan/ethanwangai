@@ -42,7 +42,7 @@ describe('environmentAt', () => {
     const e = environmentAt(0.15);
     const a = rgb(SKY_KEYFRAMES[0].horizon), b = rgb(SKY_KEYFRAMES[1].horizon), m = rgb(e.horizon);
     for (let i = 0; i < 3; i++) expect(Math.abs(m[i] - (a[i] + b[i]) / 2)).toBeLessThanOrEqual(1);
-    expect(e.sunIntensity).toBeCloseTo((1.6 + 2.2) / 2, 9);
+    expect(e.sunIntensity).toBeCloseTo((10 + 12) / 2, 9);
     expect(e.fogFar).toBeCloseTo((LIGHT.dusk.fogFar + LIGHT.blue.fogFar) / 2, 9);
   });
   it('keeps sunDir unit length, alphas in [0, 1], fog near < far, colours as #rrggbb', () => {
