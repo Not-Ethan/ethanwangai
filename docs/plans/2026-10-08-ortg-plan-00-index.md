@@ -68,7 +68,7 @@ export function environmentAt(tod: number): Environment;
 // src/valley/ignition.ts
 export const CHAIN_END = 5.0;
 export function ignitionSchedule(): IgnitionStep[];
-export function ignitionLevel(step: IgnitionStep, t: number): number;   // 0..1.6 brightness for a target at wall time t since T0
+export function ignitionLevel(step: IgnitionStep, t: number): number;   // 0..1.6 for a target at wall time t since T0: a brightness for lamp/flood/flicker/hillside targets, the lit-row fraction for mill run/out, the reveal value for the ridge trickle
 // src/valley/lights.ts
 export const EMITTERS: readonly Emitter[];
 export const BUILD_ORDER: readonly EmitterId[];   // hut, nist, kalshiLamp, wvu, bar1..4, hill1..5, visitor, ridge
@@ -97,7 +97,8 @@ export function mulberry32(seed: number): () => number;
 
 ```ts
 // src/gl/driverCore.ts
-export interface FrameInputs { g: number; ranges: SectionRange[]; t: number; dt: number; introT: number | null; buildT: number | null; pulseT: number | null; flickerT: number | null; darchOverride?: number; reducedMotion: boolean }
+export interface FrameInputs { g: number; ranges: SectionRange[]; t: number; dt: number; introT: number | null; buildT: number | null; pulseT: number | null; flickerT: number | null; darchOverride?: number; reducedMotion: boolean; portrait?: boolean /* picks the portrait yaw column */ }
+// ValleyUniforms is defined in driverCore.ts (Stage 2 Task 2.2): plain { value } holders for the sky, fog, light and reveal uniforms; Stage 3 extends it with the light uniforms (uRidgeLit, uMillRows, uWheelAngle).
 export interface FrameTargets { uniforms: ValleyUniforms; lit: Float32Array /* per emitter, EMITTERS order */; projected: Float32Array /* x,y,visible per emitter */; latched: { ridge: number; hedge: number } }
 export function applyFrame(inputs: FrameInputs, targets: FrameTargets): void;   // allocation-free
 ```
@@ -117,7 +118,7 @@ Each stage is its own file and ends with a gate from spec §14. Do not start a s
 
 ## Execution notes for the orchestrator
 
-- Stage 0 and Stage 1 are independent after Task 0.1 (the rewiring) and can run in parallel. Stage 2 depends on both.
+- Stage 1 can start after Stage 0's Tasks 0.1, 0.3 and 0.4 have landed (it imports `facts`, `PALETTE` and `SKY_KEYFRAMES`); only Tasks 1.1 and 1.7 need nothing beyond 0.1. Tasks 0.3 and 0.4 run after 0.2 (the delete), because 0.4's "colour literals live only in palette.ts" test fails while `src/theme/palettes.ts` exists. Stage 2 depends on both stages.
 - Within a stage, tasks marked **[parallel-safe]** touch disjoint files and can be assigned to separate agents at once; the rest run in order.
 - Implementers run on Sonnet; reviewers, re-reviewers, escalations and gate judges run on Opus. Never the session model.
 - Every task's "Verify" block is what a reviewer checks. A reviewer that cannot run the verify block rejects the task.
