@@ -87,6 +87,9 @@ body {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background-color: var(--sky-night-zenith); background-position: center; background-size: cover; background-repeat: no-repeat;
 }
+/* the static ignition-label list under the deck is the no-WebGL fallback (spec §11); while a canvas is mounted it is
+   kept in the DOM for the exported HTML and screen readers but not drawn. */
+:root:has(.valley-canvas canvas) [data-labels] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* sections: copy in a left column (grid columns 1–5 of 12) over the valley (spec §9 layout). The section's inline
    min-height is its heightVh; the grid inherits it so the sticky column has room to hold. */
@@ -116,17 +119,21 @@ body {
    out to the right past the text and top and bottom. No straight edge, no card (spec §9). */
 .scrim::before {
   content: ''; position: absolute; z-index: -1; pointer-events: none;
-  inset: -3rem -3rem -3rem -100vw;
-  background: linear-gradient(to bottom, transparent, var(--scrim) 3rem, var(--scrim) calc(100% - 3rem), transparent);
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 10rem), transparent);
-  mask-image: linear-gradient(to right, black calc(100% - 10rem), transparent);
+  inset: -6rem -6rem -6rem -100vw;
+  background: linear-gradient(to bottom,
+    transparent 0%, color-mix(in srgb, var(--scrim) 25%, transparent) 2rem, color-mix(in srgb, var(--scrim) 65%, transparent) 4rem, var(--scrim) 6rem,
+    var(--scrim) calc(100% - 6rem), color-mix(in srgb, var(--scrim) 65%, transparent) calc(100% - 4rem), color-mix(in srgb, var(--scrim) 25%, transparent) calc(100% - 2rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 14rem), rgba(0,0,0,0.75) calc(100% - 10rem), rgba(0,0,0,0.4) calc(100% - 6rem), rgba(0,0,0,0.15) calc(100% - 3rem), transparent 100%);
+  mask-image: linear-gradient(to right, black calc(100% - 14rem), rgba(0,0,0,0.75) calc(100% - 10rem), rgba(0,0,0,0.4) calc(100% - 6rem), rgba(0,0,0,0.15) calc(100% - 3rem), transparent 100%);
 }
 @media (min-width: 48rem) {
   .scrim::before {
-    inset: -8rem -18rem -8rem -100vw;
-    background: linear-gradient(to bottom, transparent, var(--scrim) 8rem, var(--scrim) calc(100% - 8rem), transparent);
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 14rem), transparent);
-    mask-image: linear-gradient(to right, black calc(100% - 14rem), transparent);
+    inset: -12rem -28rem -12rem -100vw;
+    background: linear-gradient(to bottom,
+      transparent 0%, color-mix(in srgb, var(--scrim) 25%, transparent) 4rem, color-mix(in srgb, var(--scrim) 65%, transparent) 8rem, var(--scrim) 12rem,
+      var(--scrim) calc(100% - 12rem), color-mix(in srgb, var(--scrim) 65%, transparent) calc(100% - 8rem), color-mix(in srgb, var(--scrim) 25%, transparent) calc(100% - 4rem), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 26rem), rgba(0,0,0,0.75) calc(100% - 19rem), rgba(0,0,0,0.4) calc(100% - 12rem), rgba(0,0,0,0.15) calc(100% - 6rem), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 26rem), rgba(0,0,0,0.75) calc(100% - 19rem), rgba(0,0,0,0.4) calc(100% - 12rem), rgba(0,0,0,0.15) calc(100% - 6rem), transparent 100%);
   }
 }
 
