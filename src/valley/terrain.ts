@@ -46,12 +46,12 @@ export function heightAt(x: number, z: number): number {
   const edge = smoothstep(28, 48, z);   // 0 on the valley, 1 at the near edge (z = 50): the swell eases down there
   const noise = ((valueNoise(x / 18, z / 18, 0x51) - 0.5) * 1.6 + (valueNoise(x / 6, z / 6, 0x9e) - 0.5) * 0.5) * (1 - 0.7 * edge);
   const far = 6 * smoothstep(6, 34, -z);
-  const near = 3.6 * smoothstep(5, 22, z) * (1 - 0.8 * edge);
+  const near = 1.2 * smoothstep(5, 22, z) * (1 - 0.8 * edge);
   const dz = (z - CREST_Z) / 7;
   const ridge = 10 * Math.exp(-dz * dz);
   const hx = (x + 31) / 11, hz = (z + 16) / 9;
   const hill = 7 * Math.exp(-(hx * hx + hz * hz));
-  let h = 1.4 + far + near + ridge + hill + noise;
+  let h = 1.0 + far + near + ridge + hill + noise;
   const pd = Math.hypot(x - MILL_PAD.x, z - MILL_PAD.z);
   h = lerp(h, MILL_PAD.y, 1 - smoothstep(MILL_PAD.flat, MILL_PAD.blend, pd));
   h = lerp(h, RIVER_BED, 1 - smoothstep(4, 7, Math.abs(z)));
@@ -60,8 +60,8 @@ export function heightAt(x: number, z: number): number {
 
 const GRID_X = TERRAIN.width / TERRAIN.res + 1;   // 161
 const GRID_Z = TERRAIN.depth / TERRAIN.res + 1;   // 101
-/** Treeline (§4.1): one cone per unit of x along the crest, base radius 0.5, 6 sides, height 1.2–3.0. */
-export const TREELINE = { count: TERRAIN.width, sides: 6, radius: 0.5, minHeight: 1.2, maxHeight: 3.0 } as const;
+/** Treeline (§4.1): one cone per unit of x along the crest, 6 sides, radius 0.35–0.7, height 0.8–3.4, z jitter ±0.6; about 15% collapse to zero height. */
+export const TREELINE = { count: TERRAIN.width, sides: 6, minRadius: 0.35, maxRadius: 0.7, minHeight: 0.8, maxHeight: 3.4, jitter: 0.6, skip: 0.15 } as const;
 export const TERRAIN_VERTEX_COUNT = GRID_X * GRID_Z + TREELINE.count * (TREELINE.sides + 1);
 export const TERRAIN_INDEX_COUNT = (GRID_X - 1) * (GRID_Z - 1) * 6 + TREELINE.count * TREELINE.sides * 3;
 
@@ -111,15 +111,17 @@ export function buildTerrain(): { positions: Float32Array; colors: Float32Array;
   const rng = mulberry32(0x7ee5);
   for (let t = 0; t < TREELINE.count; t++) {
     const cx = -TERRAIN.width / 2 + 0.5 + t;
-    const cz = CREST_Z + (rng() * 2 - 1);
+    const cz = CREST_Z + (rng() * 2 - 1) * TREELINE.jitter;
     const base = heightAt(cx, cz) - 0.1;
-    const height = TREELINE.minHeight + rng() * (TREELINE.maxHeight - TREELINE.minHeight);
+    const radius = TREELINE.minRadius + rng() * (TREELINE.maxRadius - TREELINE.minRadius);
+    const grown = TREELINE.minHeight + rng() * (TREELINE.maxHeight - TREELINE.minHeight);
+    const height = rng() < TREELINE.skip ? 0 : grown;   // a skipped cone keeps its vertices, collapsed at its site
     const first = v;
     for (let s = 0; s < TREELINE.sides; s++) {
       const ang = (s / TREELINE.sides) * Math.PI * 2;
-      positions[v * 3] = cx + Math.cos(ang) * TREELINE.radius;
+      positions[v * 3] = cx + Math.cos(ang) * radius;
       positions[v * 3 + 1] = base;
-      positions[v * 3 + 2] = cz + Math.sin(ang) * TREELINE.radius;
+      positions[v * 3 + 2] = cz + Math.sin(ang) * radius;
       colors[v * 3] = C_TREE.r; colors[v * 3 + 1] = C_TREE.g; colors[v * 3 + 2] = C_TREE.b;
       v++;
     }

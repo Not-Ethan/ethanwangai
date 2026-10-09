@@ -20,10 +20,10 @@ export const PALETTE = {
   wall: '#1A1F28',
   roof: '#11151C',
   // terrain ramp, river, mist
-  terrainLow: '#16241C',
-  terrainMid: '#1F3326',
-  terrainSlope: '#2B3340',
-  terrainCrest: '#0C0F16',
+  terrainLow: '#1B2C22',
+  terrainMid: '#26402E',
+  terrainSlope: '#33404F',
+  terrainCrest: '#0E121A',
   treeline: '#090B10',
   river: '#6E8AA6',
   mist: '#8FA3B8',
@@ -36,10 +36,10 @@ export interface SkyKeyframe { name: SkyName; tod: number; zenith: string; horiz
 
 /** Sky and sun/moon keyframes. Hemisphere sky = zenith, hemisphere ground = PALETTE.terrainLow, fog follows the horizon. */
 export const SKY_KEYFRAMES: readonly SkyKeyframe[] = [
-  { name: 'dusk', tod: 0, zenith: '#1B2238', horizon: '#C9825A', east: '#2A2E48', sun: '#E8A070', sunIntensity: 0.6 },
-  { name: 'blue', tod: 0.3, zenith: '#0E1426', horizon: '#3E5A7A', east: '#141A2E', sun: '#8FA8D0', sunIntensity: 0.35 },
-  { name: 'night', tod: 0.6, zenith: '#05070F', horizon: '#101830', east: '#070A14', sun: '#9FB2D8', sunIntensity: 0.25 },
-  { name: 'predawn', tod: 1, zenith: '#0A0F1E', horizon: '#1E2A40', east: '#3E5068', sun: '#B8C4D8', sunIntensity: 0.3 },
+  { name: 'dusk', tod: 0, zenith: '#1B2238', horizon: '#C9825A', east: '#2A2E48', sun: '#E8A070', sunIntensity: 1.6 },
+  { name: 'blue', tod: 0.3, zenith: '#0E1426', horizon: '#2E4360', east: '#141A2E', sun: '#8FA8D0', sunIntensity: 2.2 },
+  { name: 'night', tod: 0.6, zenith: '#05070F', horizon: '#101830', east: '#070A14', sun: '#9FB2D8', sunIntensity: 4 },
+  { name: 'predawn', tod: 1, zenith: '#0A0F1E', horizon: '#1E2A40', east: '#5A6E8C', sun: '#B8C4D8', sunIntensity: 3 },
 ];
 
 const kebab = (key: string) => key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);

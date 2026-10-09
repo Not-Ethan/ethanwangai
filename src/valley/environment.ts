@@ -1,6 +1,6 @@
 // Sky, fog and light by time of day (spec §4.1, §5.2, §9): linear blends through the four palette keyframes
 // SKY_KEYFRAMES (tod 0 dusk, 0.3 blue, 0.6 night, 1.0 predawn). Fog colour follows the horizon; the hemisphere sky
-// is the zenith and its ground the terrain's low colour. The non-colour values per keyframe (fog range, light
+// is the horizon colour (the night zenith is near-black and gives no fill) and its ground the terrain's mid colour. The non-colour values per keyframe (fog range, light
 // direction, stars, moon) are authored here in LIGHT, keyed by the same names.
 // Precomputed at module load for tod in steps of 0.001, so environmentAt never allocates in the frame loop.
 import type { Environment, Vec3 } from './types';
@@ -11,10 +11,10 @@ export const EAST_DIR: Vec3 = [1, 0, 0];
 
 /** Per-keyframe values the palette does not hold. moonPos is a world point on a 200-unit dome around the origin. */
 export const LIGHT: Record<SkyName, { fogNear: number; fogFar: number; sunDir: Vec3; starAlpha: number; moonPos: Vec3; moonAlpha: number }> = {
-  dusk:    { fogNear: 70, fogFar: 260, sunDir: [-0.85, 0.18, -0.5], starAlpha: 0,    moonPos: [120, 15, -155], moonAlpha: 0 },
-  blue:    { fogNear: 55, fogFar: 230, sunDir: [-0.6, 0.35, -0.7],  starAlpha: 0.35, moonPos: [90, 32, -173],  moonAlpha: 0.6 },
-  night:   { fogNear: 45, fogFar: 210, sunDir: [0.3, 0.8, -0.5],    starAlpha: 1,    moonPos: [40, 42, -191],  moonAlpha: 1 },
-  predawn: { fogNear: 55, fogFar: 230, sunDir: [0.75, 0.3, -0.6],   starAlpha: 0.4,  moonPos: [-60, 45, -185], moonAlpha: 0.5 },
+  dusk:    { fogNear: 50, fogFar: 230, sunDir: [-0.85, 0.18, -0.5], starAlpha: 0,    moonPos: [120, 15, -155], moonAlpha: 0 },
+  blue:    { fogNear: 40, fogFar: 200, sunDir: [-0.6, 0.35, -0.7],  starAlpha: 0.35, moonPos: [90, 32, -173],  moonAlpha: 0.6 },
+  night:   { fogNear: 30, fogFar: 180, sunDir: [0.3, 0.8, -0.5],    starAlpha: 1,    moonPos: [40, 42, -191],  moonAlpha: 1 },
+  predawn: { fogNear: 40, fogFar: 200, sunDir: [0.75, 0.3, -0.6],   starAlpha: 0.4,  moonPos: [-60, 45, -185], moonAlpha: 0.5 },
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -56,8 +56,8 @@ function compute(tod: number): Environment {
     sunDir: mixVec(la.sunDir, lb.sunDir, t, true),
     sunColor: mixHex(a.sun, b.sun, t),
     sunIntensity: lerp(a.sunIntensity, b.sunIntensity, t),
-    hemiSky: zenith,
-    hemiGround: PALETTE.terrainLow.toLowerCase(),
+    hemiSky: horizon,
+    hemiGround: PALETTE.terrainMid.toLowerCase(),
     starAlpha: lerp(la.starAlpha, lb.starAlpha, t),
     moonPos: mixVec(la.moonPos, lb.moonPos, t, false),
     moonAlpha: lerp(la.moonAlpha, lb.moonAlpha, t),

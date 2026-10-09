@@ -28,8 +28,8 @@ describe('heightAt', () => {
       expect(heightAt(x, -8)).toBeGreaterThan(0.2);
     }
   });
-  it('holds the mill pad flat under the whole 10 × 7 mill footprint', () => {
-    for (const [dx, dz] of [[-5, -3.5], [5, -3.5], [-5, 3.5], [5, 3.5], [0, 0]]) {
+  it('holds the mill pad flat under the mill: the 14-wide body along its centre line and its 10 × 7 core', () => {
+    for (const [dx, dz] of [[-5, -3.5], [5, -3.5], [-5, 3.5], [5, 3.5], [0, 0], [-7, 0], [7, 0]]) {
       expect(heightAt(MILL_PAD.x + dx, MILL_PAD.z + dz)).toBeCloseTo(MILL_PAD.y, 6);
     }
   });
@@ -88,9 +88,28 @@ describe('buildTerrain', () => {
       const vx = p[c] - p[a], vy = p[c + 1] - p[a + 1], vz = p[c + 2] - p[a + 2];
       const nx = uy * vz - uz * vy, nz = ux * vy - uy * vx;
       const ox = (p[a] + p[c]) / 2 - p[b], oz = (p[a + 2] + p[c + 2]) / 2 - p[b + 2];   // apex → base-edge midpoint
+      if (nx === 0 && nz === 0) continue;   // a skipped cone collapsed to zero height has no face
       if (!(nx * ox + nz * oz > 0)) inward++;
     }
     expect(inward).toBe(0);
+  });
+  it('varies the treeline: heights 0.8–3.4, radii 0.35–0.7, about 15% collapsed', () => {
+    const p = terrain.positions;
+    let skipped = 0, tall = 0;
+    for (let t = 0; t < TREELINE.count; t++) {
+      const first = GRID + t * (TREELINE.sides + 1);
+      const h = p[(first + TREELINE.sides) * 3 + 1] - p[first * 3 + 1];
+      if (h === 0) { skipped++; continue; }
+      expect(h).toBeGreaterThanOrEqual(0.8 - 1e-4);
+      expect(h).toBeLessThanOrEqual(3.4 + 1e-4);
+      if (h > 2.5) tall++;
+      const r = Math.hypot(p[first * 3] - p[(first + TREELINE.sides) * 3], p[first * 3 + 2] - p[(first + TREELINE.sides) * 3 + 2]);
+      expect(r).toBeGreaterThanOrEqual(0.35 - 1e-4);
+      expect(r).toBeLessThanOrEqual(0.7 + 1e-4);
+    }
+    expect(skipped).toBeGreaterThan(TREELINE.count * 0.08);
+    expect(skipped).toBeLessThan(TREELINE.count * 0.22);
+    expect(tall).toBeGreaterThan(10);
   });
   it('colours the treeline with the palette treeline colour and stays in the dark ramp', () => {
     const tree = new Color(PALETTE.treeline);

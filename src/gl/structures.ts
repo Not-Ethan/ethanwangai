@@ -15,7 +15,7 @@ export const BUILDING_SIZES = {
   hut: { w: 3, h: 2.5, d: 3, rise: 1.2 },
   cabin: { w: 2.5, h: 2, d: 2.5, rise: 1.0 },
   bar: { w: 5, h: 3, d: 4, rise: 0.6 },
-  mill: { w: 10, h: 9, d: 7, rise: 2.5 },
+  mill: { w: 14, h: 5.5, d: 7, rise: 1.6 },
 } as const satisfies Record<string, BuildingSize>;
 
 export const LAMP_POST = { w: 0.12, h: 1.2, head: 0.3 } as const;
@@ -118,8 +118,8 @@ export function staticWindows(): WindowSpec[] {
     for (let c = 0; c < 5; c++) {
       out.push({
         emitter: 'mill',
-        center: [mill[0] + (c - 2) * 1.8, mill[1] + 1.6 + r * 2.0, front(mill, BUILDING_SIZES.mill.d)],
-        w: 1.1, h: 1.2, color: colorOf('mill'), row: r,
+        center: [mill[0] + (c - 2) * 2.4, mill[1] + 0.9 + r * 1.05, front(mill, BUILDING_SIZES.mill.d)],
+        w: 0.7, h: 0.8, color: colorOf('mill'), row: r,
       });
     }
   }

@@ -30,7 +30,7 @@ import { Buildings } from './Buildings';
 import { Windows } from './Windows';
 import { Glow } from './Glow';
 
-export const HEMI_INTENSITY = 0.9;
+export const HEMI_INTENSITY = 20.0;
 export const SHADOW_MAP_SIZE = 1024;
 const SHADOW_EXTENT = 70;
 

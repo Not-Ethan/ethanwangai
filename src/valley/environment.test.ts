@@ -19,19 +19,30 @@ describe('environmentAt', () => {
     expect(e.fogNear).toBeCloseTo(LIGHT[k.name].fogNear, 12);
     expect(e.starAlpha).toBeCloseTo(LIGHT[k.name].starAlpha, 12);
   });
-  it('fog follows the horizon; hemisphere sky is the zenith, ground the terrain low', () => {
+  it('has monotone sky luminance dusk > blue > night and an east lift at predawn', () => {
+    const lum = (hex: string) => {
+      const n = parseInt(hex.slice(1), 16);
+      return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255);
+    };
+    for (const f of ['horizon', 'zenith'] as const) {
+      expect(lum(environmentAt(0)[f])).toBeGreaterThan(lum(environmentAt(0.3)[f]));
+      expect(lum(environmentAt(0.3)[f])).toBeGreaterThan(lum(environmentAt(0.6)[f]));
+    }
+    expect(lum(environmentAt(1).east)).toBeGreaterThan(lum(environmentAt(0.6).horizon) * 1.5);
+  });
+  it('fog follows the horizon; hemisphere sky is the horizon, ground the terrain mid', () => {
     for (const tod of [0, 0.17, 0.45, 0.8, 1]) {
       const e = environmentAt(tod);
       expect(e.fogColor).toBe(e.horizon);
-      expect(e.hemiSky).toBe(e.zenith);
-      expect(e.hemiGround).toBe(lc(PALETTE.terrainLow));
+      expect(e.hemiSky).toBe(e.horizon);
+      expect(e.hemiGround).toBe(lc(PALETTE.terrainMid));
     }
   });
   it('blends linearly between keyframes (midway dusk → blue)', () => {
     const e = environmentAt(0.15);
     const a = rgb(SKY_KEYFRAMES[0].horizon), b = rgb(SKY_KEYFRAMES[1].horizon), m = rgb(e.horizon);
     for (let i = 0; i < 3; i++) expect(Math.abs(m[i] - (a[i] + b[i]) / 2)).toBeLessThanOrEqual(1);
-    expect(e.sunIntensity).toBeCloseTo((0.6 + 0.35) / 2, 9);
+    expect(e.sunIntensity).toBeCloseTo((1.6 + 2.2) / 2, 9);
     expect(e.fogFar).toBeCloseTo((LIGHT.dusk.fogFar + LIGHT.blue.fogFar) / 2, 9);
   });
   it('keeps sunDir unit length, alphas in [0, 1], fog near < far, colours as #rrggbb', () => {

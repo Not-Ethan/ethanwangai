@@ -15,10 +15,10 @@
   --rain: #9AAEC4;
   --wall: #1A1F28;
   --roof: #11151C;
-  --terrain-low: #16241C;
-  --terrain-mid: #1F3326;
-  --terrain-slope: #2B3340;
-  --terrain-crest: #0C0F16;
+  --terrain-low: #1B2C22;
+  --terrain-mid: #26402E;
+  --terrain-slope: #33404F;
+  --terrain-crest: #0E121A;
   --treeline: #090B10;
   --river: #6E8AA6;
   --mist: #8FA3B8;
@@ -115,10 +115,10 @@ body {
 /* the gradient lives on a pseudo-element behind the copy so the side fade never masks the text itself */
 .scrim::before {
   content: ''; position: absolute; z-index: -1; pointer-events: none;
-  inset: -3rem -4rem -3rem -2rem;
-  background: radial-gradient(ellipse closest-side at 50% 50%, var(--scrim) 0%, var(--scrim) 35%, transparent 100%);
+  inset: -3rem -3rem -3rem -3rem;
+  background: radial-gradient(ellipse closest-side at 50% 50%, var(--scrim) 0%, var(--scrim) 70%, transparent 100%);
 }
-@media (min-width: 48rem) { .scrim::before { inset: -4rem -8rem -4rem -3rem; } }
+@media (min-width: 48rem) { .scrim::before { inset: -5rem -6rem -5rem -6rem; } }
 
 /* fixed mono chrome (spec §9): home mark top-left, nav top-right. No band, no panel. */
 .nav {
