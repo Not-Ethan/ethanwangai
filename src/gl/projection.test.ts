@@ -51,10 +51,10 @@ describe('projection', () => {
   it('places labels beside their anchor in pixels, clamps them and hides invalid ones (spec §12)', () => {
     const proj = Float32Array.of(0, 0, 1, 0.999, -0.999, 1, 0.5, 0.5, 0, 40, -90, 1, Number.NaN, 0, 1);
     const out: LabelPlacement = { x: -1, y: -1, visible: false };
-    expect(placeLabel(proj, 0, 1440, 900, 16, out)).toEqual({ x: 730, y: 444, visible: true });
-    expect(placeLabel(proj, 1, 1440, 900, 16, out)).toEqual({ x: 1424, y: 884, visible: true });
+    expect(placeLabel(proj, 0, 1440, 900, 16, out)).toEqual({ x: 730, y: 450 - 14 - 22, visible: true });
+    expect(placeLabel(proj, 1, 1440, 900, 16, out)).toEqual({ x: 1424, y: 900 - 16 - 14, visible: true });
     expect(placeLabel(proj, 2, 1440, 900, 16, out).visible).toBe(false);
-    expect(placeLabel(proj, 3, 1440, 900, 16, out)).toEqual({ x: 1424, y: 884, visible: true });
+    expect(placeLabel(proj, 3, 1440, 900, 16, out)).toEqual({ x: 1424, y: 900 - 16 - 14, visible: true });
     expect(placeLabel(proj, 4, 1440, 900, 16, out).visible).toBe(false);
     expect(placeLabel(proj, 9, 1440, 900, 16, out).visible).toBe(false);
   });
@@ -74,7 +74,7 @@ describe('projection', () => {
     expect(top.y).toBeGreaterThanOrEqual(16);
     const mid = placeLabel(proj, 3, 1440, 900, 16, out, w, h);
     expect(mid.x).toBeCloseTo(710, 6);
-    expect(mid.y).toBeCloseTo(450 - h - 6, 6);
+    expect(mid.y).toBeCloseTo(450 - h - 22, 6);
     expect(mid.y + h).toBeLessThan(450);
   });
 });

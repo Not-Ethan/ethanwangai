@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ridgePoints, TRADES_PER_DAY, RIDGE_LIFT, RIDGE_JITTER, RIDGE_JITTER_Y, RIDGE_JITTER_Z } from './ridge';
+import { ridgePoints, TRADES_PER_DAY, RIDGE_LIFT, RIDGE_JITTER, RIDGE_JITTER_Y, RIDGE_JITTER_Z, RIDGE_FLOOR_FRACTION, TRICKLE_SIZE_BOOST } from './ridge';
 import { RIDGE } from './layout';
 import { heightAt } from './terrain';
 import { facts } from './facts';
@@ -33,7 +33,8 @@ describe('ridgePoints (uniform, the committed tradesPerDay.json is empty)', () =
       if (x < RIDGE.x0 || x > RIDGE.x1) bad++;
       if (Math.abs(z - RIDGE.z) > RIDGE_JITTER_Z + 1e-4) bad++;
       if (Math.abs(y - (heightAt(x, RIDGE.z) + RIDGE_LIFT)) > RIDGE_JITTER_Y + 1e-3) bad++;
-      if (r.size[i] < 0.6 || r.size[i] > 1.4) bad++;
+      const boost = r.birth[i] < RIDGE_FLOOR_FRACTION ? TRICKLE_SIZE_BOOST : 1;   // the hero trickle is drawn larger
+      if (r.size[i] < 0.6 * boost - 1e-6 || r.size[i] > 1.4 * boost + 1e-6) bad++;
     }
     expect(bad).toBe(0);
   });

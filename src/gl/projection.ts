@@ -85,7 +85,8 @@ export function placeLabel(
   let x = ax + 10;
   if (x + labelW > vw - margin) x = ax - 10 - labelW;
   out.x = Math.max(margin, Math.min(vw - margin - labelW, x));
-  out.y = Math.max(margin, Math.min(vh - margin - labelH, ay - labelH - 6));
+  const h = labelH > 0 ? labelH : 14;
+  out.y = Math.max(margin, Math.min(vh - margin - h, ay - h - 22));   // clearly above the light, never across its window
   out.visible = true;
   return out;
 }

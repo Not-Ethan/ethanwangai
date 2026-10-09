@@ -106,6 +106,8 @@ body {
 @media (min-width: 48rem) {
   .section-grid { padding: 7rem 3rem 0; }
   .copy-col { grid-column: 1 / span 5; top: 7rem; }
+  /* section 02 talks about the ridge, so its column starts under the ridge band (y ≈ 200 at 1440 × 900) */
+  #kalshi .copy-col { top: 17rem; }
   .open-col { grid-column: 1 / span 8; }
 }
 

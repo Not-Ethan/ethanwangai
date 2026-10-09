@@ -11,6 +11,9 @@ import tradesPerDay from './data/tradesPerDay.json';
 export const RIDGE_LIFT = 0.5;
 export const RIDGE_JITTER_Y = 0.35;
 export const RIDGE_JITTER_Z = 2.0;
+/** The first 1% of points is the hero trickle (reveal 0.01); they are drawn larger so a few hundred grains read as an ember. */
+export const RIDGE_FLOOR_FRACTION = 0.01;
+export const TRICKLE_SIZE_BOOST = 2.6;
 export const RIDGE_JITTER = RIDGE_JITTER_Z;
 export const RIDGE_SIZE = { min: 0.6, max: 1.4 } as const;
 
@@ -68,6 +71,7 @@ export function ridgePoints(
     positions[i * 3 + 1] = heightAt(x, RIDGE.z) + RIDGE_LIFT + (rng() * 2 - 1) * RIDGE_JITTER_Y;
     positions[i * 3 + 2] = RIDGE.z + (rng() * 2 - 1) * RIDGE_JITTER_Z;
     size[i] = RIDGE_SIZE.min + rng() * (RIDGE_SIZE.max - RIDGE_SIZE.min);
+    if (f < RIDGE_FLOOR_FRACTION) size[i] *= TRICKLE_SIZE_BOOST;   // the hero trickle must read from the hut's distance
   }
   return { positions, birth, size };
 }
