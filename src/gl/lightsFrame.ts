@@ -6,6 +6,8 @@ import { EMITTER_INDEX } from './projection';
 import { writeChainLevels } from './chain';
 import { latchReveals } from './reveal';
 import { resolveDarchT, writeMill } from './mill';
+import { applyPulse } from './pulse';
+import { flickerLevel } from './flicker';
 import type { Timeline } from '@/valley/types';
 
 export interface LightUniforms {
@@ -38,6 +40,8 @@ export function applyLights(
   const darchT = resolveDarchT(inputs.darchOverride, tl.darchT, inputs.introT);
   u.uDarchT.value = darchT;
   writeMill(darchT, inputs.dt, inputs.reducedMotion, u.uMillRows.value, u.uWheelAngle, lit);
+  applyPulse(inputs.pulseT, inputs.reducedMotion, lit);
+  lit[EMITTER_INDEX.hut] *= flickerLevel(inputs.flickerT);
   latchReveals(tl, inputs.introT, inputs.reducedMotion, latched);
   u.uRidgeReveal.value = latched.ridge;
   u.uHedgeReveal.value = latched.hedge;

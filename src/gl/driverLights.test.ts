@@ -3,6 +3,7 @@ import { EMITTERS } from '@/valley/lights';
 import { timelineAt } from '@/valley/timeline';
 import { EMITTER_INDEX } from './projection';
 import { REST_LIT, applyFrame, createFrameTargets } from './driverCore';
+import { pulseMultiplier } from './pulse';
 import { fixtureInputs, fixtureRanges, gAt } from './frameFixture';
 
 const ranges = fixtureRanges();
@@ -103,5 +104,23 @@ describe('the mill through applyFrame (spec §4.5, §14 G4)', () => {
     applyFrame(fixtureInputs(ranges, { g: 0, darchOverride: 0.9 }), targets);
     expectRows(targets, [1, 0, 0, 0]);
     expect(targets.uniforms.uDarchT.value).toBe(0.9);
+  });
+});
+
+describe('pulse and flicker through applyFrame (spec §4.2, §5.6)', () => {
+  it('multiplies every lit thing but the mill, and the ridge brightness', () => {
+    const targets = createFrameTargets();
+    const t = 0.6;
+    applyFrame(fixtureInputs(ranges, { pulseT: t }), targets);
+    expect(targets.lit[EMITTER_INDEX.hut]).toBeCloseTo(pulseMultiplier(EMITTER_INDEX.hut, t), 5);
+    expect(targets.lit[EMITTER_INDEX.mill]).toBe(0);
+    expect(targets.uniforms.uRidgeLit.value).toBeCloseTo(pulseMultiplier(EMITTER_INDEX.ridge, t), 5);
+  });
+
+  it('dips the hut to 0.6 mid-flicker and leaves the rest alone', () => {
+    const targets = createFrameTargets();
+    applyFrame(fixtureInputs(ranges, { flickerT: 0.2 }), targets);
+    expect(targets.lit[EMITTER_INDEX.hut]).toBeCloseTo(0.6, 5);
+    expect(targets.lit[EMITTER_INDEX.nist]).toBe(1);
   });
 });

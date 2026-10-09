@@ -13,6 +13,8 @@ import { writeLabelAlpha } from './chain';
 import { frame } from './frame';
 import { LIVE } from './live';
 import { wheelRef } from './wheelRef';
+import { createPulseGate, inSection, stepPulseGate, type PulseGate } from './pulse';
+import { createFlickerClock, isEmailTarget, stepFlicker, type FlickerClock } from './flicker';
 import { introClock, markIntroPlayed, readIntroPlayed, sessionStore, shouldPlayIntro, stillParams } from './introGate';
 
 export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefObject<number | null> }) {
@@ -27,6 +29,21 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
     playIntro.current = shouldPlayIntro({ reducedMotion, introPlayed: readIntroPlayed(sessionStore), still });
   }, [reducedMotion, still]);
 
+  const pulseGate = useRef<PulseGate>(createPulseGate());
+  const flicker = useRef<FlickerClock>(createFlickerClock());
+  useEffect(() => {
+    const clock = flicker.current;
+    const onEnter = (e: Event) => {
+      if (isEmailTarget(e.target)) clock.pending = true;
+    };
+    window.addEventListener('pointerover', onEnter, { passive: true });
+    window.addEventListener('focusin', onEnter);
+    return () => {
+      window.removeEventListener('pointerover', onEnter);
+      window.removeEventListener('focusin', onEnter);
+    };
+  }, []);
+
   useFrame((_, delta) => {
     const { inputs, targets } = frame;
     const u = targets.uniforms;
@@ -40,6 +57,8 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
     const introT = introClock(playIntro.current, start, t, still.t);
     setFrameInputs(inputs, s.g, s.ranges, t, delta, introT, reducedMotion, rig.portrait);
     if (still.g !== null) inputs.g = still.g;
+    inputs.pulseT = stepPulseGate(pulseGate.current, inSection(inputs.g, inputs.ranges, 'alive'), t);
+    inputs.flickerT = stepFlicker(flicker.current, t);
     applyFrame(inputs, targets);
     writeLabelAlpha(inputs.introT, LABEL_ALPHA);
     LIVE.ridge = targets.latched.ridge;
