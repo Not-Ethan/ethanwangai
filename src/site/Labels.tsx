@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import { EMITTERS } from '@/valley/lights';
 import { EMITTER_INDEX, LABEL_ALPHA, PROJECTED, placeLabel, type LabelPlacement } from '@/gl/projection';
 import { copy } from '@/site/copy';
 import { ignitionLabelItems, type LabelItem } from './labelItems';
@@ -34,6 +35,8 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
     const lastA = new Float32Array(items.length).fill(Number.NaN);
     const w = new Float32Array(items.length);
     const h = new Float32Array(items.length);
+    // a label sits higher over a bigger light (the mill's panes, a house's windows): 12 px per unit of glow size
+    const lift = Float32Array.from(items, (it) => 12 * EMITTERS[EMITTER_INDEX[it.anchor]].size);
     const measure = () => {
       for (let k = 0; k < items.length; k++) {
         const el = spans.current[k];
@@ -53,7 +56,7 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
         const el = spans.current[k];
         if (!el) continue;
         const i = indices[k];
-        placeLabel(PROJECTED, i, vw, vh, LABEL_MARGIN, place, w[k], h[k]);
+        placeLabel(PROJECTED, i, vw, vh, LABEL_MARGIN, place, w[k], h[k] + lift[k]);
         const alpha = place.visible ? LABEL_ALPHA[i] : 0;
         if (place.visible && (Number.isNaN(lastX[k]) || Math.abs(place.x - lastX[k]) > 0.5 || Math.abs(place.y - lastY[k]) > 0.5)) {
           el.style.transform = `translate3d(${place.x.toFixed(1)}px, ${place.y.toFixed(1)}px, 0)`;

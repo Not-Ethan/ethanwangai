@@ -107,7 +107,11 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
       },
       wait: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
       now: () => performance.now(),
-    }).then((t) => { t0.current = t; });
+    }).then((t) => {
+      t0.current = t;
+      // T0 marker for the visual gates and debugging: the ignition clock starts here (spec §7).
+      try { document.documentElement.dataset.t0 = String(t); } catch { /* no DOM */ }
+    });
   }, [fog, refs, onFail]);
 
   return (
