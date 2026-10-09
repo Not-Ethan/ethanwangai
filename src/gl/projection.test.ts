@@ -82,20 +82,22 @@ describe('projection', () => {
     expect(mid.y + h).toBeLessThan(450);
   });
 
-  it('slides a label past a line of copy, or under it when there is no room to the right', () => {
+  it('keeps a label by its light: other side of the light when copy covers the first slot, hidden when nothing is clear', () => {
     const proj = Float32Array.of(-0.5, 0.2, 1);
     const out: LabelPlacement = { x: 0, y: 0, visible: false };
     const free = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, null);
-    const freeX = free.x, freeY = free.y;
-    const line = { left: 0, top: freeY - 4, right: 900, bottom: freeY + 10 };
-    const moved = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, [line]);
-    expect(moved.x).toBeCloseTo(912, 6);          // slid right of the line
-    expect(moved.y).toBeCloseTo(freeY, 6);
-    const wide = { left: 0, top: freeY - 4, right: 1300, bottom: freeY + 10 };
-    const under = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, [wide]);
-    expect(under.y).toBeCloseTo(wide.bottom + 6, 6);   // no room to the right: just under the line
-    const clear = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, [{ left: 1000, top: 0, right: 1400, bottom: 800 }]);
-    expect(clear.x).toBeCloseTo(freeX, 6);
-    expect(clear.y).toBeCloseTo(freeY, 6);
+    const ax = 360, ay = 360;
+    expect(free.x).toBeCloseTo(ax + 10, 3);
+    expect(free.y).toBeCloseTo(ay - 14 - 22, 3);
+    const line = { left: 0, top: ay - 40, right: 900, bottom: ay - 10 };
+    const flipped = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, [line]);
+    expect(flipped.visible).toBe(true);
+    expect(flipped.y).toBeCloseTo(ay + 14, 3);        // below the light instead
+    expect(flipped.x).toBeCloseTo(ax + 10, 3);
+    const everywhere = { left: 0, top: 0, right: 1440, bottom: 900 };
+    const hidden = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, [everywhere]);
+    expect(hidden.visible).toBe(false);
+    const belowFirst = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, null, 'below');
+    expect(belowFirst.y).toBeCloseTo(ay + 14, 3);
   });
 });

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { EMITTERS } from '@/valley/lights';
-import { LABEL_LIFT_PX } from './labelItems';
+import { LABEL_LIFT_PX, LABEL_SIDE } from './labelItems';
 import { stillParams } from '@/gl/introGate';
 import { EMITTER_INDEX, LABEL_ALPHA, PROJECTED, placeLabel, type AvoidRect, type LabelPlacement } from '@/gl/projection';
 import { copy } from '@/site/copy';
@@ -38,7 +38,8 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
     const w = new Float32Array(items.length);
     const h = new Float32Array(items.length);
     // a label sits higher over a bigger light (the mill's panes, a house's windows): 12 px per unit of glow size
-    const lift = Float32Array.from(items, (it) => 12 * EMITTERS[EMITTER_INDEX[it.anchor]].size + LABEL_LIFT_PX[it.key]);
+    const lift = Float32Array.from(items, (it) => (LABEL_SIDE[it.key] === 'below' ? 0 : 12 * EMITTERS[EMITTER_INDEX[it.anchor]].size + LABEL_LIFT_PX[it.key]));
+    const side = items.map((it) => LABEL_SIDE[it.key]);
     // the hero's headline and deck lines, read once per resize (never per frame): labels keep clear of them while
     // the chain plays at the top of the page. Still mode (the gates) hides the DOM, so it skips this.
     const still = stillParams(typeof window === 'undefined' ? '' : window.location.search).still;
@@ -79,7 +80,7 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
         if (!el) continue;
         const i = indices[k];
         // the avoid rects are document px; they only matter at the top of the page
-        placeLabel(PROJECTED, i, vw, vh, LABEL_MARGIN, place, w[k], h[k] + lift[k], avoids.length > 0 && window.scrollY < 2 ? avoids : null);
+        placeLabel(PROJECTED, i, vw, vh, LABEL_MARGIN, place, w[k], h[k] + lift[k], avoids.length > 0 && window.scrollY < 2 ? avoids : null, side[k]);
         const alpha = place.visible ? LABEL_ALPHA[i] : 0;
         // a label never prints over one that is already showing: move up by its height plus a gap, up to three times
         if (place.visible && alpha > 0.02) {

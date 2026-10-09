@@ -76,9 +76,22 @@ function hits(x: number, y: number, w: number, h: number, r: AvoidRect): boolean
   return x < r.right && x + w > r.left && y < r.bottom && y + h > r.top;
 }
 
+export type LabelSide = 'above' | 'below';
+
+function clearOf(x: number, y: number, w: number, h: number, avoid: readonly AvoidRect[]): boolean {
+  for (let k = 0; k < avoid.length; k++) if (hits(x, y, w, h, avoid[k])) return false;
+  return true;
+}
+
+/**
+ * Places label i beside its light: 10 px right of the light, on the preferred side (above: label bottom 22 px over
+ * the light; below: label top 14 px under it). When copy lines are given and that slot would print over one, it
+ * tries the other side, then the left of the light; with no clear slot the label is hidden (visible false) rather
+ * than moved away from its light. Allocation-free.
+ */
 export function placeLabel(
   projected: Float32Array, i: number, vw: number, vh: number, margin: number, out: LabelPlacement,
-  labelW = 0, labelH = 0, avoid: readonly AvoidRect[] | null = null,
+  labelW = 0, labelH = 0, avoid: readonly AvoidRect[] | null = null, side: LabelSide = 'above',
 ): LabelPlacement {
   const o = i * 3;
   const nx = projected[o];
@@ -89,22 +102,22 @@ export function placeLabel(
   }
   const ax = ((nx + 1) / 2) * vw;
   const ay = ((1 - ny) / 2) * vh;
-  let x = ax + 10;
-  if (x + labelW > vw - margin) x = ax - 10 - labelW;
-  out.x = Math.max(margin, Math.min(vw - margin - labelW, x));
   const h = labelH > 0 ? labelH : 14;
-  let y = ay - h - 22;   // clearly above the light, never across its window
-  if (avoid) {
-    // the box would print over a line of copy: first slide right past that line, else sit just under it
-    for (let pass = 0; pass < 2; pass++) {
-      for (let k = 0; k < avoid.length; k++) {
-        const r = avoid[k];
-        if (!hits(out.x, y, labelW, h, r)) continue;
-        if (r.right + 12 + labelW <= vw - margin) out.x = r.right + 12;
-        else y = r.bottom + 6;
-      }
-    }
+  const right = ax + 10 + labelW <= vw - margin ? ax + 10 : ax - 10 - labelW;
+  const left = ax - 10 - labelW;
+  const above = ay - h - 22;   // clearly above the light, never across its window
+  const below = ay + 14;
+  const first = side === 'above' ? above : below;
+  const second = side === 'above' ? below : above;
+  let x = right;
+  let y = first;
+  if (avoid && avoid.length > 0 && !clearOf(x, y, labelW, h, avoid)) {
+    if (clearOf(right, second, labelW, h, avoid)) { y = second; }
+    else if (left >= margin && clearOf(left, first, labelW, h, avoid)) { x = left; }
+    else if (left >= margin && clearOf(left, second, labelW, h, avoid)) { x = left; y = second; }
+    else { out.visible = false; return out; }
   }
+  out.x = Math.max(margin, Math.min(vw - margin - labelW, x));
   out.y = Math.max(margin, Math.min(vh - margin - h, y));
   out.visible = true;
   return out;
