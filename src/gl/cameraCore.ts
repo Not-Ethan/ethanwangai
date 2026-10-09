@@ -62,8 +62,8 @@ export function composeCamera(
   else rig.parallax.set(0, 0);
   const yaw = (yawDeg + rig.parallax.x * PARALLAX_DEG) * DEG;
   const pitch = (pitchDeg + rig.parallax.y * PARALLAX_DEG) * DEG;
-  const [px, py, pz] = base.position;
-  const [lx, ly, lz] = base.lookAt;
+  const px = base.position[0], py = base.position[1], pz = base.position[2];   // indexed reads: no iterator on the frame path
+  const lx = base.lookAt[0], ly = base.lookAt[1], lz = base.lookAt[2];
   const d = Math.hypot(lx - px, ly - py, lz - pz);
   rig.lookAt.set(lx + Math.tan(yaw) * d, ly + Math.tan(pitch) * d, lz);
   camera.position.set(px, py, pz);

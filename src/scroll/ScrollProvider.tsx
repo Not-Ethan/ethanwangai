@@ -73,6 +73,8 @@ export function ScrollProvider({ children }: { children: ReactNode }) {
       const docHeight = document.documentElement.scrollHeight;
       s.maxScroll = Math.max(1, docHeight - s.vh);
       s.ranges = sectionRanges(s.tops, docHeight, s.vh);
+      // a resize or rotation changes the document length: refresh g now, not on the next scroll event
+      s.g = Math.min(1, Math.max(0, window.scrollY / s.maxScroll));
     };
     measure();
     const ro = new ResizeObserver(measure);
