@@ -8,6 +8,7 @@ import { SECTIONS, sectionRanges } from '@/valley/sections';
 import { timelineAt } from '@/valley/timeline';
 import { environmentAt } from '@/valley/environment';
 import { EMITTERS } from '@/valley/lights';
+import { BUILD_SECONDS, buildStateAt } from '@/valley/build';
 import { EMITTER_COUNT, EMITTER_INDEX, PROJECTED } from './projection';
 import { applyLights, createLightUniforms, type LightUniforms } from './lightsFrame';
 
@@ -134,6 +135,73 @@ export function setFrameInputs(
   inputs.portrait = portrait;
 }
 
+// ---- The visitor build clock (spec 5.5). buildT = wall seconds since the current build's t = 0. ----
+export const LIGHT_OUT_SECONDS = 0.2;
+export const WINDOW_LIT_AT = 4.25;
+const WINDOW_RAMP = BUILD_SECONDS - WINDOW_LIT_AT;   // the window is full when the clock reads 4.40
+const SCAFFOLD_COUNT = 18;
+const DONE_CLOCK = buildStateAt(BUILD_SECONDS).clock;
+const VISITOR_INDEX = EMITTERS.findIndex((e) => e.id === 'visitor');
+
+export const BUILD_PHASE = { none: 0, lightOut: 1, building: 2, done: 3 } as const;
+export type BuildPhase = (typeof BUILD_PHASE)[keyof typeof BUILD_PHASE];
+
+export interface BuildClock { start: number | null }
+export interface BuildTargets { phase: BuildPhase; cut: number; grow: Float32Array; clock: string }
+
+export function createBuildTargets(): BuildTargets {
+  return { phase: BUILD_PHASE.none, cut: 0, grow: new Float32Array(SCAFFOLD_COUNT), clock: '0.00' };
+}
+
+/**
+ * A new sentence at wall time t. An existing house goes dark first. Reduced motion (spec 11) cuts straight to the
+ * built house: start = -Infinity, like a restored house, so no light-out and no scaffold.
+ */
+export function startBuild(clock: BuildClock, t: number, hadHouse: boolean, reducedMotion: boolean): void {
+  clock.start = reducedMotion ? -Infinity : t + (hadHouse ? LIGHT_OUT_SECONDS : 0);
+}
+
+/** A house restored from localStorage: built since forever (spec 4.7 "rebuilt silently at load"). */
+export function restoreBuild(clock: BuildClock): void {
+  clock.start = -Infinity;
+}
+
+export function buildTAt(clock: BuildClock, t: number): number | null {
+  return clock.start === null ? null : t - clock.start;
+}
+
+export function buildPhaseAt(buildT: number | null): BuildPhase {
+  if (buildT === null) return BUILD_PHASE.none;
+  if (buildT < 0) return BUILD_PHASE.lightOut;
+  if (buildT < BUILD_SECONDS) return BUILD_PHASE.building;
+  return BUILD_PHASE.done;
+}
+
+/** Multiplier on the visitor emitter's brightness. Pure arithmetic: safe inside applyFrame. */
+export function visitorFactor(buildT: number | null): number {
+  if (buildT === null) return 0;
+  if (buildT < 0) return Math.min(1, -buildT / LIGHT_OUT_SECONDS);
+  if (buildT < WINDOW_LIT_AT) return 0;
+  return Math.min(1, (buildT - WINDOW_LIT_AT) / WINDOW_RAMP);
+}
+
+/** The house's clip, scaffold and clock for this frame. Called by the visitor bridge after applyFrame, not inside it. */
+export function applyBuild(buildT: number | null, out: BuildTargets): void {
+  const phase = buildPhaseAt(buildT);
+  out.phase = phase;
+  if (phase === BUILD_PHASE.building) {
+    const s = buildStateAt(buildT as number);
+    out.cut = s.cut;
+    out.grow.fill(0);
+    for (const b of s.scaffold) out.grow[b.idx] = b.grow;
+    out.clock = s.clock;
+    return;
+  }
+  out.grow.fill(0);
+  out.cut = phase === BUILD_PHASE.none ? 0 : 1;
+  out.clock = phase === BUILD_PHASE.done ? DONE_CLOCK : '0.00';
+}
+
 /** Stage 2's light at rest: every registered emitter lit, except the visitor, whose lot is empty until a build. */
 export const REST_LIT: Float32Array = Float32Array.from(EMITTERS, (e) => (e.id === 'visitor' || e.id === 'mill' ? 0 : 1));
 
@@ -207,6 +275,7 @@ export function applyFrame(inputs: FrameInputs, targets: FrameTargets): void {
   if (!inputs.reducedMotion) u.uTime.value = inputs.t;
 
   applyLights(inputs, tl, u, targets.lit, targets.latched);
+  targets.lit[VISITOR_INDEX] *= visitorFactor(inputs.buildT);
 }
 
 /** out[i] = lit[map[i]] for i < count. Returns true when any slot changed, so the caller uploads only then. */

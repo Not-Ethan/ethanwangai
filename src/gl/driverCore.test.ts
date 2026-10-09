@@ -5,8 +5,11 @@ import { SECTIONS, sectionRanges } from '@/valley/sections';
 import { timelineAt } from '@/valley/timeline';
 import { environmentAt } from '@/valley/environment';
 import { EMITTERS } from '@/valley/lights';
+import { BUILD_SECONDS, buildStateAt } from '@/valley/build';
 import {
   applyFrame, attachFog, attachPointLight, attachSink, attachSun, createFrame, createFrameTargets, createSceneRefs, createUniforms,
+  BUILD_PHASE, LIGHT_OUT_SECONDS, WINDOW_LIT_AT, applyBuild, buildPhaseAt, buildTAt, createBuildTargets, restoreBuild, startBuild,
+  visitorFactor, type BuildClock, type FrameInputs,
   hexToColor, POINT_LIGHTS, REST_LIT, scatterLit, setFrameInputs, SUN_DISTANCE, syncScene,
 } from './driverCore';
 import { EMITTER_COUNT, EMITTER_INDEX } from './projection';
@@ -234,5 +237,101 @@ describe('helpers', () => {
     source.count = 4;
     syncScene(refs, createUniforms(), lit);
     expect(Array.from(attr.array)).toEqual([1, 1, 1, 1]);
+  });
+});
+
+describe('the build clock (spec 5.5)', () => {
+  it('starts at 0 with no house, at -0.2 s when an old house must go dark, already built under reduced motion', () => {
+    const c: BuildClock = { start: null };
+    expect(buildTAt(c, 10)).toBeNull();
+    startBuild(c, 10, false, false);
+    expect(buildTAt(c, 10)).toBe(0);
+    expect(buildTAt(c, 12.5)).toBeCloseTo(2.5, 9);
+    startBuild(c, 20, true, false);
+    expect(buildTAt(c, 20)).toBeCloseTo(-LIGHT_OUT_SECONDS, 9);
+    startBuild(c, 30, true, true);
+    expect(buildTAt(c, 30)).toBe(Infinity);
+  });
+
+  it('a restored house is simply built', () => {
+    const c: BuildClock = { start: null };
+    restoreBuild(c);
+    expect(buildTAt(c, 3)).toBe(Infinity);
+    expect(buildPhaseAt(buildTAt(c, 3))).toBe(BUILD_PHASE.done);
+  });
+
+  it('phases', () => {
+    expect(buildPhaseAt(null)).toBe(BUILD_PHASE.none);
+    expect(buildPhaseAt(-0.1)).toBe(BUILD_PHASE.lightOut);
+    expect(buildPhaseAt(0)).toBe(BUILD_PHASE.building);
+    expect(buildPhaseAt(4.39)).toBe(BUILD_PHASE.building);
+    expect(buildPhaseAt(4.4)).toBe(BUILD_PHASE.done);
+  });
+
+  it('WINDOW_LIT_AT is where buildStateAt says the window lights', () => {
+    expect(buildStateAt(WINDOW_LIT_AT).lit).toBe(true);
+    expect(buildStateAt(WINDOW_LIT_AT - 0.01).lit).toBe(false);
+  });
+
+  it('visitorFactor: dark with no house, old light out over 0.2 s, dark while building, lit from 4.25 s', () => {
+    expect(visitorFactor(null)).toBe(0);
+    expect(visitorFactor(-0.2)).toBeCloseTo(1, 9);
+    expect(visitorFactor(-0.1)).toBeCloseTo(0.5, 9);
+    expect(visitorFactor(0)).toBe(0);
+    expect(visitorFactor(4.2)).toBe(0);
+    expect(visitorFactor(4.325)).toBeCloseTo(0.5, 6);
+    expect(visitorFactor(4.4)).toBe(1);
+    expect(visitorFactor(Infinity)).toBe(1);
+  });
+
+  it('applyBuild mirrors buildStateAt while building and holds the built state after', () => {
+    const out = createBuildTargets();
+    for (const t of [0.5, 2.0, 3.85]) {
+      applyBuild(t, out);
+      const s = buildStateAt(t);
+      expect(out.phase).toBe(BUILD_PHASE.building);
+      expect(out.cut).toBeCloseTo(s.cut, 9);
+      expect(out.clock).toBe(s.clock);
+      for (const b of s.scaffold) expect(out.grow[b.idx]).toBeCloseTo(b.grow, 6);
+    }
+    applyBuild(0.5, out);
+    expect(Array.from(out.grow).some((g) => g > 0)).toBe(true);
+    applyBuild(BUILD_SECONDS, out);
+    expect(out.phase).toBe(BUILD_PHASE.done);
+    expect(out.cut).toBe(1);
+    expect(out.clock).toBe(buildStateAt(BUILD_SECONDS).clock);
+    expect(Array.from(out.grow).every((g) => g === 0)).toBe(true);
+    applyBuild(-0.1, out);
+    expect(out.phase).toBe(BUILD_PHASE.lightOut);
+    expect(out.cut).toBe(1);
+    applyBuild(null, out);
+    expect(out.phase).toBe(BUILD_PHASE.none);
+    expect(out.cut).toBe(0);
+  });
+});
+
+describe('applyFrame: the visitor light follows the build clock, not the scroll', () => {
+  const V = EMITTERS.findIndex((e) => e.id === 'visitor');
+  const inputs = (g: number, buildT: number | null): FrameInputs => ({
+    g, ranges: RANGES, t: 50, dt: 1 / 60, introT: 100, buildT, pulseT: null, flickerT: null, reducedMotion: false,
+  });
+
+  it('is dark with no house, dark mid-build, half-lit at 4.325 s, fully lit when built, at any scroll position', () => {
+    const targets = createFrameTargets(createUniforms(), new Float32Array(EMITTER_COUNT * 3));
+    applyFrame(inputs(0.5, Infinity), targets);
+    const full = targets.lit[V];
+    expect(full).toBeGreaterThan(0.5);
+    for (const g of [0.02, 0.5, 0.97]) {
+      applyFrame(inputs(g, null), targets);
+      expect(targets.lit[V]).toBe(0);
+      applyFrame(inputs(g, 2.0), targets);
+      expect(targets.lit[V]).toBe(0);
+      applyFrame(inputs(g, 4.325), targets);
+      expect(targets.lit[V]).toBeCloseTo(full * 0.5, 5);
+      applyFrame(inputs(g, -0.1), targets);
+      expect(targets.lit[V]).toBeCloseTo(full * 0.5, 5);
+      applyFrame(inputs(g, Infinity), targets);
+      expect(targets.lit[V]).toBeCloseTo(full, 9);
+    }
   });
 });
