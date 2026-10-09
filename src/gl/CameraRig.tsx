@@ -6,7 +6,8 @@
 import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import type { Tier } from '@/valley/types';
-import { isPortrait, normalizePointer, resetPointer, setRigMode, type Rig } from './cameraCore';
+import { normalizePointer, resetPointer, setRigMode, type Rig } from './cameraCore';
+import { isPortrait } from './composition';
 
 export function CameraRig({ rig, tier, reducedMotion }: { rig: Rig; tier: Tier; reducedMotion: boolean }) {
   const width = useThree((s) => s.size.width);
