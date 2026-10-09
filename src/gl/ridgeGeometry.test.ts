@@ -1,20 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { facts } from '@/valley/facts';
 import { RIDGE } from '@/valley/layout';
 import { heightAt } from '@/valley/terrain';
 import { RIDGE_FRAG } from './shaders/ridge';
 import {
-  CREST_LIFT, CREST_SEGMENTS, buildRidgeGeometry, crestLinePoints, pointScale, ridgeConfig,
+  CREST_LIFT, CREST_SEGMENTS, buildRidgeGeometry, crestLinePoints, pointScale,
 } from './ridgeGeometry';
-
-describe('ridgeConfig (spec §4.6, §11)', () => {
-  it('draws every trade on desktop at size 1', () => {
-    expect(ridgeConfig('desktop')).toEqual({ count: facts.kalshi.trades, sizeScale: 1 });
-  });
-  it('draws a fifth of them on phone at 1.8x size', () => {
-    expect(ridgeConfig('phone')).toEqual({ count: Math.floor(facts.kalshi.trades / 5), sizeScale: 1.8 });
-  });
-});
 
 describe('buildRidgeGeometry', () => {
   it('carries position, aBirth and aSize for every point', () => {

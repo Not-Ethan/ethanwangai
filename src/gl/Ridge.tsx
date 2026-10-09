@@ -5,15 +5,14 @@ import { useEffect, useMemo } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
-import type { Tier } from '@/valley/types';
 import { PALETTE } from '@/valley/palette';
 import { CAMERA_LANDSCAPE } from '@/valley/layout';
 import { cameraFor } from './composition';
 import { getGlowTexture } from './glowTexture';
-import { RIDGE_ALPHA, RIDGE_POINT_WORLD, buildRidgeGeometry, crestLinePoints, pointScale, ridgeConfig } from './ridgeGeometry';
+import { RIDGE_ALPHA, RIDGE_POINT_WORLD, buildRidgeGeometry, crestLinePoints, pointScale } from './ridgeGeometry';
 import { RIDGE_FRAG, RIDGE_VERT } from './shaders/ridge';
 
-export interface RidgeProps { tier: Tier; reveal: { value: number }; lit: { value: number } }
+export interface RidgeProps { count: number; sizeScale: number; reveal: { value: number }; lit: { value: number } }
 
 export function createRidgeMaterial(reveal: { value: number }, lit: { value: number }, sizeScale: number): THREE.ShaderMaterial {
   const uniforms = THREE.UniformsUtils.merge([
@@ -45,8 +44,7 @@ function setPixelScale(material: THREE.ShaderMaterial, bufferHeightPx: number, f
   material.uniforms.uPixelScale.value = pointScale(bufferHeightPx, fovDeg) * RIDGE_POINT_WORLD * sizeScale;
 }
 
-export function Ridge({ tier, reveal, lit }: RidgeProps) {
-  const { count, sizeScale } = ridgeConfig(tier);
+export function Ridge({ count, sizeScale, reveal, lit }: RidgeProps) {
   const geometry = useMemo(() => buildRidgeGeometry(count), [count]);
   const material = useMemo(() => createRidgeMaterial(reveal, lit, sizeScale), [reveal, lit, sizeScale]);
   const crest = useMemo(() => crestLinePoints(), []);

@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { CAMERA_LANDSCAPE, PLACES } from '@/valley/layout';
 import { webgl2Available } from '@/fallback/glSupport';
 import { useScroll } from '@/scroll/ScrollProvider';
-import { useTier } from './useTier';
+import { PERF_MONITOR, useTier } from './useTier';
 import {
   attachFog, attachPointLight, attachSun, createSceneRefs, POINT_LIGHTS, type SceneRefs, type ValleyUniforms,
 } from './driverCore';
@@ -72,7 +72,7 @@ export function Scene() {
 }
 
 function ValleyCanvas({ onFail }: { onFail: () => void }) {
-  const { tier, dpr, shadows, onDecline } = useTier();
+  const { tier, dpr, shadows, antialias, ridgeCount, ridgeSizeScale, stars, rain, mist, onDecline } = useTier();
   const { reducedMotion } = useScroll();
   const uniforms = frame.targets.uniforms;
   const refs = useMemo(() => createSceneRefs(), []);
@@ -85,8 +85,8 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
     return f;
   }, [uniforms]);
   const gl = useMemo(
-    () => ({ antialias: tier === 'desktop', powerPreference: 'high-performance' as const, alpha: false }),
-    [tier],
+    () => ({ antialias, powerPreference: 'high-performance' as const, alpha: false }),
+    [antialias],
   );
 
   const onCreated = useCallback((state: RootState) => {
@@ -125,23 +125,23 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
         frameloop="always"
         onCreated={onCreated}
       >
-        <PerformanceMonitor onDecline={onDecline}>
+        <PerformanceMonitor ms={PERF_MONITOR.ms} iterations={PERF_MONITOR.iterations} threshold={PERF_MONITOR.threshold} bounds={PERF_MONITOR.bounds} onDecline={onDecline}>
           <SceneLights uniforms={uniforms} refs={refs} shadows={shadows} />
           <Sky uniforms={uniforms} />
-          <Stars uniforms={uniforms} tier={tier} />
+          <Stars uniforms={uniforms} count={stars} />
           <Moon uniforms={uniforms} />
           <Terrain shadows={shadows} />
           <River uniforms={uniforms} />
-          {tier === 'desktop' && <Mist uniforms={uniforms} />}
+          {mist ? <Mist uniforms={uniforms} /> : null}
           <Buildings shadows={shadows} />
           <Hillside />
           <VisitorHouse />
           <Windows refs={refs} millRows={uniforms.uMillRows} />
           <Glow refs={refs} />
-          <Ridge tier={tier} reveal={uniforms.uRidgeReveal} lit={uniforms.uRidgeLit} />
+          <Ridge count={ridgeCount} sizeScale={ridgeSizeScale} reveal={uniforms.uRidgeReveal} lit={uniforms.uRidgeLit} />
           <HedgeLines reveal={uniforms.uHedgeReveal} />
           <MillWheel shadows={shadows} />
-          {tier === 'desktop' && !reducedMotion ? <Rain rain={uniforms.uRain} time={uniforms.uTime} /> : null}
+          {rain && !reducedMotion ? <Rain rain={uniforms.uRain} time={uniforms.uTime} /> : null}
           <CameraRig rig={rig} tier={tier} reducedMotion={reducedMotion} />
           <Driver refs={refs} rig={rig} t0={t0} />
         </PerformanceMonitor>

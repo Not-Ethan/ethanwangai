@@ -1,7 +1,6 @@
 // The ridge's pure part (spec §4.6, §11): how many trade points a tier draws, the points geometry, the crest line under
 // them, and the point-size scale. Runs in Node for tests; Ridge.tsx renders it.
 import * as THREE from 'three';
-import type { Tier } from '@/valley/types';
 import { facts } from '@/valley/facts';
 import { ridgePoints } from '@/valley/ridge';
 import { RIDGE } from '@/valley/layout';
@@ -14,12 +13,6 @@ export const RIDGE_ALPHA = 0.16;
 export const CREST_SEGMENTS = 152;
 /** The crest line sits this far above the terrain crest so the terrain does not z-fight it. */
 export const CREST_LIFT = 0.05;
-
-export function ridgeConfig(tier: Tier): { count: number; sizeScale: number } {
-  return tier === 'phone'
-    ? { count: Math.floor(facts.kalshi.trades / 5), sizeScale: 1.8 }
-    : { count: facts.kalshi.trades, sizeScale: 1 };
-}
 
 export function buildRidgeGeometry(count: number): THREE.BufferGeometry {
   const { positions, birth, size } = ridgePoints(count, facts.kalshi.trades);
