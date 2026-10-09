@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { ScrollProvider } from '@/scroll/ScrollProvider';
 import { ProjectedLabels } from './Labels';
 import { HillsideLabel } from './HillsideLabel';
+import { LightControls } from './LightButtons';
 import { Nav } from './chrome/Nav';
 import { Open } from './sections/Open';
 import { Kalshi } from './sections/Kalshi';
@@ -41,6 +42,7 @@ export function Site() {
         <Yours />
         <Contact />
       </main>
+      <LightControls />
       <ProjectedLabels />
       <HillsideLabel />
     </ScrollProvider>
