@@ -15,7 +15,11 @@ export const metadata: Metadata = {
   title: copy.meta.title,
   description: copy.meta.description,
   metadataBase: new URL('https://ethanwang.ai'),
-  openGraph: { title: copy.meta.title, description: copy.meta.description, url: 'https://ethanwang.ai', type: 'website' },
+  openGraph: {
+    title: copy.meta.title, description: copy.meta.description, url: 'https://ethanwang.ai', type: 'website',
+    images: [{ url: '/og.png', width: 1200, height: 630 }],
+  },
+  twitter: { card: 'summary_large_image', title: copy.meta.title, description: copy.meta.description, images: ['/og.png'] },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
