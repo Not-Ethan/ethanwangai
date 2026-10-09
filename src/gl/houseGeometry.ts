@@ -1,5 +1,11 @@
 // House parts → world-space mesh arrays (spec §4.7, §5.4, §6, §9). Uses only three's math and geometry classes, which
 // run in Node, so it is tested without a renderer. Hillside.tsx, VisitorHouse.tsx and Scaffold.tsx wrap its output.
+//
+// HOUSE_SCALE (0.5) shrinks every grammar house uniformly about its seat point (footprint centre in x and z, wall base in
+// y): part boxes, window quads and the scaffold layout (which reads the scaled bounds) all scale together, so a 6-bay
+// house is 3 units wide, the hut's size. Part counts are unchanged (spec §5.4's parts are the build units); only their
+// world size shrinks. The seat is the lowest corner of the wall (plank) footprint, sunk SINK; porch posts are extended
+// down to the slope under each of them.
 import { BoxGeometry, BufferAttribute, BufferGeometry, Color } from 'three';
 import type { House, Vec3 } from '@/valley/types';
 import { PALETTE } from '@/valley/palette';
@@ -15,7 +21,10 @@ export const HOUSE_ROOF: string = PALETTE.roof;
 export const WINDOW_W = 0.8;          // the hut's window (§4.2); the grammar gives positions, not sizes
 export const WINDOW_H = 0.6;
 const WINDOW_OUT = 0.03;              // quads sit this far outside the wall so they never z-fight
-const SINK = 0.1;                     // seat below the lowest corner so no edge floats on the slope
+const SINK = 0.25;                    // seat below the lowest wall corner so no edge floats on the slope
+const POST_SINK = 0.2;                // porch posts end this far below the ground at their own (x, z)
+/** Uniform world scale of every grammar house, about its seat point. */
+export const HOUSE_SCALE = 0.5;
 export const SCAFFOLD_BARS = 18;      // §5.5, §6
 export const SCAFFOLD_THICKNESS = 0.1;
 
@@ -44,7 +53,7 @@ export function seatY(x: number, z: number, halfW: number, halfD: number): numbe
   ) - SINK;
 }
 
-function windowQuad(w: Vec3, lo: number[], hi: number[], off: number[]): WindowQuad {
+function windowQuad(w: Vec3, lo: number[], hi: number[]): WindowQuad {
   // Nearest wall face: 0 = −x, 1 = +x, 2 = −z (back), 3 = +z (front, toward the camera).
   const d = [Math.abs(w[0] - lo[0]), Math.abs(hi[0] - w[0]), Math.abs(w[2] - lo[2]), Math.abs(hi[2] - w[2])];
   let k = 0;
@@ -52,7 +61,7 @@ function windowQuad(w: Vec3, lo: number[], hi: number[], off: number[]): WindowQ
   const normal: Vec3 = k === 0 ? [-1, 0, 0] : k === 1 ? [1, 0, 0] : k === 2 ? [0, 0, -1] : [0, 0, 1];
   const lx = k === 0 ? lo[0] - WINDOW_OUT : k === 1 ? hi[0] + WINDOW_OUT : w[0];
   const lz = k === 2 ? lo[2] - WINDOW_OUT : k === 3 ? hi[2] + WINDOW_OUT : w[2];
-  return { center: [lx + off[0], w[1] + off[1], lz + off[2]], normal, width: WINDOW_W, height: WINDOW_H };
+  return { center: [lx, w[1], lz], normal, width: WINDOW_W * HOUSE_SCALE, height: WINDOW_H * HOUSE_SCALE };
 }
 
 /** One house as world-space boxes in `house.parts` order, centred on (x, z) and seated on the terrain. */
@@ -74,9 +83,17 @@ export function houseMeshData(house: House, x: number, z: number): HouseMeshData
   }
   if (!Number.isFinite(wlo[0])) { wlo = lo.slice(); whi = hi.slice(); }
 
-  const baseY = seatY(x, z, (hi[0] - lo[0]) / 2, (hi[2] - lo[2]) / 2);
-  const off = [x - (lo[0] + hi[0]) / 2, baseY - lo[1], z - (lo[2] + hi[2]) / 2];
+  // Local → world, scaled about the footprint centre in x, z and the wall base in y, then seated.
+  const cx = (lo[0] + hi[0]) / 2, cz = (lo[2] + hi[2]) / 2;
+  const S = HOUSE_SCALE;
+  const wallHalfW = ((whi[0] - wlo[0]) / 2) * S, wallHalfD = ((whi[2] - wlo[2]) / 2) * S;
+  const wallCx = x + ((wlo[0] + whi[0]) / 2 - cx) * S, wallCz = z + ((wlo[2] + whi[2]) / 2 - cz) * S;
+  const baseY = seatY(wallCx, wallCz, wallHalfW, wallHalfD);
+  const tx = (v: number) => x + (v - cx) * S;
+  const ty = (v: number) => baseY + (v - wlo[1]) * S;
+  const tz = (v: number) => z + (v - cz) * S;
 
+  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
   const n = parts.length;
   const positions = new Float32Array(n * BOX_VERTS * 3);
   const normals = new Float32Array(n * BOX_VERTS * 3);
@@ -89,10 +106,14 @@ export function houseMeshData(house: House, x: number, z: number): HouseMeshData
 
   for (let i = 0; i < n; i++) {
     const p = parts[i];
-    const sx = p.max[0] - p.min[0], sy = p.max[1] - p.min[1], sz = p.max[2] - p.min[2];
-    const mx = (p.min[0] + p.max[0]) / 2 + off[0];
-    const my = (p.min[1] + p.max[1]) / 2 + off[1];
-    const mz = (p.min[2] + p.max[2]) / 2 + off[2];
+    const sx = (p.max[0] - p.min[0]) * S, sz = (p.max[2] - p.min[2]) * S;
+    const mx = tx((p.min[0] + p.max[0]) / 2);
+    const mz = tz((p.min[2] + p.max[2]) / 2);
+    let y0 = ty(p.min[1]);
+    const y1 = ty(p.max[1]);
+    if (p.kind === 'post') y0 = Math.min(y0, heightAt(mx, mz) - POST_SINK);
+    const sy = y1 - y0;
+    const my = (y0 + y1) / 2;
     c.copy(p.kind === 'slat' || p.kind === 'chimney' ? roof : wall).multiplyScalar(0.9 + 0.2 * rand());
     const vb = i * BOX_VERTS;
     for (let v = 0; v < BOX_VERTS; v++) {
@@ -101,6 +122,9 @@ export function houseMeshData(house: House, x: number, z: number): HouseMeshData
       positions[o] = mx + UNIT_POS[u] * sx;
       positions[o + 1] = my + UNIT_POS[u + 1] * sy;
       positions[o + 2] = mz + UNIT_POS[u + 2] * sz;
+      minX = Math.min(minX, positions[o]); maxX = Math.max(maxX, positions[o]);
+      minY = Math.min(minY, positions[o + 1]); maxY = Math.max(maxY, positions[o + 1]);
+      minZ = Math.min(minZ, positions[o + 2]); maxZ = Math.max(maxZ, positions[o + 2]);
       normals[o] = UNIT_NRM[u];
       normals[o + 1] = UNIT_NRM[u + 1];
       normals[o + 2] = UNIT_NRM[u + 2];
@@ -115,9 +139,11 @@ export function houseMeshData(house: House, x: number, z: number): HouseMeshData
   return {
     positions, normals, colors, indices,
     partCount: n,
-    min: [lo[0] + off[0], lo[1] + off[1], lo[2] + off[2]],
-    max: [hi[0] + off[0], hi[1] + off[1], hi[2] + off[2]],
-    windows: house.windows.map((w) => windowQuad(w, wlo, whi, off)),
+    min: [minX, minY, minZ],
+    max: [maxX, maxY, maxZ],
+    windows: house.windows.map((w) => windowQuad(
+      [tx(w[0]), ty(w[1]), tz(w[2])], [tx(wlo[0]), 0, tz(wlo[2])], [tx(whi[0]), 0, tz(whi[2])],
+    )),
   };
 }
 

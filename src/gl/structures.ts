@@ -154,13 +154,14 @@ export function staticWindows(): WindowSpec[] {
 
   for (const body of BODIES.filter((x) => x.key.startsWith('bar'))) {
     const id = body.key as 'bar1' | 'bar2' | 'bar3' | 'bar4';
-    const { w, h, d } = body.size;
+    const { w, d } = body.size;
     const spec = (lx: number, ly: number, qw: number, qh: number, color: string): WindowSpec => {
       const [wx, wz] = bodyPoint(body, lx, d / 2 + WINDOW_OFFSET);
-      return { emitter: id, center: [wx, body.place[1] + ly, wz], w: qw, h: qh, color, row: -1, yaw: body.yaw };
+      return { emitter: id, center: [wx, heightAt(wx, wz) + ly, wz], w: qw, h: qh, color, row: -1, yaw: body.yaw };
     };
-    out.push(spec(-0.6, 1.4, 0.9, 1.1, PALETTE.warm));
-    out.push(spec(w / 2 - 0.6, h - 0.35, 0.3, 0.3, PALETTE.porch));
+    // Door height from the ground at the pane's own spot: a pane whose sill is a step above the ground.
+    out.push(spec(-0.6, 0.55 + 0.15, 0.9, 1.1, PALETTE.warm));
+    out.push(spec(w / 2 - 0.6, 1.9, 0.3, 0.3, PALETTE.porch));
   }
 
   const mill = PLACES.mill;

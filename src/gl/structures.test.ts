@@ -123,6 +123,11 @@ describe('staticWindows', () => {
       expect([win.w, win.h, win.color]).toEqual([0.9, 1.1, PALETTE.warm]);
       expect([porch.w, porch.h, porch.color]).toEqual([0.3, 0.3, PALETTE.porch]);
       expect(EMITTERS[EMITTER_INDEX[b as 'bar1']].color).toBe(PALETTE.warm);
+      // Door height: the pane's sill is a step above the ground at its own spot, and it stays inside the body's height.
+      const body = buildingBodies().find((x) => x.key === b)!;
+      expect(win.center[1] - win.h / 2 - heightAt(win.center[0], win.center[2])).toBeCloseTo(0.15, 6);
+      expect(win.center[1] + win.h / 2).toBeLessThan(body.place[1] + body.size.h);
+      expect(porch.center[1] - heightAt(porch.center[0], porch.center[2])).toBeCloseTo(1.9, 6);
     }
   });
 

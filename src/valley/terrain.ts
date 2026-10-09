@@ -81,7 +81,7 @@ export function groundColor(x: number, z: number, out: Color): Color {
   out.copy(C_LOW).lerp(C_MID, clamp01(smoothstep(0.5, 6, h) + (patch * 2 - 1) * 0.18));
   out.lerp(C_SLOPE, smoothstep(0.08, 0.3, slope));
   out.lerp(C_CREST, smoothstep(13, 17, h));
-  if (dhdz < 0) out.multiplyScalar(1 + 0.06 * smoothstep(0, 0.4, -dhdz));   // north-facing slopes catch a little moon
+  if (dhdz > 0) out.multiplyScalar(1 + 0.06 * smoothstep(0, 0.4, dhdz));   // slopes facing −z catch a little moon (the moon is on the −z side)
   return out;
 }
 

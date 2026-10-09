@@ -5,7 +5,7 @@ import { PALETTE } from '@/valley/palette';
 import { PLACES } from '@/valley/layout';
 import { heightAt } from '@/valley/terrain';
 import {
-  HILL_IDS, HOUSE_ROOF, HOUSE_WALL, SCAFFOLD_BARS, WINDOW_H, WINDOW_W,
+  HILL_IDS, HOUSE_ROOF, HOUSE_SCALE, HOUSE_WALL, SCAFFOLD_BARS, WINDOW_H, WINDOW_W,
   clipConstant, hillsideData, houseMeshData, mergeMeshData, scaffoldBars, seatY, toBufferGeometry,
 } from './houseGeometry';
 
@@ -50,7 +50,9 @@ describe('houseMeshData', () => {
     const n = house.parts.length;
     for (const i of [1, Math.floor(n / 3), Math.floor((2 * n) / 3), n - 1]) {
       for (const axis of [0, 1, 2]) {
-        expect(blockMin(i, axis) - blockMin(0, axis)).toBeCloseTo(house.parts[i].min[axis] - house.parts[0].min[axis], 4);
+        // Posts reach down to the slope, so their y is not a pure scale of the grammar's.
+        if (axis === 1 && (house.parts[i].kind === 'post' || house.parts[0].kind === 'post')) continue;
+        expect(blockMin(i, axis) - blockMin(0, axis)).toBeCloseTo((house.parts[i].min[axis] - house.parts[0].min[axis]) * HOUSE_SCALE, 4);
       }
     }
   });
@@ -66,8 +68,7 @@ describe('houseMeshData', () => {
     expect((d.min[0] + d.max[0]) / 2).toBeCloseTo(x, 4);
     expect((d.min[2] + d.max[2]) / 2).toBeCloseTo(z, 4);
     expect(d.min[1]).toBeLessThanOrEqual(heightAt(x, z));
-    expect(d.min[1]).toBeCloseTo(seatY(x, z, (d.max[0] - d.min[0]) / 2, (d.max[2] - d.min[2]) / 2), 4);
-    expect(d.max[1] - d.min[1]).toBeGreaterThan(2.5);
+    expect(d.max[1] - d.min[1]).toBeGreaterThan(1.2);
   });
 
   it('colours every part from the palette wall or roof colour, scaled 0.9 to 1.1', () => {
@@ -92,8 +93,8 @@ describe('houseMeshData', () => {
     for (const w of d.windows) {
       expect(Math.abs(w.normal[0]) + Math.abs(w.normal[1]) + Math.abs(w.normal[2])).toBe(1);
       expect(w.normal[1]).toBe(0);
-      expect(w.width).toBe(WINDOW_W);
-      expect(w.height).toBe(WINDOW_H);
+      expect(w.width).toBeCloseTo(WINDOW_W * HOUSE_SCALE, 9);
+      expect(w.height).toBeCloseTo(WINDOW_H * HOUSE_SCALE, 9);
       expect(w.center[1]).toBeGreaterThan(d.min[1]);
       expect(w.center[1]).toBeLessThan(d.max[1]);
     }
@@ -161,6 +162,64 @@ describe('hillsideData', () => {
         expect(Math.abs(q.center[0] - p[0])).toBeLessThan(8);
         expect(Math.abs(q.center[2] - p[2])).toBeLessThan(5);
       }
+    });
+  });
+});
+
+function extent(m: { positions: Float32Array }, axis: number): [number, number] {
+  let lo = Infinity, hi = -Infinity;
+  for (let i = axis; i < m.positions.length; i += 3) { lo = Math.min(lo, m.positions[i]); hi = Math.max(hi, m.positions[i]); }
+  return [lo, hi];
+}
+
+describe('hut scale and seating', () => {
+  it('keeps the widest hillside house at most 5 units wide in x', () => {
+    let widest = 0;
+    HILL_IDS.forEach((id, i) => {
+      const p = PLACES[id];
+      const m = houseMeshData(houseFromSentence(HILLSIDE[i]), p[0], p[2]);
+      const [a, b] = extent(m, 0);
+      widest = Math.max(widest, b - a);
+    });
+    expect(widest).toBeLessThanOrEqual(5);
+    expect(widest).toBeGreaterThan(2);
+  });
+
+  it('scales the mesh bounds linearly with HOUSE_SCALE', () => {
+    const house = houseFromSentence(HILLSIDE[1]);
+    const p = PLACES.hill2;
+    const m = houseMeshData(house, p[0], p[2]);
+    const wx = extent(m, 0), wz = extent(m, 2);
+    // Grammar-space extent (scale 1) of the same parts.
+    let lx0 = Infinity, lx1 = -Infinity, lz0 = Infinity, lz1 = -Infinity;
+    for (const q of house.parts) {
+      lx0 = Math.min(lx0, q.min[0]); lx1 = Math.max(lx1, q.max[0]);
+      lz0 = Math.min(lz0, q.min[2]); lz1 = Math.max(lz1, q.max[2]);
+    }
+    expect(wx[1] - wx[0]).toBeCloseTo((lx1 - lx0) * HOUSE_SCALE, 4);
+    expect(wz[1] - wz[0]).toBeCloseTo((lz1 - lz0) * HOUSE_SCALE, 4);
+  });
+
+  it('stands posts on the slope and the lowest wall plank at or below every wall corner', () => {
+    HILL_IDS.forEach((id, i) => {
+      const house = houseFromSentence(HILLSIDE[i]);
+      const p = PLACES[id];
+      const m = houseMeshData(house, p[0], p[2]);
+      let wallLow = Infinity, wx0 = Infinity, wx1 = -Infinity, wz0 = Infinity, wz1 = -Infinity;
+      house.parts.forEach((q, k) => {
+        const [x0, x1] = extent({ positions: m.positions.subarray(k * 72, k * 72 + 72) }, 0);
+        const [y0] = extent({ positions: m.positions.subarray(k * 72, k * 72 + 72) }, 1);
+        const [z0, z1] = extent({ positions: m.positions.subarray(k * 72, k * 72 + 72) }, 2);
+        if (q.kind === 'post') expect(y0).toBeLessThanOrEqual(heightAt((x0 + x1) / 2, (z0 + z1) / 2) - 0.2 + 1e-4);
+        if (q.kind === 'plank') {
+          wallLow = Math.min(wallLow, y0);
+          wx0 = Math.min(wx0, x0); wx1 = Math.max(wx1, x1); wz0 = Math.min(wz0, z0); wz1 = Math.max(wz1, z1);
+        }
+      });
+      for (const [cx, cz] of [[wx0, wz0], [wx1, wz0], [wx0, wz1], [wx1, wz1]]) {
+        expect(wallLow).toBeLessThanOrEqual(heightAt(cx, cz) + 1e-4);
+      }
+      expect(wallLow).toBeCloseTo(seatY((wx0 + wx1) / 2, (wz0 + wz1) / 2, (wx1 - wx0) / 2, (wz1 - wz0) / 2), 4);
     });
   });
 });
