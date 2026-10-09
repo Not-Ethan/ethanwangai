@@ -58,7 +58,7 @@ Eight sections, each a DOM `<section id>` with a minimum height, copy in a fixed
 | 04 | `darch` | 180vh | 0.60 | +7, 0, 0.95 | the mill's year: flood, run, go out | nothing |
 | 05 | `summers` | 100vh | 0.65 | −6, +3, 0.97 | nothing | the two cabin labels (same strings as the ignition labels) |
 | 06 | `alive` | 120vh | 0.72 | 0, +1, 1.04 | nothing | one pulse through every lit thing, build order |
-| 07 | `yours` | 140vh | 0.80 | +4, −2, 0.97 | nothing | nothing; the build is triggered by Enter |
+| 07 | `yours` | 140vh | 0.80 | +4, −2, 0.97 (portrait: +1, −8, 0.50, the §11 reframe onto the lot) | nothing | nothing; the build is triggered by Enter |
 | 08 | `contact` | 150vh | 1.00 | −3, −1, 1.00 | nothing | email hover or focus flickers the hut once |
 
 Conventions: yaw turns the view toward the section's subject; positive yaw moves the look-at toward +x (the right of the frame), negative toward −x. It is implemented as a look-at offset, `lookAt.x += tan(yaw) · d` where `d` is the distance from the camera to the base look-at, never as `camera.rotation.y`. Pitch positive looks up, same construction on y. `fovScale` multiplies the base fov (1.04 is a pull-back, 0.95 a push). The camera position never changes; only the look direction and fov. `tod` is piecewise linear between the breakpoints above and 0 through all of 01. View values ease between sections with smoothstep over the last 25% of each section.

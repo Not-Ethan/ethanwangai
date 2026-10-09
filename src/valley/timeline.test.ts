@@ -49,14 +49,14 @@ describe('timelineAt: view', () => {
       expect(timelineAt(at(s.id, 0.5), R, true).view).toEqual(s.viewPortrait);
     }
   });
-  it('is continuous in g in both orientations (no step above 0.25° or 0.002 fovScale per 1e-4 of g)', () => {
+  it('is continuous in g in both orientations (no step above 0.25° or 0.004 fovScale per 1e-4 of g)', () => {
     for (const portrait of [false, true]) {
       let prev = { ...timelineAt(0, R, portrait).view };
       for (let i = 1; i <= STEPS; i++) {
         const v = { ...timelineAt(i / STEPS, R, portrait).view };
         expect(Math.abs(v.yaw - prev.yaw)).toBeLessThan(0.25);
         expect(Math.abs(v.pitch - prev.pitch)).toBeLessThan(0.25);
-        expect(Math.abs(v.fovScale - prev.fovScale)).toBeLessThan(0.002);
+        expect(Math.abs(v.fovScale - prev.fovScale)).toBeLessThan(0.004);   // the portrait yours zoom eases 0.97 → 0.5 over the last quarter of alive
         prev = v;
       }
     }

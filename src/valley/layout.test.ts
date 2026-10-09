@@ -5,7 +5,7 @@ import { heightAt, MILL_PAD } from './terrain';
 const SPEC_XZ: Record<keyof typeof PLACES, [number, number]> = {
   hut: [-18, 22], nist: [-34, -14], wvu: [-27, -18], kalshiLamp: [2, -30],
   bar1: [-10, -20], bar2: [0, -22], bar3: [10, -21], bar4: [20, -23],
-  mill: [30, -12], millWheel: [30, -5], lot: [6, 10],
+  mill: [30, -12], millWheel: [30, -5], lot: [1, 9],
   hill1: [12, 15], hill2: [18, 19], hill3: [8, 20], hill4: [22, 13], hill5: [15, 24],
 };
 

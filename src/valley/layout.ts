@@ -34,7 +34,7 @@ export const PLACES: Record<
   bar4: ground(20, -23),
   mill: ground(30, -12),         // §4.5 on the mill pad
   millWheel: [30, 2.6, -5],      // §4.5 wheel hub, overhanging the river
-  lot: ground(6, 10),            // §4.7 the visitor's lot, low on the near bank
+  lot: ground(1, 9),             // §4.7 the visitor's lot, low on the near bank, clear of the hillside houses to its right
   hill1: ground(12, 15),         // §4.7 hillside sites, up the slope toward the camera
   hill2: ground(18, 19),
   hill3: ground(8, 20),

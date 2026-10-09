@@ -31,9 +31,15 @@ describe('SECTIONS (spec §3)', () => {
       [0, 0, 1], [4, 1, 0.96], [2, 0, 0.98], [7, 0, 0.95], [-6, 3, 0.97], [0, 1, 1.04], [4, -2, 0.97], [-3, -1, 1],
     ]);
   });
-  it('uses the portrait yaw column and shares pitch and fovScale with landscape', () => {
-    expect(SECTIONS.map((s) => s.viewPortrait.yaw)).toEqual([0, 0, 0, 12, -12, 0, 3, -6]);
+  it('uses the portrait yaw column and shares pitch and fovScale with landscape, except yours (the §11 reframe)', () => {
+    expect(SECTIONS.map((s) => s.viewPortrait.yaw)).toEqual([0, 0, 0, 12, -12, 0, 1, -6]);
     for (const s of SECTIONS) {
+      if (s.id === 'yours') {
+        // portrait yours looks down at the lot and zooms in so the new house reads under the copy
+        expect(s.viewPortrait.fovScale).toBeLessThan(s.view.fovScale);
+        expect(s.viewPortrait.pitch).toBeLessThan(s.view.pitch);
+        continue;
+      }
       expect(s.viewPortrait.pitch, s.id).toBe(s.view.pitch);
       expect(s.viewPortrait.fovScale, s.id).toBe(s.view.fovScale);
     }
