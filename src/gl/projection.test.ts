@@ -82,16 +82,20 @@ describe('projection', () => {
     expect(mid.y + h).toBeLessThan(450);
   });
 
-  it('drops a label under the copy block when its box would print over it', () => {
+  it('slides a label past a line of copy, or under it when there is no room to the right', () => {
     const proj = Float32Array.of(-0.5, 0.2, 1);
     const out: LabelPlacement = { x: 0, y: 0, visible: false };
     const free = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, null);
-    const freeY = free.y;
-    const avoid = { left: 0, top: 100, right: 900, bottom: 500 };
-    const moved = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, avoid);
-    expect(freeY).toBeLessThan(avoid.bottom);
-    expect(moved.y).toBeCloseTo(506, 6);
-    const clear = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, { left: 1000, top: 0, right: 1400, bottom: 800 });
+    const freeX = free.x, freeY = free.y;
+    const line = { left: 0, top: freeY - 4, right: 900, bottom: freeY + 10 };
+    const moved = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, [line]);
+    expect(moved.x).toBeCloseTo(912, 6);          // slid right of the line
+    expect(moved.y).toBeCloseTo(freeY, 6);
+    const wide = { left: 0, top: freeY - 4, right: 1300, bottom: freeY + 10 };
+    const under = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, [wide]);
+    expect(under.y).toBeCloseTo(wide.bottom + 6, 6);   // no room to the right: just under the line
+    const clear = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, [{ left: 1000, top: 0, right: 1400, bottom: 800 }]);
+    expect(clear.x).toBeCloseTo(freeX, 6);
     expect(clear.y).toBeCloseTo(freeY, 6);
   });
 });

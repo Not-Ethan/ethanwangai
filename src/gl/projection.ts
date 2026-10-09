@@ -72,9 +72,13 @@ export interface LabelPlacement { x: number; y: number; visible: boolean }
 /** A screen rectangle in CSS px that labels keep clear of (the hero copy block while the chain plays). */
 export interface AvoidRect { left: number; top: number; right: number; bottom: number }
 
+function hits(x: number, y: number, w: number, h: number, r: AvoidRect): boolean {
+  return x < r.right && x + w > r.left && y < r.bottom && y + h > r.top;
+}
+
 export function placeLabel(
   projected: Float32Array, i: number, vw: number, vh: number, margin: number, out: LabelPlacement,
-  labelW = 0, labelH = 0, avoid: AvoidRect | null = null,
+  labelW = 0, labelH = 0, avoid: readonly AvoidRect[] | null = null,
 ): LabelPlacement {
   const o = i * 3;
   const nx = projected[o];
@@ -90,9 +94,16 @@ export function placeLabel(
   out.x = Math.max(margin, Math.min(vw - margin - labelW, x));
   const h = labelH > 0 ? labelH : 14;
   let y = ay - h - 22;   // clearly above the light, never across its window
-  if (avoid && out.x < avoid.right && out.x + labelW > avoid.left && y < avoid.bottom && y + h > avoid.top) {
-    // the box would print over the copy: drop it just under the copy block (the light itself may sit under the copy)
-    y = avoid.bottom + 6;
+  if (avoid) {
+    // the box would print over a line of copy: first slide right past that line, else sit just under it
+    for (let pass = 0; pass < 2; pass++) {
+      for (let k = 0; k < avoid.length; k++) {
+        const r = avoid[k];
+        if (!hits(out.x, y, labelW, h, r)) continue;
+        if (r.right + 12 + labelW <= vw - margin) out.x = r.right + 12;
+        else y = r.bottom + 6;
+      }
+    }
   }
   out.y = Math.max(margin, Math.min(vh - margin - h, y));
   out.visible = true;

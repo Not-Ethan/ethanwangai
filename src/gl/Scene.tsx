@@ -110,7 +110,7 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
     }).then((t) => {
       t0.current = t;
       // T0 marker for the visual gates and debugging: the ignition clock starts here (spec §7).
-      try { document.documentElement.dataset.t0 = String(t); } catch { /* no DOM */ }
+      try { document.documentElement.dataset.t0 = String(t * 1000); } catch { /* no DOM */ }   // ms, like performance.now()
     });
   }, [fog, refs, onFail]);
 
