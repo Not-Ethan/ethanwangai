@@ -19,11 +19,12 @@ function newestMtime(dir: string): number {
 }
 const fresh = existsSync(OUT) && statSync(OUT).mtimeMs >= newestMtime(SRC);
 
-/** The page's HTML with scripts removed, React's text separators dropped and entities decoded. */
+/** The page's HTML with scripts removed, React's text separators and figure nowrap spans dropped and entities decoded. */
 function pageText(html: string): string {
   return html
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '')
     .replace(/<!-- -->/g, '')
+    .replace(/<span style="white-space:nowrap">([^<]*)<\/span>/g, '$1')
     .replace(/&#x27;|&#39;/g, '\'')
     .replace(/&quot;/g, '"')
     .replace(/&lt;/g, '<')

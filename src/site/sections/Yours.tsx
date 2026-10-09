@@ -18,7 +18,7 @@ export function Yours() {
         <Reveal className="copy-col scrim">
           <h2 className="h2" data-reveal>{c.heading}</h2>
           <p className="body mt-5" data-reveal>{c.body}</p>
-          <form id="yours-form" className="mt-6 flex items-end gap-4" onSubmit={onSubmit}>
+          <form id="yours-form" className="mt-6 flex items-baseline gap-4" onSubmit={onSubmit}>
             <input
               id="yours-input"
               type="text"
@@ -30,7 +30,7 @@ export function Yours() {
               autoComplete="off"
               spellCheck={false}
             />
-            <button type="submit" className="mono link">{c.button}</button>
+            <button type="submit" className="mono link yours-button">{c.button}</button>
           </form>
           <p className="mono ink-dim mt-3">{c.hint}</p>
         </Reveal>

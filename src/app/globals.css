@@ -93,7 +93,7 @@ body {
 .section { position: relative; }
 .section-grid {
   display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem;
-  min-height: inherit; padding: 6rem 1rem 0;
+  min-height: inherit; padding: 6.5rem 1rem 0;
 }
 .copy-col { grid-column: 1 / -1; align-self: start; position: sticky; top: 6rem; }
 .open-col { grid-column: 1 / -1; align-self: start; }
@@ -107,8 +107,10 @@ body {
    wide as the text. No blur, no shadow, no border over the canvas. palette.test.ts pins 4.5:1 for ink and
    ink-dim on it. */
 .scrim {
-  width: fit-content; max-width: calc(100% + 1.5rem); padding: 1.25rem 0.75rem; margin-inline: -0.75rem;
-  background: linear-gradient(to bottom, transparent, var(--scrim) 1.25rem, var(--scrim) calc(100% - 1.25rem), transparent);
+  width: fit-content; max-width: calc(100% + 3rem); padding: 1.5rem 1.5rem; margin-inline: -1.5rem;
+  background: linear-gradient(to bottom, transparent, var(--scrim) 1.5rem, var(--scrim) calc(100% - 1.5rem), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 1.5rem, black calc(100% - 1.5rem), transparent);
+  mask-image: linear-gradient(to right, transparent, black 1.5rem, black calc(100% - 1.5rem), transparent);
 }
 
 /* fixed mono chrome (spec §9): home mark top-left, nav top-right. No band, no panel. */
@@ -124,3 +126,4 @@ body {
   padding: 0.5rem 0; width: min(100%, 34ch);
 }
 .yours-input::placeholder { color: var(--ink-dim); }
+.yours-button { padding: 0.5rem 0; text-decoration: underline; text-underline-offset: 0.2em; }
