@@ -1,28 +1,54 @@
 @import "tailwindcss";
 
-:root, :root[data-theme="light"] {
-  --paper: #F1EEE9; --ink: #141416; --ink-top: #44444C; --ink-key: #2C2C32; --ink-shade: #141416;
-  --pencil: #B9B4AC; --hot: #FF4A1C; --shadow: #D8D3CB;
-  color-scheme: light;
-}
-:root[data-theme="dark"] {
-  --paper: #17171A; --ink: #ECE8E0; --ink-top: #F2EEE6; --ink-key: #E0DBD2; --ink-shade: #C9C3B8;
-  --pencil: #4E4E56; --hot: #FF5A2C; --shadow: #0A0A0C;
+/* The one dark palette (spec §9). Mirrors src/valley/palette.ts; src/valley/palette.test.ts checks every line. */
+:root {
+  --ink: #E9E4DA;
+  --ink-dim: #9A958C;
+  --rule: #2A2C33;
+  --scrim: rgba(5,7,15,0.72);
+  --warm: #FFC98A;
+  --ridge: #FFB45A;
+  --porch: #FFD9A0;
+  --mill-window: #FFC27A;
+  --lamp: #FFD2A0;
+  --hedge: #8FA3B8;
+  --rain: #9AAEC4;
+  --wall: #1A1F28;
+  --roof: #11151C;
+  --terrain-low: #16241C;
+  --terrain-mid: #1F3326;
+  --terrain-slope: #2B3340;
+  --terrain-crest: #0C0F16;
+  --treeline: #090B10;
+  --river: #6E8AA6;
+  --mist: #8FA3B8;
+  --sky-dusk-zenith: #1B2238;
+  --sky-dusk-horizon: #C9825A;
+  --sky-dusk-east: #2A2E48;
+  --sky-dusk-sun: #E8A070;
+  --sky-blue-zenith: #0E1426;
+  --sky-blue-horizon: #3E5A7A;
+  --sky-blue-east: #141A2E;
+  --sky-blue-sun: #8FA8D0;
+  --sky-night-zenith: #05070F;
+  --sky-night-horizon: #101830;
+  --sky-night-east: #070A14;
+  --sky-night-sun: #9FB2D8;
+  --sky-predawn-zenith: #0A0F1E;
+  --sky-predawn-horizon: #1E2A40;
+  --sky-predawn-east: #3E5068;
+  --sky-predawn-sun: #B8C4D8;
   color-scheme: dark;
 }
 
 @theme inline {
-  --color-paper: var(--paper);
   --color-ink: var(--ink);
-  --color-pencil: var(--pencil);
-  --color-hot: var(--hot);
-  --color-shadow: var(--shadow);
-  --font-display: var(--font-display), Arial, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, monospace;
+  --color-ink-dim: var(--ink-dim);
+  --color-rule: var(--rule);
 }
 
 html { scroll-behavior: auto; }
-html, body { background: var(--paper); color: var(--ink); }
+html, body { background: var(--sky-night-zenith); color: var(--ink); }
 body {
   font-family: var(--font-display), Arial, sans-serif;
   font-weight: 500;
@@ -30,157 +56,71 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* type system (spec §9) */
+/* type (spec §9). Copy is already lowercase in copy.ts; no font axis animates, no kinetic type. */
 .display {
   font-family: var(--font-display), Arial, sans-serif;
-  font-weight: 700; font-size: clamp(2.75rem, 8vw, 8rem); line-height: 0.92; letter-spacing: -0.03em;
-  text-transform: lowercase;
+  font-weight: 700; font-size: clamp(2.5rem, 7vw, 7rem); line-height: 0.95; letter-spacing: -0.03em;
 }
 .h2 {
   font-family: var(--font-display), Arial, sans-serif;
-  font-weight: 700; font-size: clamp(1.7rem, min(4.2vw, 5.6vh), 3.6rem); line-height: 1.0; letter-spacing: -0.025em;
-  text-transform: lowercase;
+  font-weight: 700; font-size: clamp(1.6rem, 3.8vw, 3.2rem); line-height: 1.02; letter-spacing: -0.025em;
 }
-.body { font-size: clamp(1.125rem, 1.35vw, 1.25rem); line-height: 1.45; max-width: 34ch; }
+.body { font-size: clamp(1.125rem, 1.35vw, 1.25rem); font-weight: 500; line-height: 1.45; max-width: 34ch; }
 .mono {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 0.8125rem; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; text-transform: lowercase;
+  font-size: clamp(0.75rem, 0.9vw, 0.875rem); letter-spacing: 0.02em; font-variant-numeric: tabular-nums;
 }
-/* the evidence figures (spec §9: 48–72 px). 7vh shrinks them on short viewports so kalshi's block fits under its pin
-   (50.4 px at 1280 × 720, 63 px at 1440 × 900); the 3rem floor keeps them oversized below 960 px wide (phones) and
-   under ~686 px tall. */
-.mono-figure { font-family: var(--font-mono), ui-monospace, monospace; font-size: clamp(3rem, min(5vw, 7vh), 4.5rem); line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
-/* 08's uptime, `running 00:04:12` (spec §3.1 · 08), on one line in the copy column: 16 mono characters at 0.59em
-   each are 9.44em, so 3.6vw keeps them inside the 5-of-12 column from 1280 px up (489 px of 551 at 1440) and the
-   floor is still an oversized figure (48 px). On two lines at 5vw 08's block was 793 px, more than the 788 px a
-   900 px viewport leaves under its 112 px pin, so it could not hold through the poster dwell; on one it is 700 px.
-   Narrower columns wrap at the space. */
-.uptime-figure { font-size: clamp(3rem, 3.6vw, 4.5rem); }
-.rule { border-top: 1px solid var(--pencil); }
-.hot { color: var(--hot); }
-.pencil { color: var(--pencil); }
-a { text-underline-offset: 0.18em; }
-a:hover, button.link:hover { color: var(--hot); }
-::selection { background: var(--hot); color: var(--paper); }
-:focus-visible { outline: 2px solid var(--hot); outline-offset: 3px; }
+.mono-figure {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(3rem, 5vw, 4.5rem); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+}
+.ink-dim { color: var(--ink-dim); }
+.link { text-underline-offset: 0.2em; }
+.link:hover, .link:focus-visible { text-decoration: underline; }
+:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+::selection { background: var(--warm); color: var(--sky-night-zenith); }
 
-/* sticky copy: every section but the hero wraps its copy in one of these, inside a .copy-track
-   (below). The wrapper carries no measure: a max-width here resolves `ch` in the 16px body default
-   (312px) and squeezes the h2 to 7-11 lines. `.body` keeps the 34ch (spec §9, body max 34ch) and
-   the heading keeps the column, the widths the Task 2.9 camera clearance was tuned against. */
-.copy-col { padding-bottom: 6vh; }
+/* the valley: fixed behind the DOM at z 0 (spec §6, §7). Its background image, the committed still, is set inline by
+   Site.tsx so the first paint is a finished picture and the no-WebGL tier keeps it. pointer-events none: all hover
+   and tap are window listeners (spec §6). */
+.valley-canvas {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-color: var(--sky-night-zenith); background-position: center; background-size: cover; background-repeat: no-repeat;
+}
 
-/* copy track: the sticky block's containing block, the only child of the copy column. On phones
-   it is simply the column (min-height: 100% of the stretched grid item), so the block pins at
-   top-24 and its section's bottom pushes it out.
-   On desktop the section's u is read at the viewport's top edge, so at u = 0.7 of a 90vh section
-   only 27vh of it is still below that edge and the next section's heading is on screen unless it
-   sits more than 73vh into its own section. So the track leads the block by --copy-lead from the
-   section's top (the grid's pt-24 is the first 6rem of it) and runs --copy-tail past the section's
-   bottom: at heron u = 0.7 the heron block is still pinned at top-28 (its range ends 27vh + 65vh
-   below the fold's top edge) and darch's heading, 27vh + 75vh down, is below the fold. The block
-   climbs into place during its section's first 70%, pins, and is pushed out by its track's end
-   65vh into the next section, which is where the next block's lead puts that block's top (tail <
-   lead, so the two never overlap; the 6vh padding above plus 10vh here is the air between them).
-   The negative margin-bottom hands the lead back to the grid, so no section grows by it: the
-   track's margin box is still just the block, and the lead and tail are overflow. The percentage
-   resolves against the column, a stretched grid item, which is definite after track sizing. */
-.copy-track { min-height: 100%; }
+/* sections: copy in a left column (grid columns 1–5 of 12) over the valley (spec §9 layout). The section's inline
+   min-height is its heightVh; the grid inherits it so the sticky column has room to hold. */
+.section { position: relative; }
+.section-grid {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem;
+  min-height: inherit; padding: 6rem 1rem 0;
+}
+.copy-col { grid-column: 1 / -1; align-self: start; position: sticky; top: 6rem; }
+.open-col { grid-column: 1 / -1; align-self: start; }
 @media (min-width: 48rem) {
-  .copy-track {
-    --copy-lead: 75vh;
-    --copy-tail: 65vh;
-    padding-top: calc(var(--copy-lead) - 6rem);
-    margin-bottom: calc(6rem - var(--copy-lead));
-    min-height: calc(100% + var(--copy-tail));
-  }
+  .section-grid { padding: 7rem 3rem 0; }
+  .copy-col { grid-column: 1 / span 5; top: 7rem; }
+  .open-col { grid-column: 1 / span 8; }
 }
 
-/* 08 → 09: the poster dwell. 08's camera holds the poster over the last 40% of the section (spec §3.1 · 08: "60–100%
-   dwell ... nothing moves in the DOM except the uptime"), so its block must stay pinned to u = 1 and 09's heading must
-   stay below the fold until then. At 08's u the next section's top is (1 − u)·110vh below the viewport's top edge, so
-   at u = 1 it is at the edge and 09's block, led --copy-lead into its section, is exactly --copy-lead down: 100vh
-   keeps it off screen, and 110vh keeps the usual 10vh of air under 08's tail. 08's track runs a full viewport past
-   its section, so its block lets go at u = 1 or later whenever it fits under its pin (at 1440 × 900 it is 700 px
-   under a 112 px pin); tail ≤ the next lead still holds (100vh ≤ 110vh), so the two never overlap. 09's tail grows
-   with its lead (lead − 10vh, as everywhere else), so the page still ends with 09's block where it ended before.
-   The cost is 35vh of page. 09's range is its lead plus its block less a viewport, so any lead that keeps 09 off
-   screen at 08's u = 1 makes the range at least the block's height: 858 px at 1440 × 900, against 543 at 75vh. */
-@media (min-width: 48rem) {
-  #alive .copy-track { --copy-tail: 100vh; }
-  #yours .copy-track { --copy-lead: 110vh; --copy-tail: 100vh; }
-
-  /* #yours's top is 08's u = 1, the poster with nothing of 09 on screen, so a jump there (nav `contact` through
-     Lenis's scrollTo, scrollIntoView, a #yours link: all honour scroll-margin) would land on 08. It lands instead
-     at the first scroll where 08's block is wholly off screen: 08's tail less the 6vh padding under its last line,
-     plus 1rem for the uptime's descenders (its line-height is 1, so they hang ~0.16em below its box), or at the
-     page's end if that comes first. 09's block is then pinned or at its resting place, with its heading, the input
-     and the links on screen, and the camera settled on the slot. */
-  #yours { scroll-margin-top: calc(-94vh - 1rem); }
-
-  /* 08's heading is the longest on the page, and its block fits under the pin only if its h2 does. At the plain .h2
-     size of the time (clamp(1.9rem, 4.2vw, 3.6rem)) it was 8 lines from 1024 to 1366 px wide: 763 px of block under
-     688 px of room at 1280 × 800, so the block let go at u 0.9 with its uptime below the fold. Three caps under the
-     plain clamp, whose 1.7rem floor and 5.6vh cap (Task 5.0) this rule shares. 0.105 of the copy column (md:px-12,
-     gap-4, col-span-5) keeps it at six lines or fewer; it wraps to eight by 0.111. 10vh − 30px gives up size for
-     height. Below 1280 px the column narrows (under about 1210 px the uptime takes a second line), so the heading
-     gives back 0.035 px per px of width. Swept over 768–1920 × 540–1100 px before the plain clamp had its 5.6vh cap,
-     the block held to u = 1 at every desktop viewport from 1216 px wide and 560 px tall, 1152 px and 610, 960 px and
-     640, with the h2 at its then 1.9rem floor below those; the cap and the lower floor only shrink it. 1920 × 1080
-     keeps 3.6rem; 1440 × 900 takes the plain 5.6vh. */
-  #alive .h2 { font-size: clamp(1.7rem, min(4.2vw, 5.6vh, 0.105 * ((100vw - 17rem) * 5 / 12 + 4rem), 10vh - 30px - 0.035 * max(0px, 1280px - 100vw)), 3.6rem); }
+/* scrim (spec §9): a vertical gradient from the scrim colour at the text to transparent above and below, only as
+   wide as the text. No blur, no box-shadow, no border over the canvas. palette.test.ts pins 4.5:1 for ink and
+   ink-dim on it. */
+.scrim {
+  width: fit-content; max-width: calc(100% + 1.5rem); padding: 1.25rem 0.75rem; margin-inline: -0.75rem;
+  background: linear-gradient(to bottom, transparent, var(--scrim) 1.25rem, var(--scrim) calc(100% - 1.25rem), transparent);
 }
 
-/* section 02's ladder track (#rungs' sticky containing block): #more is 100vh on desktop, so a ladder left at the
-   top of its grid is under the nav by the first merge click. Pinned top-right (top-20), it holds through the clicks,
-   the hold and the burst as long as its track runs past the section by the ladder's own pinned bottom: 5rem, then
-   six .mono rows at line-height 1.5 and five gap-1s. So it lets go exactly at #more's end and scrolls off with it,
-   never lingering into 03. The percentage resolves against the stretched grid column, as .copy-track's does. Phones
-   keep the column as the range. */
-@media (min-width: 48rem) {
-  .rungs-track { min-height: calc(100% + 5rem + 6 * 1.5 * 0.8125rem + 5 * 0.25rem); }
+/* fixed mono chrome (spec §9): home mark top-left, nav top-right. No band, no panel. */
+.nav {
+  position: fixed; inset-inline: 0; top: 0; z-index: 40;
+  display: flex; align-items: flex-start; justify-content: space-between; padding: 1rem;
 }
+@media (min-width: 48rem) { .nav { padding: 1.25rem 3rem; } }
 
-/* the phone layout (spec §9, §11): below 820 px, detectTier's `width < 820`, the copy sits in the upper 45% on plain
-   paper and the camera frames the bench in the lower 55% (the phone poses in src/bench/camera.ts are authored for
-   it). The sections are one column with 16 px gutters already (col-span-12, px-4; body clips overflow-x). Every copy
-   wrapper, the hero's sticky block and each section's copy-col, holds the upper 45% at least. The hero's headline,
-   deck and ladder fit in it at 375 × 667: 3.5rem clears the 52 px nav band (py-4 around one .mono row), and 0.75rem
-   between the three puts the ladder's second row at 293 px of the 300 px, where the 6rem and 1.25rem of desktop put
-   it at 349. Plates collapse to one line: the text is cut with an ellipsis, the control beside it (the hero's
-   `rebuild`) keeps its width. */
-@media (max-width: 819px) {
-  .hero-copy, .copy-col { min-height: 45vh; }
-  .hero-copy { padding-top: 3.5rem; }
-  .hero-copy #deck, .hero-copy .ladder { margin-top: 0.75rem; }
-  [data-plate] { flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
-  [data-plate] > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  [data-plate] > :not(span) { flex-shrink: 0; }
+/* 07's one input: a hairline rule under the text, the palette's rule colour. */
+.yours-input {
+  background: transparent; color: var(--ink); border-bottom: 1px solid var(--rule);
+  padding: 0.5rem 0; width: min(100%, 34ch);
 }
-
-/* section rail: one rotated line up the left edge, desktop only. It occupies x < 28px; copy starts
-   at 48px (md:px-12). About a `left center` origin, rotate(-90deg) swings the line upward from
-   top: 50%, so the last translateX(-50%) runs back along the rotated line to centre it on the
-   viewport midline; translateY(-50%) only cancels the origin's half-line-height offset.
-   Sits after .mono so its 10px wins at equal specificity. */
-.section-rail {
-  position: fixed; left: 12px; top: 50%;
-  transform: translateY(-50%) rotate(-90deg) translateX(-50%);
-  transform-origin: left center;
-  white-space: nowrap; font-size: 10px; color: var(--pencil);
-}
-.section-rail li { display: inline; }
-.section-rail .is-current { color: var(--ink); }
-
-/* section 02's reveals (task 4.1): hudSync marks a copy line .is-revealed once hud.click reaches its data-click,
-   and lights the ladder's rungs up to hud.rung (.is-lit), that one .is-current. Only the click-keyed lines start
-   hidden, and only under :root[data-gl], which hudSync sets while the scene drives hud.click: with no WebGL2, a
-   refused context, ?nogl=1 or no JS the server-rendered copy is whole (spec: the DOM is the complete site on its
-   own). The other sections' [data-reveal] copy has no driver yet, so it stays shown until one lands. The reveal and
-   the reduced-motion variant carry the same (0,4,0) scope as the hide and follow it, so they win. */
-:root[data-gl] [data-reveal][data-click] { opacity: 0; transform: translateY(0.6em); transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
-:root[data-gl] [data-reveal].is-revealed { opacity: 1; transform: none; }
-[data-rung] { color: var(--pencil); transition: color 0.2s; }
-[data-rung].is-lit { color: var(--ink); }
-[data-rung].is-lit:last-child, [data-rung].is-current { color: var(--hot); }
-@media (prefers-reduced-motion: reduce) { :root[data-gl] [data-reveal][data-click] { transition-duration: 0.2s; transform: none; } }
+.yours-input::placeholder { color: var(--ink-dim); }
