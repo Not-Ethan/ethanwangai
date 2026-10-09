@@ -10,7 +10,7 @@ describe('ignition label items', () => {
     const ids = new Set(EMITTERS.map((e) => e.id));
     expect(items.length).toBe(7);
     for (const item of items) expect(ids.has(item.anchor), item.key).toBe(true);
-    expect(LABEL_ANCHORS.bars).toBe('bar2');
+    expect(LABEL_ANCHORS.bars).toBe('bar3');
     expect(LABEL_ANCHORS.hillside).toBe('hill2');
   });
 

@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { EMITTERS } from '@/valley/lights';
-import { EMITTER_INDEX, LABEL_ALPHA, PROJECTED, placeLabel, type LabelPlacement } from '@/gl/projection';
+import { LABEL_LIFT_PX } from './labelItems';
+import { EMITTER_INDEX, LABEL_ALPHA, PROJECTED, placeLabel, type AvoidRect, type LabelPlacement } from '@/gl/projection';
 import { copy } from '@/site/copy';
 import { ignitionLabelItems, type LabelItem } from './labelItems';
 
@@ -36,7 +37,18 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
     const w = new Float32Array(items.length);
     const h = new Float32Array(items.length);
     // a label sits higher over a bigger light (the mill's panes, a house's windows): 12 px per unit of glow size
-    const lift = Float32Array.from(items, (it) => 12 * EMITTERS[EMITTER_INDEX[it.anchor]].size);
+    const lift = Float32Array.from(items, (it) => 12 * EMITTERS[EMITTER_INDEX[it.anchor]].size + LABEL_LIFT_PX[it.key]);
+    // the hero copy block, read once per resize (never per frame): labels keep clear of it while the chain plays
+    const avoid: AvoidRect = { left: 0, top: 0, right: 0, bottom: 0 };
+    let avoidOn = false;
+    const measureAvoid = () => {
+      const col = document.querySelector('#open .open-col');
+      if (!col) { avoidOn = false; return; }
+      const r = col.getBoundingClientRect();
+      avoid.left = r.left; avoid.top = r.top + window.scrollY; avoid.right = r.right; avoid.bottom = r.bottom + window.scrollY;
+      avoidOn = r.width > 0;
+    };
+    measureAvoid();
     const measure = () => {
       for (let k = 0; k < items.length; k++) {
         const el = spans.current[k];
@@ -47,7 +59,7 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
     const place: LabelPlacement = { x: 0, y: 0, visible: false };
     let vw = window.innerWidth;
     let vh = window.innerHeight;
-    const onResize = () => { vw = window.innerWidth; vh = window.innerHeight; measure(); lastX.fill(Number.NaN); };
+    const onResize = () => { vw = window.innerWidth; vh = window.innerHeight; measure(); measureAvoid(); lastX.fill(Number.NaN); };
     window.addEventListener('resize', onResize);
 
     let raf = 0;
@@ -56,7 +68,8 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
         const el = spans.current[k];
         if (!el) continue;
         const i = indices[k];
-        placeLabel(PROJECTED, i, vw, vh, LABEL_MARGIN, place, w[k], h[k] + lift[k]);
+        // the avoid rect is in document px; it only matters at the top of the page, so compare at scrollY 0
+        placeLabel(PROJECTED, i, vw, vh, LABEL_MARGIN, place, w[k], h[k] + lift[k], avoidOn && window.scrollY < 2 ? avoid : null);
         const alpha = place.visible ? LABEL_ALPHA[i] : 0;
         if (place.visible && (Number.isNaN(lastX[k]) || Math.abs(place.x - lastX[k]) > 0.5 || Math.abs(place.y - lastY[k]) > 0.5)) {
           el.style.transform = `translate3d(${place.x.toFixed(1)}px, ${place.y.toFixed(1)}px, 0)`;

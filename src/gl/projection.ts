@@ -69,9 +69,12 @@ export interface LabelPlacement { x: number; y: number; visible: boolean }
  * flags it invisible, when either coordinate is not finite, or when i is out of range: a label never receives a huge or
  * NaN transform (spec §12).
  */
+/** A screen rectangle in CSS px that labels keep clear of (the hero copy block while the chain plays). */
+export interface AvoidRect { left: number; top: number; right: number; bottom: number }
+
 export function placeLabel(
   projected: Float32Array, i: number, vw: number, vh: number, margin: number, out: LabelPlacement,
-  labelW = 0, labelH = 0,
+  labelW = 0, labelH = 0, avoid: AvoidRect | null = null,
 ): LabelPlacement {
   const o = i * 3;
   const nx = projected[o];
@@ -86,7 +89,12 @@ export function placeLabel(
   if (x + labelW > vw - margin) x = ax - 10 - labelW;
   out.x = Math.max(margin, Math.min(vw - margin - labelW, x));
   const h = labelH > 0 ? labelH : 14;
-  out.y = Math.max(margin, Math.min(vh - margin - h, ay - h - 22));   // clearly above the light, never across its window
+  let y = ay - h - 22;   // clearly above the light, never across its window
+  if (avoid && out.x < avoid.right && out.x + labelW > avoid.left && y < avoid.bottom && y + h > avoid.top) {
+    // the box would print over the copy: drop it just under the copy block (the light itself may sit under the copy)
+    y = avoid.bottom + 6;
+  }
+  out.y = Math.max(margin, Math.min(vh - margin - h, y));
   out.visible = true;
   return out;
 }

@@ -81,4 +81,17 @@ describe('projection', () => {
     expect(mid.y).toBeCloseTo(450 - h - 22, 6);
     expect(mid.y + h).toBeLessThan(450);
   });
+
+  it('drops a label under the copy block when its box would print over it', () => {
+    const proj = Float32Array.of(-0.5, 0.2, 1);
+    const out: LabelPlacement = { x: 0, y: 0, visible: false };
+    const free = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, null);
+    const freeY = free.y;
+    const avoid = { left: 0, top: 100, right: 900, bottom: 500 };
+    const moved = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, avoid);
+    expect(freeY).toBeLessThan(avoid.bottom);
+    expect(moved.y).toBeCloseTo(506, 6);
+    const clear = placeLabel(proj, 0, 1440, 900, 16, out, 300, 14, { left: 1000, top: 0, right: 1400, bottom: 800 });
+    expect(clear.y).toBeCloseTo(freeY, 6);
+  });
 });
