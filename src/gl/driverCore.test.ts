@@ -139,10 +139,10 @@ describe('applyFrame', () => {
     expect(hex(second.targets.uniforms.uZenith.value)).toBe(environmentAt(timelineAt(g, RANGES).tod).zenith.toLowerCase());
   });
 
-  it('lights every registered emitter at rest except the visitor (Stage 2, spec §4.7)', () => {
+  it('lights every registered emitter at rest except the visitor and the mill (Stage 2, spec §4.7)', () => {
     const f = frameAt(0);
     expect(f.targets.lit.length).toBe(EMITTERS.length);
-    EMITTERS.forEach((e, i) => expect(f.targets.lit[i], e.id).toBe(e.id === 'visitor' ? 0 : 1));
+    EMITTERS.forEach((e, i) => expect(f.targets.lit[i], e.id).toBe(e.id === 'visitor' || e.id === 'mill' ? 0 : 1));
     expect(Array.from(REST_LIT)).toEqual(Array.from(f.targets.lit));
   });
 

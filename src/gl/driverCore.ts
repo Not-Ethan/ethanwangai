@@ -9,11 +9,12 @@ import { timelineAt } from '@/valley/timeline';
 import { environmentAt } from '@/valley/environment';
 import { EMITTERS } from '@/valley/lights';
 import { EMITTER_COUNT, EMITTER_INDEX, PROJECTED } from './projection';
+import { applyLights, createLightUniforms, type LightUniforms } from './lightsFrame';
 
 export interface Uniform<T> { value: T }
 
 /** Every value the driver writes. Shader materials share these holders by reference. */
-export interface ValleyUniforms {
+export interface ValleyUniforms extends LightUniforms {
   uTime: Uniform<number>;            // ambient seconds; frozen under reduced motion
   uTod: Uniform<number>;
   uZenith: Uniform<THREE.Color>;
@@ -56,6 +57,7 @@ const num = (v: number): Uniform<number> => new NumberUniform(v);
 
 export function createUniforms(): ValleyUniforms {
   return {
+    ...createLightUniforms(),
     uTime: num(0),
     uTod: num(0),
     uZenith: new ObjectUniform(new THREE.Color()),
@@ -133,7 +135,7 @@ export function setFrameInputs(
 }
 
 /** Stage 2's light at rest: every registered emitter lit, except the visitor, whose lot is empty until a build. */
-export const REST_LIT: Float32Array = Float32Array.from(EMITTERS, (e) => (e.id === 'visitor' ? 0 : 1));
+export const REST_LIT: Float32Array = Float32Array.from(EMITTERS, (e) => (e.id === 'visitor' || e.id === 'mill' ? 0 : 1));
 
 export function writeRestLights(lit: Float32Array): void {
   lit.set(REST_LIT);
@@ -211,7 +213,7 @@ export function applyFrame(inputs: FrameInputs, targets: FrameTargets): void {
   u.uRain.value = inputs.reducedMotion ? 0 : tl.rain;
   if (!inputs.reducedMotion) u.uTime.value = inputs.t;
 
-  writeRestLights(targets.lit);
+  applyLights(inputs, u, targets.lit);
 }
 
 /** out[i] = lit[map[i]] for i < count. Returns true when any slot changed, so the caller uploads only then. */

@@ -8,7 +8,8 @@ import type * as THREE from 'three';
 import { useScroll } from '@/scroll/ScrollProvider';
 import { applyFrame, setFrameInputs, syncScene, type SceneRefs } from './driverCore';
 import { composeCamera, type Rig } from './cameraCore';
-import { EMITTER_POSITIONS, projectEmitters } from './projection';
+import { EMITTER_POSITIONS, LABEL_ALPHA, projectEmitters } from './projection';
+import { writeLabelAlpha } from './chain';
 import { frame } from './frame';
 import { introClock, markIntroPlayed, readIntroPlayed, sessionStore, shouldPlayIntro, stillParams } from './introGate';
 
@@ -38,6 +39,7 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
     setFrameInputs(inputs, s.g, s.ranges, t, delta, introT, reducedMotion, rig.portrait);
     if (still.g !== null) inputs.g = still.g;
     applyFrame(inputs, targets);
+    writeLabelAlpha(inputs.introT, LABEL_ALPHA);
     syncScene(refs, u, targets.lit);
     composeCamera(rig, u.uYaw.value, u.uPitch.value, u.uFovScale.value, inputs.dt, camera);
     camera.updateMatrixWorld();
