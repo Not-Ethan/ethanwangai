@@ -33,6 +33,8 @@ export function latchReveals(
   }
   const chainPlaying = introT !== null && introT < CHAIN_END;
   if (chainPlaying && ridge <= RIDGE_FLOOR) ridge = 0;
+  // The very first chain frame (introT 0) is before the trickle: nothing may latch, whatever the timeline says.
+  if (introT === 0) ridge = 0;
   latched.ridge = Math.max(latched.ridge, trickleReveal(introT), ridge);
   latched.hedge = Math.max(latched.hedge, hedge);
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ridgePoints, TRADES_PER_DAY, RIDGE_LIFT, RIDGE_JITTER } from './ridge';
+import { ridgePoints, TRADES_PER_DAY, RIDGE_LIFT, RIDGE_JITTER, RIDGE_JITTER_Y, RIDGE_JITTER_Z } from './ridge';
 import { RIDGE } from './layout';
 import { heightAt } from './terrain';
 import { facts } from './facts';
@@ -31,11 +31,14 @@ describe('ridgePoints (uniform, the committed tradesPerDay.json is empty)', () =
     for (let i = 0; i < N; i++) {
       const x = r.positions[i * 3], y = r.positions[i * 3 + 1], z = r.positions[i * 3 + 2];
       if (x < RIDGE.x0 || x > RIDGE.x1) bad++;
-      if (Math.abs(z - RIDGE.z) > RIDGE_JITTER + 1e-4) bad++;
-      if (Math.abs(y - (heightAt(x, RIDGE.z) + RIDGE_LIFT)) > RIDGE_JITTER + 1e-3) bad++;
+      if (Math.abs(z - RIDGE.z) > RIDGE_JITTER_Z + 1e-4) bad++;
+      if (Math.abs(y - (heightAt(x, RIDGE.z) + RIDGE_LIFT)) > RIDGE_JITTER_Y + 1e-3) bad++;
       if (r.size[i] < 0.6 || r.size[i] > 1.4) bad++;
     }
     expect(bad).toBe(0);
+  });
+  it('uses the thin crest band: lift 0.5, y ±0.35, z ±2.0, and keeps RIDGE_JITTER as the z jitter', () => {
+    expect([RIDGE_LIFT, RIDGE_JITTER_Y, RIDGE_JITTER_Z, RIDGE_JITTER]).toEqual([0.5, 0.35, 2.0, 2.0]);
   });
   it('reveals the left end first: the hero trickle (reveal 0.01) shows about 1% of points, all in the left 2% of x', () => {
     let shown = 0;

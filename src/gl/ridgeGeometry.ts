@@ -7,10 +7,10 @@ import { ridgePoints } from '@/valley/ridge';
 import { RIDGE } from '@/valley/layout';
 import { heightAt } from '@/valley/terrain';
 
-/** World size of a point with aSize 1 (spec §14 G3's remedy is to lower this). About 3 px at the ridge at 1440 × 900. */
-export const RIDGE_POINT_WORLD = 0.22;
+/** World size of a point with aSize 1 (spec §14 G3's remedy is to lower this). About 1.2 px at the ridge at 1440 × 900. */
+export const RIDGE_POINT_WORLD = 0.09;
 /** Per-point brightness under additive blending, so overlapping points read as a band, not a white bar. */
-export const RIDGE_ALPHA = 0.45;
+export const RIDGE_ALPHA = 0.16;
 export const CREST_SEGMENTS = 152;
 /** The crest line sits this far above the terrain crest so the terrain does not z-fight it. */
 export const CREST_LIFT = 0.05;

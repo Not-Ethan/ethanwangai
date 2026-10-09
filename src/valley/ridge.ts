@@ -7,9 +7,11 @@ import { heightAt } from './terrain';
 import { mulberry32 } from './rng';
 import tradesPerDay from './data/tradesPerDay.json';
 
-/** Points sit this far above the ground at z = RIDGE.z, then jitter ±JITTER in y and z (§4.6). */
-export const RIDGE_LIFT = 2;
-export const RIDGE_JITTER = 1.5;
+/** Points sit this far above the ground at z = RIDGE.z, then jitter ±JITTER_Y in y and ±JITTER_Z in z (§4.6): a thin line along the crest with depth. */
+export const RIDGE_LIFT = 0.5;
+export const RIDGE_JITTER_Y = 0.35;
+export const RIDGE_JITTER_Z = 2.0;
+export const RIDGE_JITTER = RIDGE_JITTER_Z;
 export const RIDGE_SIZE = { min: 0.6, max: 1.4 } as const;
 
 /** The committed per-day file, or null when it is empty or malformed (then births are uniform). */
@@ -63,8 +65,8 @@ export function ridgePoints(
     const x = RIDGE.x0 + f * span;
     birth[i] = f;
     positions[i * 3] = x;
-    positions[i * 3 + 1] = heightAt(x, RIDGE.z) + RIDGE_LIFT + (rng() * 2 - 1) * RIDGE_JITTER;
-    positions[i * 3 + 2] = RIDGE.z + (rng() * 2 - 1) * RIDGE_JITTER;
+    positions[i * 3 + 1] = heightAt(x, RIDGE.z) + RIDGE_LIFT + (rng() * 2 - 1) * RIDGE_JITTER_Y;
+    positions[i * 3 + 2] = RIDGE.z + (rng() * 2 - 1) * RIDGE_JITTER_Z;
     size[i] = RIDGE_SIZE.min + rng() * (RIDGE_SIZE.max - RIDGE_SIZE.min);
   }
   return { positions, birth, size };

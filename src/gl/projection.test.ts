@@ -48,14 +48,33 @@ describe('projection', () => {
     expect(Array.from(out)).toEqual([0, 0, 0]);
   });
 
-  it('places labels in pixels, clamps them to the margin and hides invalid ones (spec §12)', () => {
+  it('places labels beside their anchor in pixels, clamps them and hides invalid ones (spec §12)', () => {
     const proj = Float32Array.of(0, 0, 1, 0.999, -0.999, 1, 0.5, 0.5, 0, 40, -90, 1, Number.NaN, 0, 1);
     const out: LabelPlacement = { x: -1, y: -1, visible: false };
-    expect(placeLabel(proj, 0, 1440, 900, 16, out)).toEqual({ x: 720, y: 450, visible: true });
+    expect(placeLabel(proj, 0, 1440, 900, 16, out)).toEqual({ x: 730, y: 444, visible: true });
     expect(placeLabel(proj, 1, 1440, 900, 16, out)).toEqual({ x: 1424, y: 884, visible: true });
     expect(placeLabel(proj, 2, 1440, 900, 16, out).visible).toBe(false);
     expect(placeLabel(proj, 3, 1440, 900, 16, out)).toEqual({ x: 1424, y: 884, visible: true });
     expect(placeLabel(proj, 4, 1440, 900, 16, out).visible).toBe(false);
     expect(placeLabel(proj, 9, 1440, 900, 16, out).visible).toBe(false);
+  });
+
+  it('keeps the whole label box inside the margin, flips left at the right edge and sits above the anchor', () => {
+    const out: LabelPlacement = { x: 0, y: 0, visible: false };
+    const nx = (px: number) => (px / 1440) * 2 - 1;
+    const ny = (py: number) => 1 - (py / 900) * 2;
+    const proj = Float32Array.of(nx(2), ny(450), 1, nx(1380), ny(450), 1, nx(700), ny(2), 1, nx(700), ny(450), 1);
+    const w = 120, h = 12;
+    const left = placeLabel(proj, 0, 1440, 900, 16, out, w, h);
+    expect(left.x).toBeGreaterThanOrEqual(16);
+    const flipped = placeLabel(proj, 1, 1440, 900, 16, out, w, h);
+    expect(flipped.x + w).toBeLessThanOrEqual(1380 - 10 + 1e-3);
+    expect(flipped.x + w).toBeLessThanOrEqual(1440 - 16);
+    const top = placeLabel(proj, 2, 1440, 900, 16, out, w, h);
+    expect(top.y).toBeGreaterThanOrEqual(16);
+    const mid = placeLabel(proj, 3, 1440, 900, 16, out, w, h);
+    expect(mid.x).toBeCloseTo(710, 6);
+    expect(mid.y).toBeCloseTo(450 - h - 6, 6);
+    expect(mid.y + h).toBeLessThan(450);
   });
 });

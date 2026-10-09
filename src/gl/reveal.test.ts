@@ -27,6 +27,16 @@ describe('latchReveals (spec §2, §4.6, §5.1)', () => {
     expect(latched.ridge).toBe(0);
   });
 
+  it('keeps the latched ridge 0 at introT 0 and 1.0, and 0.01 once the trickle has finished', () => {
+    const latched = { ridge: 0, hedge: 0 };
+    for (const t of [0, 0.5, 1.0, trickle.at - 0.01]) {
+      latchReveals(timelineAt(0, ranges), t, false, latched);
+      expect(latched.ridge).toBe(0);
+    }
+    latchReveals(timelineAt(0, ranges), trickle.at + trickle.dur, false, latched);
+    expect(latched.ridge).toBeCloseTo(RIDGE_FLOOR, 9);
+  });
+
   it('holds the floor when the chain is not playing', () => {
     const latched = { ridge: 0, hedge: 0 };
     latchReveals(timelineAt(0, ranges), null, false, latched);

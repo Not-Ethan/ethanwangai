@@ -63,12 +63,15 @@ export function projectEmitters(camera: ProjectionCamera, positions: Float32Arra
 export interface LabelPlacement { x: number; y: number; visible: boolean }
 
 /**
- * Emitter i's label position in CSS pixels, clamped to [margin, size - margin] on both axes. Hidden when the
- * projection flags it invisible, when either coordinate is not finite, or when i is out of range: a label never
- * receives a huge or NaN transform (spec §12).
+ * Emitter i's label box, top-left in CSS pixels. The box starts 10 px right of the anchor, or ends 10 px left of it when
+ * that would pass vw - margin; its top sits 6 px above the anchor. Both axes are clamped so the whole box stays inside
+ * [margin, size - margin] (labelW and labelH default to 0, which clamps the point only). Hidden when the projection
+ * flags it invisible, when either coordinate is not finite, or when i is out of range: a label never receives a huge or
+ * NaN transform (spec §12).
  */
 export function placeLabel(
   projected: Float32Array, i: number, vw: number, vh: number, margin: number, out: LabelPlacement,
+  labelW = 0, labelH = 0,
 ): LabelPlacement {
   const o = i * 3;
   const nx = projected[o];
@@ -77,8 +80,12 @@ export function placeLabel(
     out.visible = false;
     return out;
   }
-  out.x = Math.min(vw - margin, Math.max(margin, ((nx + 1) / 2) * vw));
-  out.y = Math.min(vh - margin, Math.max(margin, ((1 - ny) / 2) * vh));
+  const ax = ((nx + 1) / 2) * vw;
+  const ay = ((1 - ny) / 2) * vh;
+  let x = ax + 10;
+  if (x + labelW > vw - margin) x = ax - 10 - labelW;
+  out.x = Math.max(margin, Math.min(vw - margin - labelW, x));
+  out.y = Math.max(margin, Math.min(vh - margin - labelH, ay - labelH - 6));
   out.visible = true;
   return out;
 }

@@ -32,10 +32,19 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
     const lastX = new Float32Array(items.length).fill(Number.NaN);
     const lastY = new Float32Array(items.length).fill(Number.NaN);
     const lastA = new Float32Array(items.length).fill(Number.NaN);
+    const w = new Float32Array(items.length);
+    const h = new Float32Array(items.length);
+    const measure = () => {
+      for (let k = 0; k < items.length; k++) {
+        const el = spans.current[k];
+        if (el) { w[k] = el.offsetWidth; h[k] = el.offsetHeight; }
+      }
+    };
+    measure();
     const place: LabelPlacement = { x: 0, y: 0, visible: false };
     let vw = window.innerWidth;
     let vh = window.innerHeight;
-    const onResize = () => { vw = window.innerWidth; vh = window.innerHeight; };
+    const onResize = () => { vw = window.innerWidth; vh = window.innerHeight; measure(); lastX.fill(Number.NaN); };
     window.addEventListener('resize', onResize);
 
     let raf = 0;
@@ -44,10 +53,10 @@ export function ProjectedLabels({ items = IGNITION_LABELS }: { items?: readonly 
         const el = spans.current[k];
         if (!el) continue;
         const i = indices[k];
-        placeLabel(PROJECTED, i, vw, vh, LABEL_MARGIN, place);
+        placeLabel(PROJECTED, i, vw, vh, LABEL_MARGIN, place, w[k], h[k]);
         const alpha = place.visible ? LABEL_ALPHA[i] : 0;
         if (place.visible && (Number.isNaN(lastX[k]) || Math.abs(place.x - lastX[k]) > 0.5 || Math.abs(place.y - lastY[k]) > 0.5)) {
-          el.style.transform = `translate3d(${place.x.toFixed(1)}px, ${place.y.toFixed(1)}px, 0) translate(-50%, -160%)`;
+          el.style.transform = `translate3d(${place.x.toFixed(1)}px, ${place.y.toFixed(1)}px, 0)`;
           lastX[k] = place.x;
           lastY[k] = place.y;
         }

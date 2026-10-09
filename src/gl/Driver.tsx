@@ -23,11 +23,15 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
 
   const still = useMemo(() => stillParams(typeof window === 'undefined' ? '' : window.location.search), []);
-  const playIntro = useRef(false);
+  // Decided during the first render, so no frame runs with the chain wrongly off (a null introT latches the ridge floor).
+  const playIntro = useRef<boolean | null>(null);
+  if (playIntro.current === null) {
+    playIntro.current = shouldPlayIntro({ reducedMotion, introPlayed: readIntroPlayed(sessionStore), still });
+  }
   const marked = useRef(false);
   useEffect(() => {
     if (still.still) markIntroPlayed(sessionStore);
-    playIntro.current = shouldPlayIntro({ reducedMotion, introPlayed: readIntroPlayed(sessionStore), still });
+    if (reducedMotion && !still.still) playIntro.current = false;
   }, [reducedMotion, still]);
 
   const pulseGate = useRef<PulseGate>(createPulseGate());
@@ -52,11 +56,11 @@ export function Driver({ refs, rig, t0 }: { refs: SceneRefs; rig: Rig; t0: RefOb
     const s = state.current;
     const t = performance.now() / 1000;
     const start = t0.current;
-    if (playIntro.current && start !== null && !marked.current) {
+    if (playIntro.current === true && start !== null && !marked.current) {
       marked.current = true;
       if (!still.still) markIntroPlayed(sessionStore);
     }
-    const introT = introClock(playIntro.current, start, t, still.t);
+    const introT = introClock(playIntro.current === true, start, t, still.t);
     setFrameInputs(inputs, s.g, s.ranges, t, delta, introT, reducedMotion, rig.portrait);
     if (still.g !== null) inputs.g = still.g;
     inputs.pulseT = stepPulseGate(pulseGate.current, inSection(inputs.g, inputs.ranges, 'alive'), t);
