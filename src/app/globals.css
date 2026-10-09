@@ -122,14 +122,14 @@ body {
   content: ''; position: absolute; z-index: -1; pointer-events: none;
   inset: -3rem -3rem -3rem -100vw;
   background: radial-gradient(ellipse 30rem 36rem at calc(100% - 14rem) 50%,
-    var(--scrim) 0%, var(--scrim) 48%, color-mix(in srgb, var(--scrim) 60%, transparent) 70%, color-mix(in srgb, var(--scrim) 20%, transparent) 90%, transparent 100%);
+    color-mix(in srgb, var(--scrim) 55%, transparent) 0%, color-mix(in srgb, var(--scrim) 55%, transparent) 40%, color-mix(in srgb, var(--scrim) 30%, transparent) 68%, color-mix(in srgb, var(--scrim) 10%, transparent) 88%, transparent 100%);
 }
-.scrim > * { text-shadow: 0 1px 2px var(--scrim), 0 0 18px var(--scrim); }
+.scrim > * { text-shadow: 0 1px 3px var(--scrim), 0 0 12px var(--scrim), 0 0 28px var(--scrim); }
 @media (min-width: 48rem) {
   .scrim::before {
     inset: -4rem -14rem -6rem -100vw;
-    background: radial-gradient(ellipse 34rem 38rem at calc(100% - 32rem) 50%,
-      var(--scrim) 0%, var(--scrim) 50%, color-mix(in srgb, var(--scrim) 60%, transparent) 72%, color-mix(in srgb, var(--scrim) 20%, transparent) 90%, transparent 100%);
+    background: radial-gradient(ellipse 36rem 40rem at calc(100% - 32rem) 50%,
+      color-mix(in srgb, var(--scrim) 55%, transparent) 0%, color-mix(in srgb, var(--scrim) 55%, transparent) 42%, color-mix(in srgb, var(--scrim) 30%, transparent) 68%, color-mix(in srgb, var(--scrim) 10%, transparent) 88%, transparent 100%);
   }
 }
 
