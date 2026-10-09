@@ -38,7 +38,7 @@ function domStrings(): string[] {
   const c = copy;
   return [
     c.meta.title, c.meta.description,
-    c.nav.home, ...c.nav.items.map((i) => i.label), c.nav.resume,
+    c.nav.home, ...c.nav.items.map((i) => i.label),
     c.open.headline, c.open.deck, c.open.scrollCue, ...Object.values(c.open.labels),
     c.kalshi.heading, c.kalshi.body, ...c.kalshi.figures, c.kalshi.mono, c.kalshi.counter(facts.kalshi.trades),
     c.heron.heading, c.heron.body, c.heron.mono,

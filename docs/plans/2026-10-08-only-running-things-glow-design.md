@@ -69,7 +69,7 @@ Portrait (aspect < 1) uses its own yaw column so each subject comes into the nar
 
 **meta.** title `ethan wang`. description `now is the best time in history to build things. everything lit on this page is something i built that people used.`
 
-**nav** (fixed, top-right, mono): `kalshi · heron · darch · summers · contact · resume`. Home mark top-left: `ethan wang`.
+**nav** (fixed, top-right, mono): `kalshi · heron · darch · summers · contact`. Home mark top-left: `ethan wang`. No resume link; the resume is private (Ethan, 2026-10-09).
 
 **01 · open.**
 Headline: `now is the best time in history to build things.`
@@ -124,7 +124,7 @@ Hint under the input (mono): `it stays in this browser. nothing is sent anywhere
 **08 · contact.**
 h2: `it's late and i'm probably up building something.`
 Body: `the first light on this page is still the discord bot.`
-Links (mono): `email` → `mailto:ethan.wanq@gmail.com`, `github` → `https://github.com/Not-Ethan`, `linkedin` → `https://linkedin.com/in/edw173`, `resume` → `/resume.pdf`.
+Links (mono): `email` → `mailto:ethan.wanq@gmail.com`, `github` → `https://github.com/Not-Ethan`, `linkedin` → `https://linkedin.com/in/edw173`. No resume link (private).
 Mono: `ethan wang · cleveland · as of oct 2026`.
 
 ### 3.2 The five hillside sentences (`copy.yours.hillside`, true things, in his voice)
@@ -333,7 +333,7 @@ src/gl/                  Scene.tsx, Driver.tsx, driverCore.ts, CameraRig.tsx, us
 src/site/                Site.tsx, copy.ts, Labels.tsx, Reveal.tsx, Counter.tsx, Figure.tsx, chrome/Nav.tsx,
                          sections/ (Open, Kalshi, Heron, Darch, Summers, Alive, Yours, Contact)
 src/fallback/            Still.tsx (no-GL tier: still + static labels + SVG house), glSupport.ts (kept)
-public/                  valley-still.jpg, og.png, resume.pdf (copied from the oct 2026 resume), favicon.ico
+public/                  valley-still.jpg, og.png, favicon.ico (no resume: it is private)
 ```
 
 **Deleted:** `src/bench/**`, `src/generated/**`, `src/theme/**`, `scripts/**`, `public/plates/**`, `src/app/opengraph-image.*`, and every file under `src/site/`, `src/gl/` and `src/fallback/` that is not listed above (including `src/site/facts.ts`, which moves to `src/valley/facts.ts`, `Plate.tsx`, `Readout.*`, `chrome/Ladder`, `SectionStrip`, `ThemeToggle`, `hudSync`, `inkedCount`, `sections/Sentence`, `More`, `First`, `src/gl/material/**`, `src/fallback/StaticPlates.*`, `src/fallback/staticPlates.css`, and their tests). The gitignored `.superpowers/` ledgers are untouched.
@@ -358,7 +358,7 @@ Each gate is judged by an Opus visual-check agent from Playwright stills against
 
 **Deleted:** everything listed in §13.
 
-**Added:** `src/valley/**`, the new `src/gl/**`, `src/site/**` and `src/fallback/Still.tsx`, `public/valley-still.jpg`, `public/og.png`, `public/resume.pdf` (from `/Users/Ethan_1/Downloads/ethan_wang_swe_trading_infrastructure_resume.pdf`), `next.config.ts` with `output: 'export'`.
+**Added:** `src/valley/**`, the new `src/gl/**`, `src/site/**` and `src/fallback/Still.tsx`, `public/valley-still.jpg`, `public/og.png`, `next.config.ts` with `output: 'export'`.
 
 **Dependencies:** none added. Removed: `tsx`, `@fontsource-variable/archivo`, `@fontsource-variable/jetbrains-mono`, `@fontsource/archivo` (the fonts are already in `src/app/fonts`). Scripts become `dev`, `build`, `lint`, `typecheck`, `test`.
 

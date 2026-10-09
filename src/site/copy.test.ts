@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { copy, RESUME_HREF } from './copy';
+import { copy } from './copy';
 import { facts } from '@/valley/facts';
 
 /** Every string in copy, with each function called on sample arguments. */
@@ -34,8 +34,8 @@ describe('copy is the spec §3.1 copy', () => {
     expect(copy.meta.title).toBe('ethan wang');
     expect(copy.meta.description).toBe('now is the best time in history to build things. everything lit on this page is something i built that people used.');
     expect(copy.nav.home).toBe('ethan wang');
-    expect([...copy.nav.items.map((i) => i.label), copy.nav.resume].join(` ${copy.nav.separator} `))
-      .toBe('kalshi · heron · darch · summers · contact · resume');
+    expect(copy.nav.items.map((i) => i.label).join(` ${copy.nav.separator} `))
+      .toBe('kalshi · heron · darch · summers · contact');
     expect(copy.nav.items.map((i) => i.section)).toEqual(['kalshi', 'heron', 'darch', 'summers', 'contact']);
   });
   it('01 open', () => {
@@ -97,9 +97,7 @@ describe('copy is the spec §3.1 copy', () => {
       { label: 'email', href: 'mailto:ethan.wanq@gmail.com', external: false },
       { label: 'github', href: 'https://github.com/Not-Ethan', external: true },
       { label: 'linkedin', href: 'https://linkedin.com/in/edw173', external: true },
-      { label: 'resume', href: '/resume.pdf', external: true },
     ]);
-    expect(RESUME_HREF).toBe('/resume.pdf');
     expect(copy.contact.mono).toBe('ethan wang · cleveland · as of oct 2026');
   });
 });

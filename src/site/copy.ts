@@ -2,8 +2,6 @@
 // no title case, no em dashes. Agents do not improvise lines; change a string here only when the spec changes.
 import type { SectionId } from '@/valley/types';
 
-export const RESUME_HREF = '/resume.pdf';
-
 /** The ignition labels, in chain order (spec §3.1 · 01). Keys name what each label sits near. */
 export type IgnitionLabelKey = 'hut' | 'nist' | 'mill' | 'kalshiLamp' | 'wvu' | 'bars' | 'hillside';
 
@@ -37,7 +35,6 @@ const CONTACT_LINKS: readonly { label: string; href: string; external: boolean }
   { label: 'email', href: 'mailto:ethan.wanq@gmail.com', external: false },
   { label: 'github', href: 'https://github.com/Not-Ethan', external: true },
   { label: 'linkedin', href: 'https://linkedin.com/in/edw173', external: true },
-  { label: 'resume', href: RESUME_HREF, external: true },
 ];
 
 export const copy = {
@@ -48,7 +45,6 @@ export const copy = {
   nav: {
     home: 'ethan wang',
     items: NAV_ITEMS,
-    resume: 'resume',
     separator: '·',
   },
   open: {
