@@ -32,6 +32,10 @@ import { Buildings } from './Buildings';
 import { Hillside } from './Hillside';
 import { Windows } from './Windows';
 import { Glow } from './Glow';
+import { Ridge } from './Ridge';
+import { HedgeLines } from './HedgeLines';
+import { MillWheel } from './MillWheel';
+import { Rain } from './Rain';
 
 /** Tuned by eye under ACES (G1 remedy): the hemisphere sky is the horizon colour, so 8 gives a visible but modest ambient fill; shading comes from the key light. */
 export const HEMI_INTENSITY = 5.5;
@@ -128,6 +132,10 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
           <Hillside />
           <Windows refs={refs} millRows={uniforms.uMillRows} />
           <Glow refs={refs} />
+          <Ridge tier={tier} reveal={uniforms.uRidgeReveal} lit={uniforms.uRidgeLit} />
+          <HedgeLines reveal={uniforms.uHedgeReveal} />
+          <MillWheel shadows={shadows} />
+          {tier === 'desktop' && !reducedMotion ? <Rain rain={uniforms.uRain} time={uniforms.uTime} /> : null}
           <CameraRig rig={rig} tier={tier} reducedMotion={reducedMotion} />
           <Driver refs={refs} rig={rig} t0={t0} />
         </PerformanceMonitor>
