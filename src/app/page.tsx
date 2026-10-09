@@ -1,3 +1,3 @@
-import { Site } from '@/site/Site';
-
-export default function Home() { return <Site />; }
+export default function Home() {
+  return <main />;
+}
