@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     // --expose-gc lets the frame-allocation test collect before each sample (src/gl/driverCore.test.ts).
     pool: 'forks',
-    poolOptions: { forks: { execArgv: ['--expose-gc'] } },
+    execArgv: ['--expose-gc'],
     include: ['src/**/*.test.ts'],
     environment: 'node',
   },
