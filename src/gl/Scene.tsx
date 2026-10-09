@@ -103,7 +103,7 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
       fadeIn: (ms) => {
         const el = fade.current;
         if (!el) return;
-        el.style.transition = `opacity ${ms}ms`;
+        el.style.transition = reducedMotion ? 'none' : `opacity ${ms}ms`;
         el.style.opacity = '1';
       },
       wait: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
@@ -113,7 +113,7 @@ function ValleyCanvas({ onFail }: { onFail: () => void }) {
       // T0 marker for the visual gates and debugging: the ignition clock starts here (spec §7).
       try { document.documentElement.dataset.t0 = String(t * 1000); } catch { /* no DOM */ }   // ms, like performance.now()
     });
-  }, [fog, refs, onFail]);
+  }, [fog, refs, onFail, reducedMotion]);
 
   return (
     <div ref={fade} data-valley-fade="" className="absolute inset-0" style={HIDDEN}>

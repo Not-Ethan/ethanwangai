@@ -3,13 +3,14 @@
 // in Node with plain uniform holders. Stage 2 writes the timeline, the environment, the latched reveals and every
 // light at rest. Stage 3 layers the ignition, the ridge trickle, the pulse and the hut flicker over writeRestLights.
 import * as THREE from 'three';
-import type { EmitterId, Environment, SectionRange, Timeline } from '@/valley/types';
+import type { EmitterId, Environment, SectionRange, Timeline, View } from '@/valley/types';
 import { SECTIONS, sectionRanges } from '@/valley/sections';
 import { timelineAt } from '@/valley/timeline';
 import { environmentAt } from '@/valley/environment';
 import { EMITTERS } from '@/valley/lights';
 import { BUILD_SECONDS, buildStateAt } from '@/valley/build';
 import { EMITTER_COUNT, EMITTER_INDEX, PROJECTED } from './projection';
+import { cutView } from './motion';
 import { applyLights, createLightUniforms, type LightUniforms } from './lightsFrame';
 
 export interface Uniform<T> { value: T }
@@ -252,6 +253,7 @@ function writeEnvironment(env: Environment, u: ValleyUniforms): void {
 }
 
 // environmentAt returns frozen table entries: rewrite the colours only when the entry (or the uniforms) changes.
+const CUT: View = { yaw: 0, pitch: 0, fovScale: 1 };
 const written = { env: null as Environment | null, u: null as ValleyUniforms | null };
 
 /** One frame of scene state. Allocation-free (timelineAt and environmentAt do not allocate either). */
@@ -268,9 +270,11 @@ export function applyFrame(inputs: FrameInputs, targets: FrameTargets): void {
   }
 
   u.uTod.value = tl.tod;
-  u.uYaw.value = tl.view.yaw;
-  u.uPitch.value = tl.view.pitch;
-  u.uFovScale.value = tl.view.fovScale;
+  // Reduced motion cuts view offsets at section boundaries instead of easing (spec 11).
+  const view = inputs.reducedMotion ? cutView(g, ranges, inputs.portrait === true, CUT) : tl.view;
+  u.uYaw.value = view.yaw;
+  u.uPitch.value = view.pitch;
+  u.uFovScale.value = view.fovScale;
 
   if (!inputs.reducedMotion) u.uTime.value = inputs.t;
 
