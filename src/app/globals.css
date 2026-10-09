@@ -99,7 +99,7 @@ body {
   min-height: inherit; padding: 6.5rem 1rem 0;
 }
 .copy-col { grid-column: 1 / -1; align-self: start; position: sticky; top: 6rem; }
-.open-col { grid-column: 1 / -1; align-self: start; }
+.open-col { grid-column: 1 / -1; align-self: start; position: relative; }
 @media (min-width: 48rem) {
   .section-grid { padding: 7rem 3rem 0; }
   .copy-col { grid-column: 1 / span 5; top: 7rem; }
@@ -116,7 +116,7 @@ body {
 .scrim::before {
   content: ''; position: absolute; z-index: -1; pointer-events: none;
   inset: -3rem -4rem -3rem -2rem;
-  background: radial-gradient(ellipse 62% 58% at 38% 50%, var(--scrim) 0%, var(--scrim) 35%, transparent 100%);
+  background: radial-gradient(ellipse closest-side at 50% 50%, var(--scrim) 0%, var(--scrim) 35%, transparent 100%);
 }
 @media (min-width: 48rem) { .scrim::before { inset: -4rem -8rem -4rem -3rem; } }
 
