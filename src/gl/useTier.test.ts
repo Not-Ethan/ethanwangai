@@ -1,95 +1,120 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { act, createElement, useEffect } from 'react';
-import { createRoot } from '@react-three/fiber';
-import * as THREE from 'three';
-import type { Tier } from '@/valley/types';
-import { useTier, dprAfterDeclines, tierOverride, TIER_SETTINGS, DPR_STEP, DPR_FLOOR } from './useTier';
+import { describe, it, expect, vi } from 'vitest';
 
-const mockScroll: { tier: Tier } = { tier: 'desktop' };
-vi.mock('@/scroll/ScrollProvider', () => ({ useScroll: () => ({ state: { current: null }, reducedMotion: false, tier: mockScroll.tier, scrollTo() {} }) }));
+// useTier.ts imports the scroll provider (Lenis, React context); the pure exports under test never call it.
+vi.mock('@/scroll/ScrollProvider', () => ({
+  useScroll: () => ({ tier: 'desktop', reducedMotion: false, state: { current: null }, scrollTo() {} }),
+}));
 
-describe('TIER_SETTINGS', () => {
-  it('desktop renders at DPR 1.25 with the shadow map and 4× MSAA; phone at DPR 1, no shadow map, 2×', () => {
-    expect(TIER_SETTINGS.desktop).toMatchObject({ dpr: 1.25, shadows: true, msaa: 4 });
-    expect(TIER_SETTINGS.phone).toMatchObject({ dpr: 1, shadows: false, msaa: 2 });
-  });
+import { facts } from '@/valley/facts';
+import {
+  TIER_SETTINGS, DPR_LADDER, DPR_FLOOR, PERF_MONITOR, ladder, maxRung, settingsAt, expectedMainDraws, tierOverride, rungOverride,
+} from './useTier';
 
-  it('stretches parts along the travel axis by 0.3·|uVel| on desktop and half that on phone, whose leader lines are off (design §11)', () => {
-    expect(TIER_SETTINGS.desktop).toEqual({ dpr: 1.25, shadows: true, msaa: 4, stretch: 0.3, lines: 1 });
-    expect(TIER_SETTINGS.phone).toEqual({ dpr: 1, shadows: false, msaa: 2, stretch: 0.15, lines: 0 });
-    expect(TIER_SETTINGS.phone.stretch).toBe(TIER_SETTINGS.desktop.stretch / 2);
+const N = facts.kalshi.trades;
+
+describe('TIER_SETTINGS (spec §6, §11)', () => {
+  it('keeps tier, dpr, shadows and antialias only: desktop 1.25 with shadows and antialias, phone 1 with neither', () => {
+    expect(TIER_SETTINGS).toEqual({
+      desktop: { dpr: 1.25, shadows: true, antialias: true },
+      phone: { dpr: 1, shadows: false, antialias: false },
+    });
   });
 });
 
-describe('tierOverride', () => {
-  it('reads ?tier=phone or ?tier=desktop and ignores anything else', () => {
-    expect(tierOverride('?built=1&tier=phone')).toBe('phone');
+describe('the step-down ladder (spec §11)', () => {
+  it('walks DPR 1.25 → 1 → 0.85, then halves the ridge, then rain off, then mist off, skipping rungs a tier has already taken', () => {
+    expect(DPR_LADDER).toEqual([1.25, 1, 0.85]);
+    expect(DPR_FLOOR).toBe(0.85);
+    expect(ladder('desktop')).toEqual(['dpr', 'dpr', 'ridge', 'rain', 'mist']);
+    expect(ladder('phone')).toEqual(['dpr', 'ridge']);
+    expect(maxRung('desktop')).toBe(5);
+    expect(maxRung('phone')).toBe(2);
+  });
+
+  it('desktop, rung by rung: [dpr, ridgeCount, rain, mist]', () => {
+    const rows = [0, 1, 2, 3, 4, 5].map((r) => {
+      const { settings, quality } = settingsAt('desktop', r);
+      return [settings.dpr, quality.ridgeCount, quality.rain, quality.mist];
+    });
+    expect(rows).toEqual([
+      [1.25, N, true, true],
+      [1, N, true, true],
+      [0.85, N, true, true],
+      [0.85, Math.round(N / 2), true, true],
+      [0.85, Math.round(N / 2), false, true],
+      [0.85, Math.round(N / 2), false, false],
+    ]);
+  });
+
+  it('phone, rung by rung: N/5 at ×1.8 size, 400 stars, no rain, no mist, then DPR 0.85, then N/10', () => {
+    const rows = [0, 1, 2].map((r) => {
+      const { settings, quality } = settingsAt('phone', r);
+      return [settings.dpr, quality.ridgeCount, quality.rain, quality.mist];
+    });
+    expect(rows).toEqual([
+      [1, Math.round(N / 5), false, false],
+      [0.85, Math.round(N / 5), false, false],
+      [0.85, Math.round(N / 10), false, false],
+    ]);
+    expect(settingsAt('phone', 0).quality).toMatchObject({ ridgeSizeScale: 1.8, stars: 400 });
+    expect(settingsAt('desktop', 0).quality).toMatchObject({ ridgeSizeScale: 1, stars: 1200 });
+  });
+
+  it('never changes tier, shadows or antialias, never goes below DPR 0.85 or N/10, and clamps any rung', () => {
+    for (const tier of ['desktop', 'phone'] as const) {
+      for (let r = -3; r <= 20; r++) {
+        const { settings, quality } = settingsAt(tier, r);
+        expect(settings.tier).toBe(tier);
+        expect(settings.shadows).toBe(TIER_SETTINGS[tier].shadows);
+        expect(settings.antialias).toBe(TIER_SETTINGS[tier].antialias);
+        expect(settings.dpr).toBeGreaterThanOrEqual(DPR_FLOOR);
+        expect(quality.ridgeCount).toBeGreaterThanOrEqual(Math.round(N / 10));
+      }
+      expect(settingsAt(tier, 99)).toEqual(settingsAt(tier, maxRung(tier)));
+      expect(settingsAt(tier, -1)).toEqual(settingsAt(tier, 0));
+    }
+  });
+});
+
+describe('PERF_MONITOR (spec §11: frame time over 20 ms for 60 frames)', () => {
+  it('declines only when every window of a ≥ 1.2 s sample is under 50 fps, and never inclines', () => {
+    const [lower, upper] = PERF_MONITOR.bounds();
+    expect(1000 / lower).toBe(20);
+    expect(upper).toBe(Infinity);
+    expect(PERF_MONITOR.ms * PERF_MONITOR.iterations).toBeGreaterThanOrEqual(60 * 20);
+    // drei declines when more than iterations·threshold windows are below `lower`: here that means all of them.
+    expect(Math.floor(PERF_MONITOR.iterations * PERF_MONITOR.threshold)).toBe(PERF_MONITOR.iterations - 1);
+  });
+});
+
+describe('expectedMainDraws (spec §6: 16 desktop, 14 phone, +1 scaffold during a build)', () => {
+  it('counts mist and rain as the only optional draws, with a visitor house standing', () => {
+    expect(expectedMainDraws(settingsAt('desktop', 0).quality, false, true)).toBe(16);
+    expect(expectedMainDraws(settingsAt('desktop', 0).quality, true, true)).toBe(17);
+    expect(expectedMainDraws(settingsAt('desktop', 5).quality, false, true)).toBe(14);
+    expect(expectedMainDraws(settingsAt('phone', 0).quality, false, true)).toBe(14);
+    expect(expectedMainDraws(settingsAt('phone', 0).quality, true, true)).toBe(15);
+  });
+  it('drops one draw while no visitor house exists (its mesh has an empty geometry, so three issues no draw)', () => {
+    expect(expectedMainDraws(settingsAt('desktop', 0).quality, false, false)).toBe(15);
+    expect(expectedMainDraws(settingsAt('phone', 0).quality, false, false)).toBe(13);
+  });
+});
+
+describe('query overrides', () => {
+  it('?tier= forces phone or desktop and ignores anything else', () => {
+    expect(tierOverride('?debug=1&tier=phone')).toBe('phone');
     expect(tierOverride('?tier=desktop')).toBe('desktop');
     expect(tierOverride('?tier=tablet')).toBeNull();
     expect(tierOverride('')).toBeNull();
   });
-});
-
-describe('dprAfterDeclines', () => {
-  it('steps DPR down by 0.25 per decline and stops at 1', () => {
-    expect(DPR_STEP).toBe(0.25);
-    expect(DPR_FLOOR).toBe(1);
-    expect(dprAfterDeclines('desktop', 0)).toBe(1.25);
-    expect(dprAfterDeclines('desktop', 1)).toBe(1);
-    expect(dprAfterDeclines('desktop', 2)).toBe(1);
-    expect(dprAfterDeclines('phone', 0)).toBe(1);
-    expect(dprAfterDeclines('phone', 5)).toBe(1);
-  });
-});
-
-// The hook, rendered through R3F's reconciler (any React renderer will do; this one needs no DOM) with the scroll layer stubbed.
-describe('useTier', () => {
-  (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  type Out = ReturnType<typeof useTier>;
-  const sink: { latest: Out | null } = { latest: null };
-  /** Publishes the hook's latest return after each commit; act() flushes the effect. */
-  function Probe(): null {
-    const out = useTier();
-    useEffect(() => { sink.latest = out; });
-    return null;
-  }
-
-  function rendererStub(): THREE.WebGLRenderer {
-    return {
-      render() {}, setSize() {}, setPixelRatio() {},
-      shadowMap: { enabled: false, type: THREE.PCFShadowMap, needsUpdate: false },
-      outputColorSpace: THREE.SRGBColorSpace, toneMapping: THREE.NoToneMapping, domElement: {},
-    } as unknown as THREE.WebGLRenderer;
-  }
-  async function mount() {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const root = createRoot({} as HTMLCanvasElement);
-    warn.mockRestore();
-    await root.configure({ gl: rendererStub(), size: { width: 8, height: 8, top: 0, left: 0 }, dpr: 1, frameloop: 'never' });
-    await act(async () => root.render(createElement(Probe)));
-    return root;
-  }
-
-  beforeEach(() => { sink.latest = null; });
-
-  it('desktop: the tier\'s settings, then onDecline lowers DPR 1.25 → 1 and holds there', async () => {
-    mockScroll.tier = 'desktop';
-    const root = await mount();
-    expect(sink.latest).toMatchObject({ tier: 'desktop', dpr: 1.25, shadows: true, msaa: 4 });
-    await act(async () => sink.latest!.onDecline());
-    expect(sink.latest!.dpr).toBe(1);
-    expect(sink.latest!.shadows).toBe(true);   // Stage 2 only lowers DPR; the shadow rungs come in Stage 6
-    await act(async () => sink.latest!.onDecline());
-    expect(sink.latest!.dpr).toBe(1);          // the floor holds
-    await act(async () => root.unmount());
-  });
-
-  it('phone: DPR 1, no shadow map, 2× MSAA, and nowhere lower to go', async () => {
-    mockScroll.tier = 'phone';
-    const root = await mount();
-    expect(sink.latest).toMatchObject({ tier: 'phone', dpr: 1, shadows: false, msaa: 2 });
-    await act(async () => sink.latest!.onDecline());
-    expect(sink.latest!.dpr).toBe(1);
-    await act(async () => root.unmount());
+  it('?rung= takes a non-negative integer and nothing else', () => {
+    expect(rungOverride('?rung=3')).toBe(3);
+    expect(rungOverride('?debug=1&rung=0')).toBe(0);
+    expect(rungOverride('?rung=-1')).toBeNull();
+    expect(rungOverride('?rung=2.5')).toBeNull();
+    expect(rungOverride('?rung=x')).toBeNull();
+    expect(rungOverride('?rung=')).toBeNull();
+    expect(rungOverride('')).toBeNull();
   });
 });
