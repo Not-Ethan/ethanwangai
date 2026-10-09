@@ -29,7 +29,7 @@ describe('PALETTE (spec §9)', () => {
       warm: '#FFC98A', ridge: '#FFB45A', porch: '#FFD9A0', millWindow: '#FFC27A', lamp: '#FFD2A0',
       hedge: '#8FA3B8', rain: '#9AAEC4',
       wall: '#1A1F28', roof: '#11151C',
-      terrainLow: '#1B2C22', terrainMid: '#26402E', terrainSlope: '#33404F', terrainCrest: '#0E121A', treeline: '#090B10',
+      terrainLow: '#14211A', terrainMid: '#213829', terrainSlope: '#33404F', terrainCrest: '#0E121A', treeline: '#090B10',
       river: '#6E8AA6', mist: '#8FA3B8',
     });
     expect(ALPHA).toEqual({ hedge: 0.5, rain: 0.35 });

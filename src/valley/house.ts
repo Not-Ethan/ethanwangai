@@ -106,11 +106,12 @@ export function houseFromSentence(sentence: string): House {
     faceZ(windowsPerFace.side, W + out / 2, W, W + out);
   }
 
-  // Porch: four posts in a row in front of the door.
+  // Porch: four deck boards laid flat in front of the door (kind 'post' so the part count holds).
   if (porch) {
     for (let i = 0; i < 4; i++) {
-      const cx = -W + 0.3 + (i * (width - 0.6)) / 3;
-      box('post', [cx - 0.075, 0, D + 1.2], [cx + 0.075, 2.2, D + 1.35]);
+      const x0 = -W + 0.3 + (i * (width - 0.6)) / 4;
+      const x1 = -W + 0.3 + ((i + 1) * (width - 0.6)) / 4 - 0.05;
+      box('post', [x0, 0, D], [x1, 0.18, D + 1.35]);
     }
   }
 

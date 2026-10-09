@@ -165,14 +165,12 @@ export function staticWindows(): WindowSpec[] {
   }
 
   const mill = PLACES.mill;
-  const MILL_W = [0.55, 0.8, 0.65, 0.9, 0.6];
-  const MILL_H = [0.8, 0.7, 0.85, 0.75, 0.8];
   for (let r = 0; r < 4; r++) {
     for (let c = 0; c < 5; c++) {
       out.push({
         emitter: 'mill',
-        center: [mill[0] + (c - 2) * 2.4 + (r % 2 === 1 ? 1.2 : 0), mill[1] + 0.9 + r * 1.05, front(mill, BUILDING_SIZES.mill.d)],
-        w: MILL_W[c], h: MILL_H[c], color: colorOf('mill'), row: r,
+        center: [mill[0] + (c - 2) * 2.6, mill[1] + 0.8 + r * 1.0, front(mill, BUILDING_SIZES.mill.d)],
+        w: 0.5, h: 0.7, color: colorOf('mill'), row: r,
         dim: (r === 3 && c === 4) || (r === 0 && c === 0),
       });
     }

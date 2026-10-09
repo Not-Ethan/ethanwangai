@@ -15,8 +15,8 @@
   --rain: #9AAEC4;
   --wall: #1A1F28;
   --roof: #11151C;
-  --terrain-low: #1B2C22;
-  --terrain-mid: #26402E;
+  --terrain-low: #14211A;
+  --terrain-mid: #213829;
   --terrain-slope: #33404F;
   --terrain-crest: #0E121A;
   --treeline: #090B10;
@@ -115,25 +115,21 @@ body {
   width: fit-content; max-width: calc(100% + 2rem); padding: 2.5rem 1rem; margin-inline: -1rem;
   isolation: isolate;
 }
-/* the scrim lives on a pseudo-element behind the copy: anchored to the frame's left edge like a vignette, fading
-   out to the right past the text and top and bottom. No straight edge, no card (spec §9). */
+/* the scrim lives on a pseudo-element behind the copy: one ellipse of the scrim colour centred on the text block, so
+   there is no corner and no straight edge anywhere; the fade runs out past the text into the sky. The copy also
+   carries a faint halo in the scrim colour for the block's corners, which the ellipse covers only partly. (spec §9) */
 .scrim::before {
   content: ''; position: absolute; z-index: -1; pointer-events: none;
-  inset: -6rem -6rem -6rem -100vw;
-  background: linear-gradient(to bottom,
-    transparent 0%, color-mix(in srgb, var(--scrim) 25%, transparent) 2rem, color-mix(in srgb, var(--scrim) 65%, transparent) 4rem, var(--scrim) 6rem,
-    var(--scrim) calc(100% - 6rem), color-mix(in srgb, var(--scrim) 65%, transparent) calc(100% - 4rem), color-mix(in srgb, var(--scrim) 25%, transparent) calc(100% - 2rem), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 14rem), rgba(0,0,0,0.75) calc(100% - 10rem), rgba(0,0,0,0.4) calc(100% - 6rem), rgba(0,0,0,0.15) calc(100% - 3rem), transparent 100%);
-  mask-image: linear-gradient(to right, black calc(100% - 14rem), rgba(0,0,0,0.75) calc(100% - 10rem), rgba(0,0,0,0.4) calc(100% - 6rem), rgba(0,0,0,0.15) calc(100% - 3rem), transparent 100%);
+  inset: -3rem -3rem -3rem -100vw;
+  background: radial-gradient(ellipse 30rem 36rem at calc(100% - 14rem) 50%,
+    var(--scrim) 0%, var(--scrim) 48%, color-mix(in srgb, var(--scrim) 60%, transparent) 70%, color-mix(in srgb, var(--scrim) 20%, transparent) 90%, transparent 100%);
 }
+.scrim > * { text-shadow: 0 1px 2px var(--scrim), 0 0 18px var(--scrim); }
 @media (min-width: 48rem) {
   .scrim::before {
-    inset: -2rem -16rem -5rem -100vw;
-    background: linear-gradient(to bottom,
-      transparent 0%, color-mix(in srgb, var(--scrim) 30%, transparent) 2.5rem, color-mix(in srgb, var(--scrim) 70%, transparent) 5rem, var(--scrim) 8rem,
-      var(--scrim) calc(100% - 8rem), color-mix(in srgb, var(--scrim) 70%, transparent) calc(100% - 5rem), color-mix(in srgb, var(--scrim) 30%, transparent) calc(100% - 2.5rem), transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 16rem), rgba(0,0,0,0.7) calc(100% - 11rem), rgba(0,0,0,0.35) calc(100% - 6rem), rgba(0,0,0,0.12) calc(100% - 2.5rem), transparent 100%);
-    mask-image: linear-gradient(to right, black calc(100% - 16rem), rgba(0,0,0,0.7) calc(100% - 11rem), rgba(0,0,0,0.35) calc(100% - 6rem), rgba(0,0,0,0.12) calc(100% - 2.5rem), transparent 100%);
+    inset: -4rem -14rem -6rem -100vw;
+    background: radial-gradient(ellipse 34rem 38rem at calc(100% - 32rem) 50%,
+      var(--scrim) 0%, var(--scrim) 50%, color-mix(in srgb, var(--scrim) 60%, transparent) 72%, color-mix(in srgb, var(--scrim) 20%, transparent) 90%, transparent 100%);
   }
 }
 

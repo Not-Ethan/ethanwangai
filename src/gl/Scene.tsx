@@ -32,7 +32,7 @@ import { Windows } from './Windows';
 import { Glow } from './Glow';
 
 /** Tuned by eye under ACES (G1 remedy): the hemisphere sky is the horizon colour, so 8 gives a visible but modest ambient fill; shading comes from the key light. */
-export const HEMI_INTENSITY = 8.0;
+export const HEMI_INTENSITY = 5.5;
 export const SHADOW_MAP_SIZE = 1024;
 const SHADOW_EXTENT = 70;
 

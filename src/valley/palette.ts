@@ -20,8 +20,8 @@ export const PALETTE = {
   wall: '#1A1F28',
   roof: '#11151C',
   // terrain ramp, river, mist
-  terrainLow: '#1B2C22',
-  terrainMid: '#26402E',
+  terrainLow: '#14211A',
+  terrainMid: '#213829',
   terrainSlope: '#33404F',
   terrainCrest: '#0E121A',
   treeline: '#090B10',
