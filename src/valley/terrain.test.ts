@@ -52,9 +52,12 @@ describe('buildTerrain', () => {
     expect(terrain.indices.length % 3).toBe(0);
   });
   it('has no NaN and no out-of-range colour channel', () => {
-    for (const v of terrain.positions) expect(Number.isFinite(v)).toBe(true);
-    for (const v of terrain.colors) { expect(v).toBeGreaterThanOrEqual(0); expect(v).toBeLessThanOrEqual(1); }
-    for (const i of terrain.indices) expect(i).toBeLessThan(TERRAIN_VERTEX_COUNT);
+    // One expect per array (a quarter of a million per-element expects timed out under full-suite load).
+    let badPos = 0, badCol = 0, badIdx = 0;
+    for (const v of terrain.positions) if (!Number.isFinite(v)) badPos++;
+    for (const v of terrain.colors) if (!(v >= 0 && v <= 1)) badCol++;
+    for (const i of terrain.indices) if (!(i < TERRAIN_VERTEX_COUNT)) badIdx++;
+    expect({ badPos, badCol, badIdx }).toEqual({ badPos: 0, badCol: 0, badIdx: 0 });
   });
   it('spans x −80..80 and z −50..50 on the grid and samples heightAt at each grid vertex', () => {
     const p = terrain.positions;
@@ -66,24 +69,28 @@ describe('buildTerrain', () => {
   it('winds every ground triangle counter-clockwise seen from above (normal y > 0)', () => {
     const p = terrain.positions, idx = terrain.indices;
     const groundTris = TERRAIN.width * TERRAIN.depth * 2;
+    let clockwise = 0;
     for (let t = 0; t < groundTris; t++) {
       const a = idx[t * 3] * 3, b = idx[t * 3 + 1] * 3, c = idx[t * 3 + 2] * 3;
       const ux = p[b] - p[a], uz = p[b + 2] - p[a + 2];
       const vx = p[c] - p[a], vz = p[c + 2] - p[a + 2];
-      expect(uz * vx - ux * vz).toBeGreaterThan(0);   // y component of (b − a) × (c − a)
+      if (!(uz * vx - ux * vz > 0)) clockwise++;   // y component of (b − a) × (c − a)
     }
+    expect(clockwise).toBe(0);
   });
   it('winds every treeline cone face outward', () => {
     const p = terrain.positions, idx = terrain.indices;
     const start = TERRAIN.width * TERRAIN.depth * 2;
+    let inward = 0;
     for (let t = start; t < idx.length / 3; t++) {
       const a = idx[t * 3] * 3, b = idx[t * 3 + 1] * 3, c = idx[t * 3 + 2] * 3;   // a, c on the base; b is the apex
       const ux = p[b] - p[a], uy = p[b + 1] - p[a + 1], uz = p[b + 2] - p[a + 2];
       const vx = p[c] - p[a], vy = p[c + 1] - p[a + 1], vz = p[c + 2] - p[a + 2];
       const nx = uy * vz - uz * vy, nz = ux * vy - uy * vx;
       const ox = (p[a] + p[c]) / 2 - p[b], oz = (p[a + 2] + p[c + 2]) / 2 - p[b + 2];   // apex → base-edge midpoint
-      expect(nx * ox + nz * oz).toBeGreaterThan(0);
+      if (!(nx * ox + nz * oz > 0)) inward++;
     }
+    expect(inward).toBe(0);
   });
   it('colours the treeline with the palette treeline colour and stays in the dark ramp', () => {
     const tree = new Color(PALETTE.treeline);
