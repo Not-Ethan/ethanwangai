@@ -145,7 +145,7 @@ Scene units: 1 unit ≈ 1 m. The terrain is 160 × 100 units, centred at the ori
 
 ### 4.1 Ground, river, sky
 
-- **Terrain:** a 160 × 100 plane at 1 unit resolution (161 × 101 vertices) displaced by a seeded heightfield (`src/valley/terrain.ts`: two-octave value noise plus authored masks: a river channel along +x between z −6 and 6, a near bank rising to the south, a far bank rising to the north, a hill at the far left, a ridge along the back at z ≈ −38, a flat mill pad at the far bank's right end). Vertex colours from height and slope: dark moss greens low, grey-blue rock on slopes, near-black at the ridge crest. A bare treeline is a row of 1-unit dark cones along the ridge crest merged into the terrain mesh. Flat shading. Built once on the CPU at load (≈16k vertices); the same function runs in Node for tests.
+- **Terrain:** a 160 × 100 plane at 1 unit resolution (161 × 101 vertices) displaced by a seeded heightfield (`src/valley/terrain.ts`: two-octave value noise plus authored masks: a river channel along +x between z −6 and 6, a near bank rising gently to the south (at most about 2.4 at z = 22, so the hero camera's sight line to the river clears it; amended after G1), a far bank rising to the north, a hill at the far left, a ridge along the back at z ≈ −38, a flat mill pad at the far bank's right end). Vertex colours from height and slope: dark moss greens low, grey-blue rock on slopes, near-black at the ridge crest. A bare treeline is a row of 1-unit dark cones along the ridge crest merged into the terrain mesh. Flat shading. Built once on the CPU at load (≈16k vertices); the same function runs in Node for tests.
 - **River:** a 160 × 12 ribbon at y = 0.2 with a flow shader (two scrolling noise octaves, pale blue-grey, opacity 0.85, tinted by the sky horizon uniform). Ambient, continuous.
 - **Mist:** 24 soft sprites along the river band drifting +x at 0.3 units/s, wrapping; alpha 0.12. Ambient, continuous. Off on phone.
 - **Sky:** a large inverted sphere with a three-stop gradient shader (zenith, horizon, east horizon), all three colours uniforms blended by `tod`. Stars: 1,200 points on the sphere, alpha from `tod`. Moon: one sprite, position from `tod`.
@@ -165,7 +165,7 @@ Far bank, (−10, h, −20), (0, h, −22), (10, h, −21), (20, h, −23). Four
 
 ### 4.5 The mill (darch)
 
-Far bank, right end, on the mill pad at (30, h, −12), its wheel side facing the river. The biggest building: 10 × 9 × 7 with a 5 × 4 window grid on the river face (20 instances in `Windows.tsx` with per-instance `aRow` 0–3, bottom row 0) and a wheel (a 3.2-radius ring of 12 paddles) overhanging the river at (30, 2.6, −5). Its state is `darchT` ∈ [0, 1]: 0–0.15 the rows flood bottom-up (row r lights at darchT = 0.03 + 0.03r) and the wheel spins up; 0.15–0.75 lit and turning at 0.5 rad/s; 0.75–1.0 the rows go out top-down (row r goes out at darchT = 0.78 + 0.05(3 − r)) and the wheel coasts to a stop by 1.0. Section 04's `s` drives `darchT` directly. The chain in the hero plays the same curve once over 1.4 s. Scrolling back relights it.
+Far bank, right end, on the mill pad at (30, h, −12), its wheel side facing the river. The biggest building, long and low: 14 × 5.5 × 7 with a 5 × 4 grid of small windows on the river face (amended after G1: a 10 × 9 box read as an office block) (20 instances in `Windows.tsx` with per-instance `aRow` 0–3, bottom row 0) and a wheel (a 3.2-radius ring of 12 paddles) overhanging the river at (30, 2.6, −5). Its state is `darchT` ∈ [0, 1]: 0–0.15 the rows flood bottom-up (row r lights at darchT = 0.03 + 0.03r) and the wheel spins up; 0.15–0.75 lit and turning at 0.5 rad/s; 0.75–1.0 the rows go out top-down (row r goes out at darchT = 0.78 + 0.05(3 − r)) and the wheel coasts to a stop by 1.0. Section 04's `s` drives `darchT` directly. The chain in the hero plays the same curve once over 1.4 s. Scrolling back relights it.
 
 ### 4.6 The ridge (kalshi)
 
@@ -280,12 +280,12 @@ One palette object, dark, the only place colour literals exist in `.ts`/`.tsx`; 
 - emitters: warm `#FFC98A` (hut, cabins, visitor, hillside), ridge amber `#FFB45A`, porch light `#FFD9A0`, mill windows `#FFC27A`, lamp `#FFD2A0`
 - hedge line `#8FA3B8` at alpha 0.5; rain `#9AAEC4` at alpha 0.35
 - building bodies `#1A1F28` walls, `#11151C` roofs; house bodies from the same two
-- sky keyframes: dusk zenith `#1B2238`, horizon `#C9825A`, east `#2A2E48`; blue zenith `#0E1426`, horizon `#3E5A7A`, east `#141A2E`; night zenith `#05070F`, horizon `#101830`, east `#070A14`; predawn zenith `#0A0F1E`, horizon `#1E2A40`, east `#3E5068`
-- sun/moon colour per keyframe: dusk `#E8A070` intensity 0.6, blue `#8FA8D0` 0.35, night `#9FB2D8` 0.25, predawn `#B8C4D8` 0.3; hemisphere sky = zenith, ground = terrain low
-- terrain ramp: low `#16241C`, mid `#1F3326`, slope `#2B3340`, crest `#0C0F16`, treeline `#090B10`; river `#6E8AA6`; mist `#8FA3B8`
+- sky keyframes: dusk zenith `#1B2238`, horizon `#C9825A`, east `#2A2E48`; blue zenith `#0E1426`, horizon `#2E4360`, east `#141A2E`; night zenith `#05070F`, horizon `#101830`, east `#070A14`; predawn zenith `#0A0F1E`, horizon `#1E2A40`, east `#5A6E8C` (horizon luminance strictly falls dusk → blue → night; predawn's east is a visible lift; amended after G1)
+- sun/moon colour per keyframe: dusk `#E8A070` intensity 10, blue `#8FA8D0` 12, night `#9FB2D8` 16, predawn `#B8C4D8` 14 (three's physically based light units; the Lambert ground needs them); hemisphere intensity 8, hemisphere sky = horizon, ground = terrain mid; fog near/far dusk 50/230, blue 40/200, night 30/180, predawn 40/200 (amended after G1: the first values left the ground black)
+- terrain ramp: low `#1B2C22`, mid `#26402E`, slope `#33404F`, crest `#0E121A`, treeline `#090B10` (lifted one step after G1); river `#6E8AA6`; mist `#8FA3B8`
 - fog colour follows the horizon.
 
-Scrims: each copy column sits on a vertical gradient from the scrim colour at the text to transparent, guaranteeing 4.5:1 on body copy (tested by a contrast unit test against the palette).
+Scrims: each copy column sits on the scrim colour anchored to the left edge of the frame like a vignette, fading out to the right past the text and fading top and bottom (a pseudo-element behind the column; no straight edge, never a card), guaranteeing 4.5:1 on body copy (tested by a contrast unit test against the palette). Amended after G1: a text-wide gradient read as a card over the valley.
 
 Typography: Archivo variable (kept, `next/font/local`, metric fallback), display `clamp(2.5rem, 7vw, 7rem)` weight 700, line-height 0.95, tracking −0.03em, lowercase; h2 `clamp(1.6rem, 3.8vw, 3.2rem)`; body 18–20 px weight 500, max 34ch; JetBrains Mono (kept) 12–14 px for every number, label, nav and link, tabular numerals; oversized mono figures 48–72 px for the evidence numbers. No kinetic type. No font axis animates.
 
