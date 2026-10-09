@@ -34,18 +34,27 @@ export function sectionRanges(tops: number[], docHeight: number, vh: number): Se
   }));
 }
 
-/** The section g falls in and the local progress s (0..1) inside its range. With no ranges yet, open at s = 0. */
-export function locate(g: number, ranges: SectionRange[]): { section: SectionId; s: number; index: number } {
+export interface Located { section: SectionId; s: number; index: number }
+
+/** locate() writing into `out` instead of allocating, for per-frame callers. Returns `out`. */
+export function locateInto(g: number, ranges: SectionRange[], out: Located): Located {
   const last = ranges.length - 1;
-  if (last < 0) return { section: 'open', s: 0, index: 0 };
-  if (g <= ranges[0].start) return { section: ranges[0].id, s: 0, index: 0 };
-  if (g >= 1) return { section: ranges[last].id, s: 1, index: last };
+  if (last < 0) { out.section = 'open'; out.s = 0; out.index = 0; return out; }
+  if (g <= ranges[0].start) { out.section = ranges[0].id; out.s = 0; out.index = 0; return out; }
+  if (g >= 1) { out.section = ranges[last].id; out.s = 1; out.index = last; return out; }
   for (let i = 0; i <= last; i++) {
     const r = ranges[i];
     if (g < r.end || i === last) {
       const span = Math.max(1e-6, r.end - r.start);
-      return { section: r.id, s: clamp01((g - r.start) / span), index: i };
+      out.section = r.id; out.s = clamp01((g - r.start) / span); out.index = i;
+      return out;
     }
   }
-  return { section: ranges[last].id, s: 1, index: last };
+  out.section = ranges[last].id; out.s = 1; out.index = last;
+  return out;
+}
+
+/** The section g falls in and the local progress s (0..1) inside its range. With no ranges yet, open at s = 0. */
+export function locate(g: number, ranges: SectionRange[]): Located {
+  return locateInto(g, ranges, { section: 'open', s: 0, index: 0 });
 }

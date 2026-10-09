@@ -2,7 +2,7 @@
 // Pure and latch-free: the same g always gives the same values; the driver (src/gl/driverCore.ts) latches
 // ridgeReveal and hedgeReveal and fires the pulse on pulseArm's rising edge.
 import type { SectionId, SectionRange, Timeline, View } from './types';
-import { SECTIONS, locate } from './sections';
+import { SECTIONS, locateInto, type Located } from './sections';
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -18,7 +18,11 @@ const OUT: Timeline = {
   ridgeReveal: 0.01, hedgeReveal: 0, darchT: 0, rain: 0, pulseArm: false,
 };
 
+const LOC: Located = { section: 'open', s: 0, index: 0 };
+
 const ORDER: Record<SectionId, number> = Object.fromEntries(SECTIONS.map((s, i) => [s.id, i])) as Record<SectionId, number>;
+
+const phase = (at: number, id: SectionId) => (at < ORDER[id] ? -1 : at > ORDER[id] ? 1 : 0);
 
 /**
  * Timeline at document progress `g` (clamped to [0, 1]) for the measured section `ranges`.
@@ -27,7 +31,8 @@ const ORDER: Record<SectionId, number> = Object.fromEntries(SECTIONS.map((s, i) 
  */
 export function timelineAt(g: number, ranges: SectionRange[], portrait = false): Timeline {
   const gc = Number.isFinite(g) ? clamp01(g) : 0;
-  const { section, s, index } = locate(gc, ranges);
+  locateInto(gc, ranges, LOC);
+  const { section, s, index } = LOC;
   const def = SECTIONS[index];
   const todStart = index === 0 ? 0 : SECTIONS[index - 1].todEnd;
   const tod = lerp(todStart, def.todEnd, s);
@@ -41,8 +46,7 @@ export function timelineAt(g: number, ranges: SectionRange[], portrait = false):
   OUT.view.fovScale = lerp(here.fovScale, next.fovScale, k);
 
   const at = ORDER[section];
-  const phase = (id: SectionId) => (at < ORDER[id] ? -1 : at > ORDER[id] ? 1 : 0);
-  const kalshi = phase('kalshi'), heron = phase('heron'), darch = phase('darch');
+  const kalshi = phase(at, 'kalshi'), heron = phase(at, 'heron'), darch = phase(at, 'darch');
   OUT.ridgeReveal = kalshi < 0 ? 0.01 : kalshi > 0 ? 1 : 0.01 + 0.99 * easeInOut(s);
   OUT.hedgeReveal = heron < 0 ? 0 : heron > 0 ? 1 : s;
   OUT.darchT = darch < 0 ? 0 : darch > 0 ? 1 : s;
