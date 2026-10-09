@@ -1,4 +1,4 @@
-import type { Tier } from '@/bench/types';
+import type { Tier } from '@/valley/types';
 
 export function detectTier(): Tier {
   if (typeof window === 'undefined') return 'desktop';

@@ -7,7 +7,7 @@
 // by 0.25 steps to a floor of 1; the rest of the step-down ladder arrives in Stage 6. `?tier=phone` (or `desktop`)
 // forces the GL tier for stills and Stage 5's phone checks; the DOM keeps the detected tier.
 import { useCallback, useMemo, useState } from 'react';
-import type { Tier } from '@/bench/types';
+import type { Tier } from '@/valley/types';
 import { useScroll } from '@/scroll/ScrollProvider';
 
 export interface TierSettings {

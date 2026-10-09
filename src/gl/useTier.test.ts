@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { act, createElement, useEffect } from 'react';
 import { createRoot } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { Tier } from '@/bench/types';
+import type { Tier } from '@/valley/types';
 import { useTier, dprAfterDeclines, tierOverride, TIER_SETTINGS, DPR_STEP, DPR_FLOOR } from './useTier';
 
 const mockScroll: { tier: Tier } = { tier: 'desktop' };

@@ -1,8 +1,8 @@
 'use client';
 import { createContext, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import Lenis from 'lenis';
-import { SECTIONS, sectionRanges, type SectionRange } from '@/bench/sections';
-import type { Tier } from '@/bench/types';
+import { SECTIONS, sectionRanges } from '@/valley/sections';
+import type { SectionRange, Tier } from '@/valley/types';
 import { detectTier } from './tier';
 import { normalizeVelocity, deltaVelocity } from './velocity';
 
