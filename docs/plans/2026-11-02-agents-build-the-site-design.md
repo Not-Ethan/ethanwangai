@@ -227,3 +227,66 @@ The pure modules carry the behaviour and the tests; `Swarm.tsx` is the only file
 ## 12. Left to the builder
 
 Exact SVG geometry of the four shots within the descriptions above; exact easing of the cursor scale on press; the sticky index's "nearest card" measure (a scroll listener at 100 ms throttle is fine); the handle placement arithmetic; the grid offset so the hero rule lines up with the name's left edge.
+
+## 13. Amendments after the Impeccable critique (2026-11-02, score 21/32)
+
+The critique is in `.impeccable/critique/`. These amendments override the sections above where they conflict. Copy here is verbatim; implementers transcribe it.
+
+### 13.1 Eyebrows and numbered labels go
+
+Every `.eyebrow` is deleted (the hero's `cleveland, ohio` and the six section kickers; the location stays in the footer). A section head is the h2 alone. The work number line drops the ordinal: `2026 · trading`, `2026 · product`, `2025 · system`, `2025 · tool`. Copy keys `eyebrow` are removed everywhere. The element inventory loses `eyebrow`: 42 elements; `BUILT_TOTAL` is 42. Section ids and nav targets are unchanged.
+
+### 13.2 Nav order follows page order
+
+`about · experience · work · contact`. The active section's link is underlined (2 px accent underline, offset 6 px) while its section is nearest the viewport centre (same measure as the experience index). Phone: the status pill and the `say hi` pill leave the bar and the four links show at 13 px, so a phone reader has section links.
+
+### 13.3 The email is the primary action; rebuild is demoted
+
+The closer's mail link becomes a `.btn btn-accent` pill at 22 px (phone 18 px) with the address as its text, hover translate like every button, and a focus ring. The door's `rebuild the page ↻` becomes an outlined `.btn` (white) inside the door; the note stays. When the swarm is off (reduced motion or a failed bundle), the door shows a single paragraph `this page is usually drawn in by six cursors while you read it. you asked for less motion, so they stayed home.` (copy key `closer.door.offParagraph`; phone variant says `three cursors`) and no button or note; the log card loses its fixed height (`height: auto`) and shows only `about.logReduced`.
+
+### 13.4 The agents say what they were told
+
+Each element carries a short instruction in Ethan's voice, the thing an agent was asked to build. It is the box label while the box is drawn and the element column of the log line (`agent 02 · my name, huge · 0.61s`). `Built` passes it as `data-prompt`; the swarm reads `dataset.prompt` and falls back to the name. Copy key `prompts: Record<name, string>`:
+
+mark `my initials, top left` · nav `links to the sections` · cta `a way to say hi` · h1 name `my name, huge` · headline `what i do, in one line` · actions `two buttons` · h2 about `a hello` · log `a log of what you've built` · lede `the thesis` · notes `three notes about me` · h2 toolbox `a heading for the tools` · row languages `the languages` · row backend `the backend stuff` · row data `the data stuff` · row infra `the infra` · row markets `the markets` · h2 experience `a heading for the jobs` · index `a list of the jobs` · card kalshi `the kalshi job` · card heron `the heron job` · card wvu `the wvu job` · card darch `the darch job` · card nist `the nist job` · h2 work `a heading for the work` · shot kalshi `draw an order book` · body kalshi `the kalshi story` · shot heron `draw a bar tab` · body heron `the heron story` · shot darch `draw a grid of videos` · body darch `the darch story` · shot nist `draw a chat window` · body nist `the nist story` · h2 rest `a heading for the rest` · card education `where i went to school` · card awards `the awards` · card the early stuff `the early stuff` · h2 contact `a big goodbye` · p contact `how to reach me` · mail `my email, big` · links `github and linkedin` · door `the bit about you` · footer `a footer`.
+
+A test checks that every registered name has a prompt and every prompt is lowercase.
+
+### 13.5 The effect never blocks reading
+
+- In-page links (nav, `see the work`, the ghost, the index, the to-top) scroll instantly (`scroll-behavior: auto`), so the agents arrive on the destination at once instead of the reader waiting out a 1.3 s fly-through plus a build.
+- Focus builds: a `focusin` on or inside an unbuilt element builds it instantly (no cursor), so keyboard users never focus something invisible.
+- Long queues go faster: when the queue is longer than the agent count, new jobs take tempo 0.6 (after the seeded multiplier) until it drains.
+- Idle cursors leave: an idle cursor drifts for 1.5 s, then fades out over 300 ms and is not drawn until its next job (it flies in from where it faded). At 42/42 no cursor remains on the page.
+- Rebuild announces itself: the door note becomes `it jumps to the top and takes about as long as reading it did.`
+
+### 13.6 Experience says the role; work says the thing
+
+Every job card shows `{name} · {role}` as its title at every size; the index sub-line is `{role} · {year}`. Experience copy (role, what he did) and work copy (what the thing did) no longer repeat each other:
+
+experience jobs (id · name · role · sub · when · place · lede · points · chips):
+- kalshi · `kalshi` · `independent trader` · `independent trader · 2026` · `jan 2026 to now` · `cleveland` · `i trade my own money on kalshi's crypto markets with a system i wrote.` · [`it reads the order book and a few crypto venues, places orders, checks risk and reconciles fills.`, `every idea gets tested out of sample on a replay stack before it trades.`] · python, websockets, postgresql, pandas
+- heron · `heron` · `co-founder` · `co-founder · 2026` · `june 2026 to now` · `four cities` · `heron hedges free-drink promos for bars. i built the models.` · [`pricing, liability and hedge execution on prediction markets.`, `bars signed in four cities.`] · python, fastapi, kalshi
+- wvu · `wvu medicine` · `ml intern` · `ml intern · summer 2026` · `summer 2026` · `morgantown` · `a model that watches pharmacy claims and notices when denials spike.` · [`anomaly detection over about a hundred million dollars a year of claims.`, `i built the modeling core. the team wired it into production.`, `tooling to plug it into open webui so people could ask it questions.`] · python, pytorch, pandas
+- darch · `darch` · `co-founder` · `co-founder · 2025 to 2026` · `june 2025 to may 2026` · `remote` · `i ran engineering at a video factory for a year.` · [`python, node and ffmpeg end to end. scripts in, rendered videos out, distributed.`, `it ended in may 2026.`] · python, fastapi, node, ffmpeg, mongodb
+- nist · `nist` · `software intern` · `software intern · summer 2025` · `summer 2025` · `gaithersburg` · `a help-desk assistant that reads the internal docs so people don't have to.` · [`retrieval, reranking and deep search inside a custom open webui fork.`, `logging and failure analysis, so we knew when it was wrong.`] · python, retrieval, docker
+
+work cases (id · year · kind · title · tag · lede · chips · shot):
+- kalshi · `2026` · `trading` · `kalshi algo` · `it trades while i sleep.` · `it makes markets and trades price gaps between kalshi's crypto markets. top 100 all-time on the profit leaderboard, about 30,000 trades.` · python, websockets, postgresql · book
+- heron · `2026` · `product` · `heron` · `free drinks if the home team wins.` · `the bar doesn't eat that. heron prices the promo, covers the payout and hedges it on prediction markets. bars in four cities.` · python, fastapi · tab
+- darch · `2025` · `system` · `darch` · `three thousand videos a month.` · `a content pipeline on python, node and ffmpeg. about twenty million views a month, for a year.` · python, node, ffmpeg · grid
+- nist · `2025` · `tool` · `nist help desk` · `reads the docs so you don't.` · `a retrieval assistant inside a custom open webui fork. it answers from the internal docs and says which one.` · python, retrieval, docker · chat
+
+The copy tests that pinned old strings change with these; the facts checks stay (`top ${facts.kalshi.leaderboardTop}` now in about, work and awards; the trades count in the work lede).
+
+### 13.7 Contrast, focus, wrapping, small things
+
+- Footer text and the toolbox row labels use `--ink-muted` (the 60 % ink fails 4.5:1 on the darker bands).
+- Log lines: the agent name is ink, preceded by an 8 px square swatch in the agent colour (no coloured text on white).
+- `:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; box-shadow: 0 0 0 5px var(--ink) }` on every interactive element; `::selection { background: var(--accent); color: var(--ink) }`.
+- `p, li { text-wrap: pretty }`; `h1, h2, h3 { text-wrap: balance }` (the name keeps its two spans).
+- The status pill gets `min-width: 15ch` so a digit change does not move the nav; the rebuild button gets `cursor: pointer`.
+- The to-top button is hidden on phone.
+- The education line is `case western reserve university · secondary major in mathematics · class of 2028` with a no-break space before each `·` so the separator never starts a line.
+- The four shots get one small loop each after they are built (CSS keyframes, paused under reduced motion): the order book's bars breathe (three bars scale on x between 0.85 and 1.15 over 2.6 to 3.4 s), the video grid's progress fill crawls from 40 % to 70 % and back over 6 s, the chat's answer bubble shows a blinking caret, the bar tab's `drinks · free` pill pulses once every 4 s. Nothing moves before the element is built.
+- DESIGN.md token lists gain the 26 px and 4 px radii and the 10, 13, 14, 15, 18, 22 and 24 px sizes its prose already documents.
