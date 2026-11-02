@@ -109,7 +109,7 @@ All lowercase. No em dashes, no en dashes (use "to" or a comma). `·` is allowed
    - `education`: `b.s. computer science` / `case western reserve university · secondary major in mathematics · class of 2028`; `mandarin` / `fluent`
    - `awards`: `top 100 all-time` / `kalshi crypto profit leaderboard · 2026`; `innovation award` / `tartanhacks 2025, for orbit`
    - `the early stuff`: `discord bots` / `middle school. my classmates used them. the first thing i built that ran.`; `orbit` / `a chrome extension, built in a weekend at tartanhacks, feb 2025`
-9. closer: h2 lines `i'm probably up` `building something.`; p `email is the fastest way to reach me. i answer all of them.`; mail `ethan.wanq@gmail.com`; links `github ↗` → `https://github.com/Not-Ethan`, `linkedin ↗` → `https://linkedin.com/in/edw173`; door title `oh, and about the agents.`; door paragraphs `every element on this page was drawn in by a cursor as you scrolled. there are six of them. they don't exist.` / `nothing is sent anywhere. there's no server behind this page. it's files on a cdn and some javascript.` / `they'll do it again if you ask.`; door button `rebuild the page ↻`; door note `it takes about as long as reading it did.`
+9. closer: h2 lines `i'm probably up` `building something.`; p `email is the fastest way to reach me. i answer all of them.`; mail `ethan.wanq@gmail.com`; links `github ↗` → `https://github.com/Not-Ethan`, `linkedin ↗` → `https://linkedin.com/in/edw173`; door title `oh, and about the agents.`; door paragraphs `every element on this page was drawn in by a cursor as you scrolled. there are six of them. they don't exist.` (phone variant: `… there are three of them. they don't exist.`) / `nothing is sent anywhere. there's no server behind this page. it's files on a cdn and some javascript.` / `they'll do it again if you ask.`; door button `rebuild the page ↻`; door note `it takes about as long as reading it did.`
 10. footer: left `ethan wang · cleveland`; right `that's everything. the agents are done.`; credit `layout after` + link text `aahil-khan.xyz` → `https://www.aahil-khan.xyz/`.
 11. totop label (aria) `back to top`, glyph `↑`.
 
@@ -143,7 +143,7 @@ No flash: an inline script in `<head>` runs before paint and sets `document.docu
 - Instant rule: when a job is popped and its rect lies entirely outside the viewport expanded by 200 px on each side (the user scrolled past it), it is built instantly with no cursor. When the queue is longer than 2 × agents, the oldest jobs beyond that are built instantly too. Instant builds are not logged; the status pill still counts them.
 - Done: a job completes at release. The agent returns to idle at the box's bottom-right corner plus (6, 8) px.
 - Sweep: every 250 ms the swarm checks every unbuilt, unqueued element; any whose box lies entirely above the viewport (bottom edge above `scrollY - 200`) was scrolled past without ever intersecting (a scrollbar drag or an instant jump) and is built instantly. Nothing above the reader is ever left hidden; things below still wait to be seen.
-- Rebuild (`door` button): every built element loses `data-built` and is hidden again, the log clears, the counts reset, the observer re-observes every element, and jobs flow again for whatever is in view. The button is disabled while a rebuild is in flight (any agent busy or queue non-empty).
+- Rebuild (`door` button): the page jumps to the top (instant scroll, so nothing is above the reader for the sweep to take), every built element loses `data-built` and is hidden again, the log clears, the counts reset, the observer re-observes every element, and the page rebuilds as the reader scrolls down again. The button is disabled while a rebuild is in flight (any agent busy or queue non-empty) and when the swarm is off.
 
 ### 7.5 One job's timeline (pure, tested)
 
@@ -159,7 +159,7 @@ Given the agent's current position `(ax, ay)` and the element rect `(x, y, w, h)
 
 `f` is the eased drag progress in [0, 1]. The agent is free again at the start of `linger` (so the cursor can leave while the box fades). Total active time per element is at most 70 + 700 + 950 + 120 = 1.84 s and typically under a second.
 
-Selection box: 1.5 px solid agent colour; fill agent colour at 8 %; four 7 × 7 px handles (white, 1.5 px agent border) centred on the corners; label pill (mono 11 px, white on agent colour) sitting 22 px above the top-left corner reading the element name. Box, handles and label are three DOM nodes per agent, reused.
+Selection box: 1.5 px solid agent colour; fill agent colour at 8 %; four 7 × 7 px handles (white, 1.5 px agent border) centred on the corners; label pill (mono 11 px, white on agent colour) sitting 22 px above the top-left corner reading the element name. When the box's top is within 28 px of the viewport's top edge (the bar items), the label sits below the box instead. Box, handles and label are three DOM nodes per agent, reused.
 
 ### 7.6 HUD
 
