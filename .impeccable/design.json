@@ -1,0 +1,469 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-02T23:39:36Z",
+  "title": "Design System: ethan wang",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#f7f5ee",
+        "tonalRamp": [
+          "#322d1b",
+          "#5a502d",
+          "#83743e",
+          "#ab9750",
+          "#beaf77",
+          "#d0c5a0",
+          "#e2dcc8",
+          "#f6f4ef"
+        ]
+      },
+      "canvas-toolbox": {
+        "role": "neutral",
+        "displayName": "Toolbox Stone",
+        "canonical": "#e3e1da",
+        "tonalRamp": [
+          "#2b2922",
+          "#4c483b",
+          "#6e6853",
+          "#8f876c",
+          "#a9a28d",
+          "#c1bdaf",
+          "#dad8d0",
+          "#f4f3f1"
+        ]
+      },
+      "canvas-work": {
+        "role": "neutral",
+        "displayName": "Work Mist",
+        "canonical": "#f3f3f3",
+        "tonalRamp": [
+          "#262626",
+          "#434343",
+          "#616161",
+          "#7e7e7e",
+          "#9b9b9b",
+          "#b8b8b8",
+          "#d5d5d5",
+          "#f2f2f2"
+        ]
+      },
+      "canvas-closer": {
+        "role": "neutral",
+        "displayName": "Closer Clay",
+        "canonical": "#d8d6d0",
+        "tonalRamp": [
+          "#292823",
+          "#49463e",
+          "#696558",
+          "#898472",
+          "#a49f92",
+          "#bebbb2",
+          "#d8d7d2",
+          "#f3f3f1"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#434343",
+          "#616161",
+          "#7e7e7e",
+          "#9b9b9b",
+          "#b8b8b8",
+          "#d5d5d5",
+          "#f2f2f2"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#161616",
+        "tonalRamp": [
+          "#262626",
+          "#434343",
+          "#616161",
+          "#7e7e7e",
+          "#9b9b9b",
+          "#b8b8b8",
+          "#d5d5d5",
+          "#f2f2f2"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Marker Yellow",
+        "canonical": "#facc00",
+        "tonalRamp": [
+          "#473b06",
+          "#826b04",
+          "#bf9c02",
+          "#fbcd00",
+          "#fed938",
+          "#fbe275",
+          "#f9ecb1",
+          "#fcf8e9"
+        ]
+      },
+      "agent-blue": {
+        "role": "secondary",
+        "displayName": "Agent Blue",
+        "canonical": "#2563eb",
+        "tonalRamp": [
+          "#0b1c41",
+          "#0f3078",
+          "#1243af",
+          "#1557e6",
+          "#497ced",
+          "#80a3f0",
+          "#b7caf3",
+          "#eaeffa"
+        ]
+      },
+      "agent-red": {
+        "role": "secondary",
+        "displayName": "Agent Red",
+        "canonical": "#e5484d",
+        "tonalRamp": [
+          "#3f0e0f",
+          "#731417",
+          "#a8191e",
+          "#dc1f25",
+          "#e55155",
+          "#ea8689",
+          "#f0babc",
+          "#faebeb"
+        ]
+      },
+      "agent-green": {
+        "role": "secondary",
+        "displayName": "Agent Green",
+        "canonical": "#16a34a",
+        "tonalRamp": [
+          "#0d3f20",
+          "#137337",
+          "#18a94e",
+          "#1edd65",
+          "#50e687",
+          "#85ebab",
+          "#b9f1ce",
+          "#ebfaf0"
+        ]
+      },
+      "agent-violet": {
+        "role": "secondary",
+        "displayName": "Agent Violet",
+        "canonical": "#7c3aed",
+        "tonalRamp": [
+          "#1f0b41",
+          "#360f78",
+          "#4c12af",
+          "#6215e6",
+          "#8549ed",
+          "#a980f0",
+          "#cdb7f3",
+          "#f0eafa"
+        ]
+      },
+      "agent-orange": {
+        "role": "secondary",
+        "displayName": "Agent Orange",
+        "canonical": "#f97316",
+        "tonalRamp": [
+          "#452107",
+          "#7f3908",
+          "#bb5006",
+          "#f56806",
+          "#f98a3d",
+          "#f7ac78",
+          "#f8cfb3",
+          "#fbf1e9"
+        ]
+      },
+      "agent-pink": {
+        "role": "secondary",
+        "displayName": "Agent Pink",
+        "canonical": "#db2777",
+        "tonalRamp": [
+          "#3e0f24",
+          "#70163e",
+          "#a41d59",
+          "#d72474",
+          "#e15493",
+          "#e888b3",
+          "#efbbd2",
+          "#f9ebf1"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "rgba(22,22,22,0.74)",
+        "tonalRamp": []
+      },
+      "ink-subtle": {
+        "role": "neutral",
+        "displayName": "Ink Subtle",
+        "canonical": "rgba(22,22,22,0.6)",
+        "tonalRamp": []
+      },
+      "grid-line": {
+        "role": "neutral",
+        "displayName": "Grid Line",
+        "canonical": "rgba(22,22,22,0.11)",
+        "tonalRamp": []
+      }
+    },
+    "typographyMeta": {
+      "name": {
+        "displayName": "Name",
+        "purpose": "Uppercase hero name only."
+      },
+      "closer-headline": {
+        "displayName": "Closer Headline",
+        "purpose": "Contact h2."
+      },
+      "hero-headline": {
+        "displayName": "Hero Headline",
+        "purpose": "Thesis line under the name."
+      },
+      "case-title": {
+        "displayName": "Case Title",
+        "purpose": "Work case h3."
+      },
+      "section-title": {
+        "displayName": "Section Title",
+        "purpose": "Section h2."
+      },
+      "mail-link": {
+        "displayName": "Mail Link",
+        "purpose": "Email with yellow underline."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "About paragraph."
+      },
+      "job-title": {
+        "displayName": "Job Title",
+        "purpose": "Job and case titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default reading text."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Button labels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Eyebrows and row labels, uppercase."
+      },
+      "hud": {
+        "displayName": "Hud",
+        "purpose": "Swarm tags, labels, log, status pill (JetBrains Mono)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-2",
+        "value": "2px 2px 0 0 #161616",
+        "purpose": "Small buttons and pressed state."
+      },
+      {
+        "name": "shadow-4",
+        "value": "4px 4px 0 0 #161616",
+        "purpose": "Buttons, cards, to-top."
+      },
+      {
+        "name": "shadow-6",
+        "value": "6px 6px 0 0 #161616",
+        "purpose": "Work shot cards."
+      },
+      {
+        "name": "cursor-drop",
+        "value": "drop-shadow(0 1px 1px rgba(22,22,22,.2))",
+        "purpose": "Swarm cursor arrow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Button press translate and shadow, .2s."
+      },
+      {
+        "name": "totop-fade",
+        "value": "opacity .25s",
+        "purpose": "To-top button fade after 600px of scroll."
+      },
+      {
+        "name": "swarm-job",
+        "value": "travel 180-700ms, press 70ms, drag 280-950ms, release 120ms, linger 600ms",
+        "purpose": "One agent building one element. Disabled under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "max-width 767px"
+      },
+      {
+        "name": "status-hidden",
+        "value": "max-width 1023px"
+      },
+      {
+        "name": "wrap",
+        "value": "1180px max, 72px gutter (20px phone)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "btn",
+      "description": "Pill with yellow arrow disc; presses in on hover.",
+      "html": "<a class=\"ds-btn\" href=\"#\"><span>see the work</span><span class=\"ds-btn-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\"><path d=\"M3 8h10M9 4l4 4-4 4\" stroke=\"#161616\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span></a>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;gap:12px;height:52px;padding:0 8px 0 24px;border:2px solid #161616;border-radius:999px;background:#fff;box-shadow:4px 4px 0 0 #161616;font:500 16px \"Space Grotesk Variable\",system-ui,sans-serif;color:#161616;text-decoration:none;transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1)}.ds-btn:hover,.ds-btn:focus-visible{transform:translate(2px,2px);box-shadow:2px 2px 0 0 #161616}.ds-btn-icon{width:38px;height:38px;border-radius:50%;background:#facc00;display:grid;place-items:center}"
+    },
+    {
+      "name": "Small Button",
+      "kind": "button",
+      "refersTo": "btn-sm",
+      "description": "Bar CTA, 42px, shadow 2.",
+      "html": "<a class=\"ds-btn-sm\" href=\"#\">say hi</a>",
+      "css": ".ds-btn-sm{display:inline-flex;align-items:center;height:42px;padding:0 16px;border:2px solid #161616;border-radius:999px;background:#fff;box-shadow:2px 2px 0 0 #161616;font:500 15px \"Space Grotesk Variable\",system-ui,sans-serif;color:#161616;text-decoration:none;transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1)}.ds-btn-sm:hover,.ds-btn-sm:focus-visible{transform:translate(2px,2px);box-shadow:0 0 0 0 #161616}"
+    },
+    {
+      "name": "Accent Button",
+      "kind": "button",
+      "refersTo": "btn-accent",
+      "description": "Yellow-filled pill for the rebuild action.",
+      "html": "<a class=\"ds-btn-accent\" href=\"#\">rebuild the page</a>",
+      "css": ".ds-btn-accent{display:inline-flex;align-items:center;height:52px;padding:0 24px;border:2px solid #161616;border-radius:999px;background:#facc00;box-shadow:4px 4px 0 0 #161616;font:500 16px \"Space Grotesk Variable\",system-ui,sans-serif;color:#161616;text-decoration:none;transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1)}.ds-btn-accent:hover,.ds-btn-accent:focus-visible{transform:translate(2px,2px);box-shadow:2px 2px 0 0 #161616}"
+    },
+    {
+      "name": "Ghost Pill",
+      "kind": "custom",
+      "refersTo": "ghost",
+      "description": "Dashed pill with a hollow dot and yellow badge.",
+      "html": "<a class=\"ds-ghost\" href=\"#\"><span class=\"ds-dot\"></span><span>the agents are building this page</span><span class=\"ds-badge\">live</span></a>",
+      "css": ".ds-ghost{display:inline-flex;align-items:center;gap:12px;height:52px;padding:0 20px;border:2px dashed rgba(22,22,22,.32);border-radius:999px;color:rgba(22,22,22,.74);font:500 16px \"Space Grotesk Variable\",system-ui,sans-serif;text-decoration:none}.ds-dot{width:8px;height:8px;border-radius:50%;border:2px solid #facc00}.ds-badge{font-size:11px;font-weight:700;padding:3px 10px;border:1.5px solid #161616;border-radius:999px;background:#facc00;color:#161616}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "White card, 2px ink outline, offset shadow.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-eyebrow\">build log</p><p>waiting for the agents</p></div>",
+      "css": ".ds-card{background:#fff;border:2px solid #161616;border-radius:14px;box-shadow:4px 4px 0 0 #161616;padding:32px;font:400 17px/1.65 \"Space Grotesk Variable\",system-ui,sans-serif;color:#161616}.ds-eyebrow{font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(22,22,22,.6);margin:0 0 12px}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Static white label, 8px radius.",
+      "html": "<span class=\"ds-chip\">python</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;padding:6px 14px;border:1.5px solid rgba(22,22,22,.24);border-radius:8px;background:#fff;font:400 15px/1.4 \"Space Grotesk Variable\",system-ui,sans-serif;color:#161616}"
+    },
+    {
+      "name": "Nav Bar",
+      "kind": "nav",
+      "refersTo": "mark",
+      "description": "Fixed bar with yellow mark, links and status pill.",
+      "html": "<div class=\"ds-bar\"><a class=\"ds-mark\" href=\"#\">ew</a><span class=\"ds-links\"><a href=\"#\">about</a><a href=\"#\">work</a></span><span class=\"ds-status\">6 agents · 12/43 built</span></div>",
+      "css": ".ds-bar{display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 24px;background:rgba(247,245,238,.88);border-bottom:1px solid rgba(22,22,22,.1);font-family:\"Space Grotesk Variable\",system-ui,sans-serif}.ds-mark{width:46px;height:46px;display:grid;place-items:center;background:#facc00;border:2px solid #161616;border-radius:8px;font-weight:700;color:#161616;text-decoration:none}.ds-links a{padding:10px 14px;font-size:15px;font-weight:500;color:rgba(22,22,22,.74);text-decoration:none}.ds-links a:hover{color:#161616}.ds-status{font:400 12px ui-monospace,monospace;height:32px;padding:0 12px;display:inline-flex;align-items:center;border:2px solid #161616;border-radius:999px;background:#fff}"
+    },
+    {
+      "name": "Swarm Cursor and Selection Box",
+      "kind": "custom",
+      "refersTo": "cursor-tag",
+      "description": "An agent cursor with its name tag, and a selection box with handles and label.",
+      "html": "<div class=\"ds-stage\"><div class=\"ds-box\"><i class=\"ds-h\" style=\"left:-4.5px;top:-4.5px\"></i><i class=\"ds-h\" style=\"right:-4.5px;top:-4.5px\"></i><i class=\"ds-h\" style=\"left:-4.5px;bottom:-4.5px\"></i><i class=\"ds-h\" style=\"right:-4.5px;bottom:-4.5px\"></i><span class=\"ds-label\">h1 name</span></div><div class=\"ds-cursor\"><svg viewBox=\"0 0 18 18\" width=\"18\" height=\"18\"><path d=\"M2 1.5 L2 14.5 L5.6 11.2 L8 16.5 L10.6 15.4 L8.2 10.2 L13 10.2 Z\" fill=\"#2563eb\" stroke=\"#fff\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/></svg><span class=\"ds-tag\">agent 01</span></div></div>",
+      "css": ".ds-stage{position:relative;width:200px;height:90px;margin:28px 0 0 8px;font-family:ui-monospace,monospace}.ds-box{position:absolute;inset:0 30px 0 0;border:1.5px solid #2563eb;background:rgba(37,99,235,.08)}.ds-h{position:absolute;width:7px;height:7px;background:#fff;border:1.5px solid #2563eb}.ds-label{position:absolute;left:-1.5px;top:-24px;white-space:nowrap;font-size:11px;line-height:1;padding:3px 6px;border-radius:4px;background:#2563eb;color:#fff}.ds-cursor{position:absolute;right:20px;bottom:-4px;width:18px;height:18px;filter:drop-shadow(0 1px 1px rgba(22,22,22,.2))}.ds-tag{position:absolute;left:14px;top:16px;white-space:nowrap;font-size:11px;line-height:1;padding:3px 6px;border-radius:4px;background:#2563eb;color:#fff}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Drafting Table",
+    "overview": "The page is a warm paper sheet with a heavy black pencil outline around everything that matters, and the page assembles itself while you watch. Six colored cursors, each with a name tag, drag selection boxes over the elements, and each element appears as its box is drawn. The system is a hard-edged, neo-brutalist card language (2px ink outlines, flat offset shadows, one yellow accent) borrowed on purpose from https://www.aahil-khan.xyz/, because Ethan asked for that layout. The cursors are the only multi-color thing on the page; the site itself stays paper, ink and yellow.\n\nDensity is medium and editorial. Sections are separated by generous vertical padding (108px) and, three times, by tinted bands closed with 2px ink rules. Type is one family (Space Grotesk) used loud at the top (an uppercase name up to 168px) and plain everywhere else. Monospace appears only in the swarm HUD and in a few facts that read as machine output (status pill, build log, case numbers, the drawn schematics).\n\nThe system rejects softness. There are no blurs on content, no gradients except two static glows behind the hero and closer, no dark mode (`color-scheme: light`), no photos, no logos, no icons beyond a few inline SVG arrows.",
+    "keyCharacteristics": [
+      "Warm off-white paper (#f7f5ee) with true-black ink (#161616); everything outlined at 2px.",
+      "Flat offset shadows (no blur) as the only elevation: 2, 4, or 6px down-right in solid ink.",
+      "One yellow accent (#facc00), used for fills of small things: icon circle, badge, mark, bullets, dots, underline.",
+      "Six agent colors live only inside the swarm overlay and the build log.",
+      "Pills for actions, 14px rounded cards for content, 8px for chips.",
+      "Lowercase copy; the name is the only uppercase display text.",
+      "Motion is the swarm. Nothing else moves except a button nudge and the to-top fade."
+    ],
+    "rules": [
+      {
+        "name": "The One Yellow Rule",
+        "body": "Yellow is the only accent and fills only small things. If a new element wants a second hue, it must be an agent color and live in the swarm overlay.",
+        "section": "colors"
+      },
+      {
+        "name": "The Agent Color Rule",
+        "body": "Red, green, violet, orange, pink and blue exist only as agent identity. Never use them for page content, links, states or decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Outline Rule",
+        "body": "Borders are ink (#161616) at 2px for structure; translucent ink is for hairlines and dashes only. Never a grey solid border.",
+        "section": "colors"
+      },
+      {
+        "name": "The Lowercase Rule",
+        "body": "Copy is lowercase. The name is uppercase only through CSS `text-transform` on display type, and eyebrows are uppercase through CSS on their lowercase source.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono Is A Machine Rule",
+        "body": "JetBrains Mono marks swarm output and machine-like facts only. Do not use it for headings, nav or body.",
+        "section": "typography"
+      },
+      {
+        "name": "The Weight Ladder Rule",
+        "body": "700 for headings and names, 500 for leads, buttons, nav and labels, 400 for reading. No 300, no italics.",
+        "section": "typography"
+      },
+      {
+        "name": "The Reference Grid Rule",
+        "body": "Layout numbers (column ratios, paddings, type sizes) were measured from aahil-khan.xyz at Ethan's request. Do not \"improve\" them.",
+        "section": "layout"
+      },
+      {
+        "name": "The No Blur Rule",
+        "body": "Shadows have zero blur and are always solid ink. Never add soft or colored shadows.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Press-In Rule",
+        "body": "On hover a shadowed button moves 2px down and right and drops to shadow 2, so it looks pressed into the page.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** outline every card, button and pill in 2px #161616 and give it a flat offset shadow of 4px (2px when small, 6px for work shots).",
+      "**Do** keep yellow (#facc00) to small fills, dots, bullets and one underline.",
+      "**Do** set all copy lowercase with no dashes; use the middle dot (·) or a period instead. Only the name and eyebrows are uppercase, and only through CSS.",
+      "**Do** keep type to Space Grotesk at weights 400, 500, 700, with tight negative tracking on large sizes and 0.14em on uppercase labels.",
+      "**Do** use JetBrains Mono only for swarm HUD text, the status pill, case numbers and schematic text.",
+      "**Do** give any new element a `Built` name so the swarm has a label and a box for it, and make hero and heading blocks `width: fit-content` so boxes hug text.",
+      "**Do** keep the page fully readable with the swarm off or reduced motion on."
+    ],
+    "donts": [
+      "**Don't** use blurred or colored shadows, gradients on content, rounded corners above 14px (except pills and circles), or dark mode.",
+      "**Don't** introduce a second accent or use agent colors outside the swarm and build log.",
+      "**Don't** add motion beyond the swarm, the 2px button press, and the .25s to-top fade: no scroll reveals, parallax, hover zooms or looping animation.",
+      "**Don't** add photos, screenshots, logos, testimonials or icon sets; the work shots are drawn inline SVG schematics.",
+      "**Don't** use em dashes, en dashes, resume-style bullets, hype words or title-cased copy.",
+      "**Don't** change the reference layout numbers (1180 wrap, 72px gutter, 108px sections, 767px phone break) to taste.",
+      "**Don't** use thin 1px outlines for structure, or grey solid borders."
+    ]
+  }
+}
