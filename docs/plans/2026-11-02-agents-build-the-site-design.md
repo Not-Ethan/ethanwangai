@@ -46,7 +46,7 @@ Tokens (match the reference exactly where it is measurable):
 --canvas-2: #e3e1da      toolbox band
 --canvas-3: #f3f3f3      work band
 --canvas-4: #d8d6d0      closer + footer band
---grid: rgba(22,22,22,0.11)   hero grid lines (2 px every 96 px)
+--grid: rgba(22,22,22,0.11)   hero grid lines (2 px every 88 px)
 --surface: #ffffff       cards
 --ink: #161616
 --ink-muted: rgba(22,22,22,0.74)
@@ -64,7 +64,7 @@ Fluid sizes: name `clamp(64px, 11.7vw, 168px)`; headline `clamp(28px, 4.2vw, 60p
 
 Components: `.btn` (pill, 2 px border, white, shadow-4, 52 px tall, "see the work" with a yellow circle arrow icon at the right); `.btn-accent` (yellow fill); `.ghost` (dashed 2 px pill, muted text, with a small badge pill inside in yellow, 11 px bold); `.card` (white, 2 px border, 14 px radius, shadow-4, 32 px padding; `.card-6` uses shadow-6 and 14 px padding for the work shots); `.chip` (white, 1.5 px border at 24 % ink, 8 px radius, 15 px, 6 px 14 px padding); `.eyebrow`; `.wrap` (max 1180 px, 72 px side padding at ≥1280, 20 px at phone; content column 1036 px centred inside it); `.totop` (48 px round, fixed bottom-right 32 px, appears after 600 px of scroll).
 
-Hero backdrop: the grid (`linear-gradient` lines, 96 px cells, offset so a line sits 44 px from the left), a radial white glow at 50 % 6 % at 70 % alpha fading by 40 %, and a soft yellow glow (`radial-gradient(circle at 18% 55%, rgba(250,204,0,0.28), transparent 32%)`) behind the name. These are static.
+Hero backdrop: the grid (`linear-gradient` lines, 88 px cells, offset so a line sits 36 px from the left), a radial white glow at 50 % 6 % at 70 % alpha fading by 40 %, and a soft yellow glow (`radial-gradient(circle 220px at 19% 50%, rgba(250,204,0,0.28), transparent)`; on phone `circle 180px at 70% 52%`) behind the name. These are static.
 
 ## 5. Layout, section by section (desktop 1440 × 900; phone 390 × 844)
 
@@ -80,7 +80,7 @@ Section ids: `top`, `about`, `toolbox`, `experience`, `work`, `rest`, `contact`.
 8. **Closer** (`#contact`, band `--canvas-4`, 144 px padding, with the reference's soft yellow/grey radial field at the top-left). h2 on two lines, 18 px muted paragraph (max 554 px), the mail link (32 px, 3 px yellow underline), a row of pills `github ↗`, `linkedin ↗`. Then the door: a dashed 2 px card (38 % ink), 32 px padding, two columns: copy (title 16 px / 700 muted, three 16 px paragraphs) and on the right a `.btn-accent` "rebuild the page ↻" with a 16 px muted note under it.
 9. **Footer** (band `--canvas-4`, 32 px padding, 15 px subtle): left `ethan wang · cleveland`, right `that's everything. the agents are done.`; a second line 13 px: `layout after` + link `aahil-khan.xyz`.
 
-Phone (≤ 767 px): one column everywhere, 20 px gutters; the name at 64 px; headline 28 px; about card 100 % wide and 320 px tall; toolbox label above its chips; work shot above body, never mirrored; rest cards stacked; closer h2 48 px; the door stacks with the button under the copy; `.totop` 44 px.
+Phone (≤ 767 px): one column everywhere, 20 px gutters; the hero block is vertically centred in the viewport (as in the reference); the name at 64 px; headline 28 px; about card 100 % wide and 320 px tall; toolbox label above its chips; work shot above body, never mirrored; rest cards stacked; closer h2 48 px; the door stacks with the button under the copy; `.totop` 44 px.
 
 ## 6. Copy (verbatim; `src/site/copy.ts` is the source, tests pin it)
 
@@ -127,7 +127,7 @@ The page loads as the cream canvas with the grid and the bar's status pill readi
 - Names `agent 01` … `agent 06`. Colours in order: `#2563eb`, `#e5484d`, `#16a34a`, `#7c3aed`, `#f97316`, `#db2777`.
 - Cursor: an 18 px arrow SVG (the standard pointer silhouette), filled with the agent colour, 1.5 px white stroke, a 1 px 20 % ink drop shadow. Name tag: mono 11 px, white text on the agent colour, 2 px 6 px padding, 4 px radius, placed 14 px right and 16 px below the tip. During the press the whole cursor scales to 0.92 for the hold then back.
 - Initial positions: 40 px outside the viewport. Agent i sits on edge `i mod 3` (top, left, right) at a seeded random coordinate along that edge, in document coordinates at mount.
-- Idle drift: when idle, the cursor adds `(5·sin(2π t/2.4 + φ), 4·cos(2π t/3.1 + φ))` px to its rest position, φ per agent. Idle cursors never leave the viewport once inside it (clamp to 12 px inside the edges).
+- Idle drift: when idle, the cursor adds `(5·sin(2π t/2.4 + φ), 4·cos(2π t/3.1 + φ))` px to its rest position, φ per agent. An idle cursor whose rest point is inside the viewport is drawn clamped 12 px inside the edges; one whose rest point is outside is not drawn at all until it has a job (so the opening cursors arrive from off-screen).
 
 ### 7.3 Elements
 
@@ -153,7 +153,7 @@ Given the agent's current position `(ax, ay)` and the element rect `(x, y, w, h)
 | travel | `clamp(dist / 1.8, 180, 700)` ms, `dist` = distance from `(ax, ay)` to `(x - 4, y - 4)`; ease-out cubic | moves to `(x - 4, y - 4)` | none |
 | press | 70 ms | holds; scale 0.92 | box appears at `(x, y)`, 0 × 0 |
 | drag | `clamp(diag / 1.4, 280, 950)` ms, `diag = hypot(w, h)`; smoothstep | moves straight to `(x + w + 4, y + h + 4)` | box = `(x, y, f·w, f·h)`; clip = `inset(0 (1-f)·100% (1-f)·100% 0)` |
-| release | 120 ms | stays | box snaps to the full rect; fill drops to 0; `data-built` set at the start of this phase and the inline clip removed |
+| release | 120 ms | eases from the drag end to the rest point, drag end + (6, 8) | box snaps to the full rect; fill drops to 0; `data-built` set at the start of this phase and the inline clip removed |
 | linger | 600 ms | idle drift begins | box stroke and label fade out over the last 250 ms |
 
 `f` is the eased drag progress in [0, 1]. The agent is free again at the start of `linger` (so the cursor can leave while the box fades). Total active time per element is at most 70 + 700 + 950 + 120 = 1.84 s and typically under a second.
