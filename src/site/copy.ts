@@ -41,9 +41,9 @@ export const copy = {
     logLine: (agent: string, element: string, seconds: number): string => `${agent} · ${element} · ${seconds.toFixed(2)}s`,
     lede: "a few sentences of plain language turn into thousands of lines of code now. what used to take months takes an afternoon. i've always loved building things. i never really liked the coding.",
     notes: [
-      'the best part is watching something i built come alive. my classmates in middle school using my discord bots. a trading algorithm i wrote climbing into the top 100 on kalshi.',
+      `the best part is watching something i built come alive. my classmates in middle school using my discord bots. a trading algorithm i wrote climbing into the top ${facts.kalshi.leaderboardTop} on kalshi.`,
       "right now i trade on kalshi and i'm co-founding heron, which prices and hedges free-drink promos for bars. before that i co-founded darch, a video factory that ran for a year.",
-      'cwru, computer science and math, class of 2028. i speak mandarin.',
+      `cwru, computer science and math, class of ${facts.school.classOf}. i speak mandarin.`,
     ],
   },
   toolbox: {
@@ -62,7 +62,7 @@ export const copy = {
     h2: "where i've been",
     jobs: [
       {
-        id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: 'since jan 2026', when: 'jan 2026 to now', place: 'cleveland',
+        id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: `since ${facts.kalshi.since}`, when: `${facts.kalshi.since} to now`, place: 'cleveland',
         lede: `a trading algorithm that climbed into the top ${facts.kalshi.leaderboardTop} all-time on kalshi's crypto markets.`,
         points: [
           "a python platform that reads kalshi's order book and crypto reference feeds from a few venues, places orders, checks risk and reconciles fills.",
@@ -72,7 +72,7 @@ export const copy = {
         chips: ['python', 'websockets', 'postgresql', 'pandas'],
       },
       {
-        id: 'heron', name: 'heron', role: 'co-founder', sub: 'since june 2026', when: 'june 2026 to now', place: 'four cities',
+        id: 'heron', name: 'heron', role: 'co-founder', sub: `since ${facts.heron.since}`, when: `${facts.heron.since} to now`, place: 'four cities',
         lede: "if the home team wins tonight, your drinks are free. the bar doesn't eat that.",
         points: [
           'heron prices the promo, covers the payout and hedges it on prediction markets.',
@@ -91,8 +91,8 @@ export const copy = {
         chips: ['python', 'pytorch', 'pandas'],
       },
       {
-        id: 'darch', name: 'darch', role: 'co-founder', sub: '2025 to 2026', when: 'june 2025 to may 2026', place: 'remote',
-        lede: 'a video factory. three thousand videos a month, about twenty million views a month. it ended in may 2026.',
+        id: 'darch', name: 'darch', role: 'co-founder', sub: '2025 to 2026', when: `${facts.darch.from} to ${facts.darch.to}`, place: 'remote',
+        lede: `a video factory. three thousand videos a month, about twenty million views a month. it ended in ${facts.darch.to}.`,
         points: [
           'python, node and ffmpeg end to end. scripts in, rendered videos out, distributed.',
           'i ran engineering. it ran for a year.',
@@ -127,7 +127,7 @@ export const copy = {
       },
       {
         id: 'darch', no: '03', year: '2025', kind: 'system', title: 'darch', tag: 'three thousand videos a month.',
-        lede: 'a content pipeline on python, node and ffmpeg. about twenty million views a month for a year. it ended in may 2026.',
+        lede: `a content pipeline on python, node and ffmpeg. about twenty million views a month for a year. it ended in ${facts.darch.to}.`,
         chips: ['python', 'node', 'ffmpeg'], shot: 'grid',
       },
       {
@@ -151,7 +151,7 @@ export const copy = {
       {
         title: 'awards',
         entries: [
-          { name: 'top 100 all-time', line: 'kalshi crypto profit leaderboard · 2026' },
+          { name: `top ${facts.kalshi.leaderboardTop} all-time`, line: 'kalshi crypto profit leaderboard · 2026' },
           { name: 'innovation award', line: 'tartanhacks 2025, for orbit' },
         ],
       },

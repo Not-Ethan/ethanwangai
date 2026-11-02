@@ -19,7 +19,7 @@ describe('voice', () => {
   it('never prints the private or forbidden things', () => {
     for (const s of ALL) expect(s, s).not.toMatch(/\$20|#75|notional|contracts|240-810|r[eé]sum[eé]/i);
   });
-  it('is not empty and has no leading or trailing space', () => { for (const s of ALL) expect(s).toBe(s.trim()); expect(ALL.length).toBeGreaterThan(80); });
+  it('is not empty and has no leading or trailing space', () => { for (const s of ALL) { expect(s.length).toBeGreaterThan(0); expect(s).toBe(s.trim()); } expect(ALL.length).toBeGreaterThan(80); });
 });
 
 describe('facts in the copy', () => {
@@ -35,6 +35,12 @@ describe('facts in the copy', () => {
     expect(facts.heron.cities).toBe(4); expect(copy.work.cases[1].lede).toContain('four cities');
     expect(facts.wvu.claimsPerYearUsd).toBe(100_000_000); expect(copy.experience.jobs.find((j) => j.id === 'wvu')!.lede).toContain('a hundred million dollars');
     expect(copy.rest.cards[0].entries[0].line).toContain(`class of ${facts.school.classOf}`);
+  });
+  it('builds notes, awards and dates from facts', () => {
+    expect(copy.about.notes[0]).toContain(`top ${facts.kalshi.leaderboardTop}`);
+    expect(copy.about.notes[2]).toContain(`class of ${facts.school.classOf}`);
+    expect(copy.rest.cards[1].entries[0].name).toContain(`top ${facts.kalshi.leaderboardTop}`);
+    expect(copy.experience.jobs.find((j) => j.id === 'darch')!.when).toBe(`${facts.darch.from} to ${facts.darch.to}`);
   });
   it('formats the hud lines', () => {
     expect(copy.bar.status(6, 12, 43)).toBe('6 agents · 12/43 built');
