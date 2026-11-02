@@ -16,7 +16,7 @@ body { font-family: 'Space Grotesk Variable', system-ui, sans-serif; font-size: 
 .mono { font-family: var(--font-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 0 72px; }
 .eyebrow { white-space: nowrap; display: flex; align-items: center; gap: 16px; font-size: 12px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-subtle); }
-.eyebrow::after { content: ''; flex: 0 1 auto; width: 420px; min-width: 32px; height: 1px; background: rgba(22,22,22,.18); }
+.eyebrow::after { content: ''; flex: 0 1 420px; min-width: 32px; height: 1px; background: rgba(22,22,22,.18); }
 .h2 { font-size: 36px; font-weight: 700; line-height: 1.05; letter-spacing: -.01em; margin-top: 14px; }
 .btn { display: inline-flex; align-items: center; gap: 12px; height: 52px; padding: 0 8px 0 24px; border: var(--bw) solid var(--border); border-radius: var(--radius-pill); background: var(--surface); box-shadow: var(--shadow-4); font-weight: 500; font-size: 16px; color: var(--ink); text-decoration: none; transition: transform .2s var(--ease-out), box-shadow .2s var(--ease-out); }
 .btn:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 0 var(--ink); }
@@ -45,7 +45,7 @@ body { font-family: 'Space Grotesk Variable', system-ui, sans-serif; font-size: 
 .hero { position: relative; min-height: 100svh; overflow: hidden; }
 .hero__grid { position: absolute; inset: -100px -36px; background-image: linear-gradient(var(--grid) 2px, transparent 2px), linear-gradient(90deg, var(--grid) 2px, transparent 2px); background-size: 88px 88px; }
 .hero__glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 6%, rgba(255,255,255,.7), transparent 40%), radial-gradient(circle 220px at 19% 50%, rgba(250,204,0,.28), transparent); }
-.hero__inner { position: relative; padding-top: 145px; padding-bottom: 108px; }
+.hero__inner { position: relative; min-width: 0; width: 100%; max-width: 1180px; padding-top: 145px; padding-bottom: 108px; }
 .name { margin-top: 36px; font-size: clamp(64px, 11.7vw, 168px); font-weight: 700; line-height: .82; letter-spacing: -.045em; text-transform: uppercase; }
 .name span { display: block; }
 .headline { margin-top: 28px; max-width: 851px; font-size: clamp(28px, 4.2vw, 60px); font-weight: 500; line-height: 1.12; letter-spacing: -.02em; }
@@ -76,6 +76,7 @@ body { font-family: 'Space Grotesk Variable', system-ui, sans-serif; font-size: 
 .lede { font-size: 30px; font-weight: 500; line-height: 1.35; letter-spacing: -.02em; }
 .name, .headline, .lede, .closer__h2, .closer__p, .section__head, .notes, .closer__links, .hero__actions { width: fit-content; max-width: 100%; }
 .headline { max-width: min(851px, 100%); }
+.section__head, .hero .eyebrow { max-width: 100%; }
 .hero .eyebrow { width: fit-content; }
 .bar[data-scrolled] { border-bottom: 2px solid var(--ink); }
 .notes { margin-top: 28px; } .notes p + p { margin-top: 20px; }
