@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PAD, clipFor, jobTimeline, restPoint, sampleJob, type JobSample } from './timeline';
+import { DRAG_SPEED, LINGER, LINGER_FADE, PAD, PRESS, RELEASE, TRAVEL_SPEED, clipFor, jobTimeline, restPoint, sampleJob, type JobSample } from './timeline';
 
 const blank = (): JobSample => ({ phase: 'travel', cx: 0, cy: 0, f: 0, scale: 1, boxAlpha: 0, fillAlpha: 0 });
 const rect = { x: 300, y: 200, w: 400, h: 120 };
@@ -73,5 +73,56 @@ describe('clipFor and restPoint', () => {
     const p = restPoint(tl);
     expect(p.x).toBe(end.cx + 6);
     expect(p.y).toBe(end.cy + 8);
+  });
+});
+
+describe('pinned numbers', () => {
+  const tl = jobTimeline({ x: -40, y: 50 }, rect);
+  const at = (t: number) => sampleJob(tl, t, blank());
+
+  it('pins the constants', () => {
+    expect(PAD).toBe(4);
+    expect(TRAVEL_SPEED).toBe(1.8);
+    expect(DRAG_SPEED).toBe(1.4);
+    expect(PRESS).toBe(70);
+    expect(RELEASE).toBe(120);
+    expect(LINGER).toBe(600);
+    expect(LINGER_FADE).toBe(250);
+  });
+  it('pins travel and drag durations', () => {
+    expect(jobTimeline({ x: 0, y: 0 }, { x: 904, y: 4, w: 10, h: 10 }).travel).toBe(500);
+    expect(jobTimeline({ x: 0, y: 0 }, { x: 0, y: 0, w: 336, h: 448 }).drag).toBeCloseTo(400, 6);
+  });
+  it('pins cursor positions through the phases', () => {
+    const p = (t: number) => { const s = at(t); return [s.cx, s.cy]; };
+    expect(p(tl.tTravel)).toEqual([296, 196]);
+    expect(p(tl.tDrag)).toEqual([704, 324]);
+    expect(p(tl.tRelease)).toEqual([710, 332]);
+    const mid = p(tl.tDrag + 60);
+    expect(mid[0]).toBeCloseTo(707, 6);
+    expect(mid[1]).toBeCloseTo(328, 6);
+  });
+  it('names the phase at each boundary', () => {
+    const ts = [0, tl.tTravel, tl.tPress, tl.tDrag, tl.tRelease, tl.tEnd];
+    expect(ts.map((t) => at(t).phase)).toEqual(['travel', 'press', 'drag', 'release', 'linger', 'done']);
+  });
+  it('eases travel out (cubic), not linearly', () => {
+    const s = at(tl.travel / 2);
+    expect(s.cx).toBeCloseTo(254, 6);
+    expect(s.cy).toBeCloseTo(177.75, 6);
+  });
+  it('smoothsteps the drag', () => {
+    expect(at(tl.tPress + tl.drag / 4).f).toBeCloseTo(0.15625, 6);
+  });
+  it('pins scale, f and alphas', () => {
+    const a = at(tl.tTravel + 10);
+    expect([a.scale, a.f, a.boxAlpha]).toEqual([0.92, 0, 1]);
+    expect(at(tl.tPress + 1).scale).toBe(1);
+    expect(at(tl.tDrag + 60).fillAlpha).toBeCloseTo(0.5, 6);
+    expect(at(tl.tRelease).boxAlpha).toBe(1);
+    expect(at(tl.tEnd - 125).boxAlpha).toBeCloseTo(0.5, 6);
+  });
+  it('clipFor shows the grown quarter', () => {
+    expect(clipFor(0.25)).toBe('inset(0 75.00% 75.00% 0)');
   });
 });

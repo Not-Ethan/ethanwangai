@@ -1,3 +1,4 @@
+import { clamp } from './easing';
 import type { Point, Rect } from './timeline';
 
 export const AGENT_COLOURS = ['#2563eb', '#e5484d', '#16a34a', '#7c3aed', '#f97316', '#db2777'] as const;
@@ -22,3 +23,13 @@ export function idleDrift(t: number, phase: number, out: Point): Point {
 
 export const JITTER_MAX = 120;
 export const jitter = (rand: () => number): number => rand() * JITTER_MAX;
+
+export const IDLE_INSET = 12;
+/** Draw pose for an idle agent: false when its rest point is outside the viewport (not drawn), else `out` holds the drifted position clamped IDLE_INSET px inside the viewport. */
+export function idlePose(a: { x: number; y: number; phase: number }, vp: Rect, tSec: number, out: Point): boolean {
+  if (a.x < vp.x || a.x > vp.x + vp.w || a.y < vp.y || a.y > vp.y + vp.h) return false;
+  idleDrift(tSec, a.phase, out);
+  out.x = clamp(a.x + out.x, vp.x + IDLE_INSET, vp.x + vp.w - IDLE_INSET);
+  out.y = clamp(a.y + out.y, vp.y + IDLE_INSET, vp.y + vp.h - IDLE_INSET);
+  return true;
+}

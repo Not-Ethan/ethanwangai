@@ -3,10 +3,14 @@ import { jitter } from './agents';
 
 export interface Job { id: number; name: string }
 export interface AgentState {
-  id: number; x: number; y: number; phase: number;
+  id: number; x: number; y: number;
+  /** idle-drift phase, radians (not the job phase) */
+  phase: number;
   busy: boolean; job: Job | null; timeline: JobTimeline | null; startAt: number;
 }
 export interface Dispatch { started: { agent: AgentState; job: Job; timeline: JobTimeline }[]; instant: Job[]; dropped: Job[] }
+
+const EMPTY: Readonly<Dispatch> = Object.freeze({ started: [], instant: [], dropped: [] });
 
 export const OFFSCREEN_MARGIN = 200;
 export const QUEUE_FACTOR = 2;
@@ -38,13 +42,15 @@ export class Scheduler {
   enqueue(job: Job): void { this.queue.push(job); }
 
   /** Hands queued jobs to idle agents. `measure` returns a job's rect in document px, or null if its element is gone. */
-  dispatch(now: number, vp: Rect, measure: (job: Job) => Rect | null): Dispatch {
+  dispatch(now: number, vp: Rect, measure: (job: Job) => Rect | null): Readonly<Dispatch> {
+    if (this.queue.length === 0) return EMPTY;
     const out: Dispatch = { started: [], instant: [], dropped: [] };
     const cap = QUEUE_FACTOR * this.agents.length;
     while (this.queue.length > cap) out.instant.push(this.queue.shift()!);
     while (this.queue.length > 0 && this.agents.some((a) => !a.busy)) {
       const job = this.queue.shift()!;
-      const rect = measure(job);
+      let rect: Rect | null;
+      try { rect = measure(job); } catch { rect = null; }
       if (!rect) { out.dropped.push(job); continue; }
       if (isOffscreen(rect, vp)) { out.instant.push(job); continue; }
       const i = nearestFreeAgent(this.agents, rect.x, rect.y);
@@ -62,9 +68,9 @@ export class Scheduler {
     agent.busy = false; agent.job = null; agent.timeline = null; agent.startAt = 0;
   }
 
-  /** Rebuild: clear the queue and free every agent where it stands. */
+  /** Rebuild: clear the queue and free every agent. A busy agent's logical position stays where it was before the job. */
   reset(): void {
     this.queue.length = 0;
-    for (const a of this.agents) { if (a.busy && a.timeline) { a.x = a.timeline.from.x; a.y = a.timeline.from.y; } a.busy = false; a.job = null; a.timeline = null; a.startAt = 0; }
+    for (const a of this.agents) { a.busy = false; a.job = null; a.timeline = null; a.startAt = 0; }
   }
 }

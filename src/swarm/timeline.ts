@@ -37,7 +37,7 @@ export interface JobSample {
   fillAlpha: number;        // fill opacity (1 while dragging, fades through release)
 }
 
-/** Where the agent rests after the job: the drag end plus (6, 8). */
+/** Where the agent rests after the job: the drag end plus (6, 8). The cursor arrives there through the release phase. */
 export function restPoint(tl: JobTimeline): Point {
   return { x: tl.rect.x + tl.rect.w + PAD + 6, y: tl.rect.y + tl.rect.h + PAD + 8 };
 }
@@ -57,13 +57,13 @@ export function sampleJob(tl: JobTimeline, t: number, out: JobSample): JobSample
     out.phase = 'drag'; out.cx = sx + (ex - sx) * f; out.cy = sy + (ey - sy) * f; out.f = f; out.scale = 1; out.boxAlpha = 1; out.fillAlpha = 1;
   } else if (t < tl.tRelease) {
     const u = (t - tl.tDrag) / RELEASE;
-    out.phase = 'release'; out.cx = ex; out.cy = ey; out.f = 1; out.scale = 1; out.boxAlpha = 1; out.fillAlpha = 1 - u;
+    out.phase = 'release'; out.cx = ex + 6 * u; out.cy = ey + 8 * u; out.f = 1; out.scale = 1; out.boxAlpha = 1; out.fillAlpha = 1 - u;
   } else if (t < tl.tEnd) {
     const left = tl.tEnd - t;
-    out.phase = 'linger'; out.cx = ex; out.cy = ey; out.f = 1; out.scale = 1; out.fillAlpha = 0;
+    out.phase = 'linger'; out.cx = ex + 6; out.cy = ey + 8; out.f = 1; out.scale = 1; out.fillAlpha = 0;
     out.boxAlpha = left < LINGER_FADE ? left / LINGER_FADE : 1;
   } else {
-    out.phase = 'done'; out.cx = ex; out.cy = ey; out.f = 1; out.scale = 1; out.boxAlpha = 0; out.fillAlpha = 0;
+    out.phase = 'done'; out.cx = ex + 6; out.cy = ey + 8; out.f = 1; out.scale = 1; out.boxAlpha = 0; out.fillAlpha = 0;
   }
   return out;
 }
