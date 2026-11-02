@@ -6,13 +6,12 @@ export function Rest() {
   return (
     <section id="rest" className="sec sec-rest">
       <div className="wrap">
-        <Built name="h2 rest" className="section__head">
-          <p className="eyebrow">{r.eyebrow}</p>
+        <Built name="h2 rest" className="section__head" prompt={copy.prompts['h2 rest']}>
           <h2 className="h2">{r.h2}</h2>
         </Built>
         <div className="creds">
           {r.cards.map((c) => (
-            <Built key={c.title} name={`card ${c.title}`} className="card cred">
+            <Built key={c.title} name={`card ${c.title}`} className="card cred" prompt={copy.prompts[`card ${c.title}`]}>
               <h3 className="eyebrow-sm">{c.title}</h3>
               <ul>
                 {c.entries.map((en) => (

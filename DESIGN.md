@@ -87,8 +87,51 @@ typography:
     fontSize: "11px"
     fontWeight: 400
     lineHeight: 1
+  hud-phone:
+    fontFamily: "JetBrains Mono, ui-monospace, monospace"
+    fontSize: "10px"
+    fontWeight: 400
+    lineHeight: 1
+  nav-phone:
+    fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 500
+    lineHeight: 1.65
+  small:
+    fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.65
+  nav:
+    fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 500
+    lineHeight: 1.65
+  closer-body:
+    fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 400
+    lineHeight: 1.65
+  mail-phone:
+    fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 500
+    lineHeight: 1.3
+  mail-desktop:
+    fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
+    fontSize: "22px"
+    fontWeight: 500
+    lineHeight: 1.3
+    letterSpacing: "-0.02em"
+  lede-phone:
+    fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
+    fontSize: "24px"
+    fontWeight: 500
+    lineHeight: 1.35
 rounded:
   mark: "8px"
+  tag: "4px"
+  ghost-phone: "26px"
   chip: "8px"
   shot: "10px"
   card: "14px"
@@ -211,8 +254,8 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 - **Card White** (`{colors.surface}`, #ffffff): cards, buttons, chips, status pill, to-top, selection handles.
 - **Ink** (`{colors.ink}`, #161616): text, every 2px border, every offset shadow, band rules.
 - **Ink Muted** (`{colors.ink-muted}`, 74% ink): secondary body copy, nav links, job leads, ghost text.
-- **Ink Subtle** (`{colors.ink-subtle}`, 60% ink): eyebrows, row labels, sub-lines, build log, footer, case numbers.
-- **Grid Line** (`{colors.grid-line}`, 11% ink): the 88px hero grid, 2px lines. Other hairlines use ink at 10 to 38% alpha (1px section rules at 10 to 12%, the eyebrow rule at 18%, chip border at 24%, ghost dash at 32%, door dash at 38%); these are alpha variants of ink, not separate tokens.
+- **Ink Subtle** (`{colors.ink-subtle}`, 60% ink): sub-lines, build log lines, case numbers. Row labels and the footer use Ink Muted (the 60% ink fails 4.5:1 on the darker bands).
+- **Grid Line** (`{colors.grid-line}`, 11% ink): the 88px hero grid, 2px lines. Other hairlines use ink at 10 to 38% alpha (1px section rules at 10 to 12%, chip border at 24%, ghost dash at 32%, door dash at 38%); these are alpha variants of ink, not separate tokens.
 
 ### Named Rules
 **The One Yellow Rule.** Yellow is the only accent and fills only small things. If a new element wants a second hue, it must be an agent color and live in the swarm overlay.
@@ -234,17 +277,17 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 - **Closer headline** (700, `clamp(48px, 6.7vw, 96px)`, 0.95, -0.04em; fixed 48px on phone): the two-line contact h2.
 - **Hero headline** (500 with one bold run at 700, `clamp(28px, 4.2vw, 60px)`, 1.12, -0.02em, max 851px): the thesis line under the name.
 - **Case title** (700, `clamp(32px, 3.3vw, 48px)`, 1.05, -0.03em): h3 of the four work cases.
-- **Section title** (700, 36px, 1.05, -0.01em): `.h2` under each eyebrow, 14px margin above.
-- **Mail link** (500, 32px, 1.3, -0.02em; 22px on phone): the email with a 3px yellow bottom border.
+- **Section title** (700, 36px, 1.05, -0.01em): `.h2`, the whole section head (no eyebrow above it).
+- **Mail link** (500, 22px, 1.3, -0.02em; 18px on phone): the email, set inside a `btn-accent` pill.
 - **Lede** (500, 30px, 1.35, -0.02em; 24px on phone): the about paragraph.
 - **Title** (700, 20px): job titles (`.job__title`) and case tags (400, 20px).
 - **Body** (400, 17px, 1.65): default. Closer paragraph 18px, door paragraphs 16px at 1.6, footer 15px, footer credit 13px, chips 15px at 1.4, nav links 15px.
 - **Button** (500, 16px; 15px at `btn-sm`).
-- **Label** (500, 12px, tracking 0.14em, uppercase, ink subtle): `.eyebrow`, `.eyebrow-sm`, and the toolbox row labels. The eyebrow is `white-space: nowrap`, never wraps, and draws a 1px rule (420px, shrinking to 32px) after it.
+- **Label** (500, 12px, tracking 0.14em, uppercase, ink subtle): `.eyebrow-sm` (card titles) and the toolbox row labels. There are no eyebrows above headings.
 - **HUD mono** (11px, line-height 1; 10px on phone): cursor tags and box labels. Also 13px build log lines (1.5), 12px status pill, 13px case numbers (0.1em tracking).
 
 ### Named Rules
-**The Lowercase Rule.** Copy is lowercase. The name is uppercase only through CSS `text-transform` on display type, and eyebrows are uppercase through CSS on their lowercase source.
+**The Lowercase Rule.** Copy is lowercase. The name is uppercase only through CSS `text-transform` on display type, and card titles are uppercase through CSS on their lowercase source.
 
 **The Mono Is A Machine Rule.** JetBrains Mono marks swarm output and machine-like facts only. Do not use it for headings, nav or body.
 
@@ -264,7 +307,7 @@ Grids, all `minmax(0, …fr)` ratios taken from the reference:
 - Rest: three equal columns, 20px gap, 28px card padding.
 - Closer: left aligned stack; the "door" is a two-column box (1fr / 240px, 48px gap, 32px padding, 72px above).
 
-Hero is `min-height: 100svh`, content starts 145px from the top, name 36px below the eyebrow, headline 28px below the name, actions 36px below with a 14px gap. Hero text blocks use `width: fit-content` so the swarm's boxes hug the text.
+Hero is `min-height: 100svh`, content starts 145px from the top, name first, headline 28px below the name, actions 36px below with a 14px gap. Hero text blocks use `width: fit-content` so the swarm's boxes hug the text.
 
 **Phone breakpoint: 767px.** Below it everything is one column, the bar hides nav and status (the status also hides under 1024px), the experience index disappears and each job gains a visible title line, rows stack label over chips, cases are never mirrored, the hero content is vertically centered, and the swarm uses three agents instead of six. Chips, rows and chip lists wrap; nothing scrolls horizontally (`overflow-x: hidden` on body).
 
@@ -298,7 +341,7 @@ Rounded rectangles with heavy outlines. Pills (999px) for every action, the stat
 - **Shape:** full pill (999px), 2px ink border, white fill, shadow 4.
 - **Primary (`btn`):** 52px tall, 500 / 16px, padding 0 8px 0 24px, a 38px yellow circle at the right holding a 16px ink arrow.
 - **Small (`btn-sm`):** 42px, 15px, padding 0 16px, shadow 2, no icon. Used for "say hi" in the bar.
-- **Accent (`btn-accent`):** same pill with yellow fill. Used for "rebuild the page" in the door; the door button has 24px side padding.
+- **Accent (`btn-accent`):** same pill with yellow fill. Used for the email address in the closer (22px text, 18px on phone). The door's "rebuild the page" is the plain outlined `btn`.
 - **Hover:** translate(2px, 2px) and shadow 2, over .2s with `cubic-bezier(.16, 1, .3, 1)`.
 - **Disabled:** `.btn[disabled]` at 60% opacity, default cursor.
 - **Ghost (`ghost`):** 52px pill, dashed 2px border at 32% ink, muted text, an 8px hollow yellow ring dot before the text, a yellow `badge` after it (11px, 700, 1.5px ink border). On phone it becomes a 26px-radius wrapped box with 15px text.
@@ -332,7 +375,7 @@ Rounded rectangles with heavy outlines. Pills (999px) for every action, the stat
 - **Name tag:** mono 11px, white text on the agent color, 4px radius, padding 3px 6px, set 14px right and 16px below the tip; flips to the left of the tip near the right edge. Text is "agent 01" through "agent 06".
 - **Selection box:** 1.5px border in the agent color, fill of the agent color at 8% (scaled by a `--fill` value), four 7px white square handles with 1.5px agent-colored borders at the corners (offset -4.5px).
 - **Box label:** the element's name, mono 11px, white on the agent color, 4px radius, sitting 24px above the box's top-left (flips below the box near the viewport top).
-- **Build log:** the about card holds a "build log" eyebrow and a bottom-anchored list of 13px mono lines at 6px gaps in ink subtle; the agent name in each line takes that agent's color. Before any line: "waiting for the agents".
+- **Build log:** the about card holds a "build log" card title and a bottom-anchored list of 13px mono lines at 6px gaps in ink subtle; each line starts with an 8px square swatch in the agent's color, then the agent name in ink. Before any line: "waiting for the agents".
 - **Motion:** the swarm is the only motion system. Per job: travel to the element's corner (180 to 700ms at 1.8px/ms), press 70ms, drag the box open (280 to 950ms), release 120ms, linger 600ms with the last 250ms fading the box out. The element's clip grows with the drag from the top-left to the bottom-right. Idle agents drift a few pixels (5px / 4px, 2.4s / 3.1s periods) and sit inside the viewport. Outside the swarm, only the button press (.2s) and the to-top fade (.25s) animate. With reduced motion, without JavaScript, or if the bundle fails to load within 6s, `data-swarm` is never set (or removed), nothing is hidden and no cursors render; the ghost pill shows its resting line and the status pill is hidden.
 - **Overlay:** absolutely positioned over the body, clipped, `pointer-events: none`, z-index 60 (bar and to-top are 40). Unbuilt elements are opacity 0 until their box is dragged open.
 
@@ -341,7 +384,7 @@ Rounded rectangles with heavy outlines. Pills (999px) for every action, the stat
 ### Do:
 - **Do** outline every card, button and pill in 2px #161616 and give it a flat offset shadow of 4px (2px when small, 6px for work shots).
 - **Do** keep yellow (#facc00) to small fills, dots, bullets and one underline.
-- **Do** set all copy lowercase with no dashes; use the middle dot (·) or a period instead. Only the name and eyebrows are uppercase, and only through CSS.
+- **Do** set all copy lowercase with no dashes; use the middle dot (·) or a period instead. Only the name and card titles are uppercase, and only through CSS.
 - **Do** keep type to Space Grotesk at weights 400, 500, 700, with tight negative tracking on large sizes and 0.14em on uppercase labels.
 - **Do** use JetBrains Mono only for swarm HUD text, the status pill, case numbers and schematic text.
 - **Do** give any new element a `Built` name so the swarm has a label and a box for it, and make hero and heading blocks `width: fit-content` so boxes hug text.
@@ -350,7 +393,7 @@ Rounded rectangles with heavy outlines. Pills (999px) for every action, the stat
 ### Don't:
 - **Don't** use blurred or colored shadows, gradients on content, rounded corners above 14px (except pills and circles), or dark mode.
 - **Don't** introduce a second accent or use agent colors outside the swarm and build log.
-- **Don't** add motion beyond the swarm, the 2px button press, and the .25s to-top fade: no scroll reveals, parallax, hover zooms or looping animation.
+- **Don't** add motion beyond the swarm, the 2px button press, and the .25s to-top fade: no scroll reveals, parallax or hover zooms. The four drawn schematics each carry one small loop that starts only once the swarm has built them and stops under reduced motion.
 - **Don't** add photos, screenshots, logos, testimonials or icon sets; the work shots are drawn inline SVG schematics.
 - **Don't** use em dashes, en dashes, resume-style bullets, hype words or title-cased copy.
 - **Don't** change the reference layout numbers (1180 wrap, 72px gutter, 108px sections, 767px phone break) to taste.

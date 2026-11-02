@@ -241,7 +241,7 @@
       },
       "mail-link": {
         "displayName": "Mail Link",
-        "purpose": "Email with yellow underline."
+        "purpose": "Email in the accent pill."
       },
       "lede": {
         "displayName": "Lede",
@@ -266,6 +266,38 @@
       "hud": {
         "displayName": "Hud",
         "purpose": "Swarm tags, labels, log, status pill (JetBrains Mono)."
+      },
+      "hud-phone": {
+        "displayName": "HUD Phone",
+        "purpose": "Cursor tags and box labels on phone."
+      },
+      "nav-phone": {
+        "displayName": "Nav Phone",
+        "purpose": "Bar links on phone."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Job dates."
+      },
+      "nav": {
+        "displayName": "Nav",
+        "purpose": "Bar links."
+      },
+      "closer-body": {
+        "displayName": "Closer Body",
+        "purpose": "Closer paragraph."
+      },
+      "mail-phone": {
+        "displayName": "Mail Phone",
+        "purpose": "Email pill on phone."
+      },
+      "mail-desktop": {
+        "displayName": "Mail Desktop",
+        "purpose": "Email pill."
+      },
+      "lede-phone": {
+        "displayName": "Lede Phone",
+        "purpose": "About paragraph on phone."
       }
     },
     "shadows": [
@@ -418,7 +450,7 @@
       },
       {
         "name": "The Lowercase Rule",
-        "body": "Copy is lowercase. The name is uppercase only through CSS `text-transform` on display type, and eyebrows are uppercase through CSS on their lowercase source.",
+        "body": "Copy is lowercase. The name is uppercase only through CSS `text-transform` on display type, and card titles are uppercase through CSS on their lowercase source.",
         "section": "typography"
       },
       {
@@ -450,7 +482,7 @@
     "dos": [
       "**Do** outline every card, button and pill in 2px #161616 and give it a flat offset shadow of 4px (2px when small, 6px for work shots).",
       "**Do** keep yellow (#facc00) to small fills, dots, bullets and one underline.",
-      "**Do** set all copy lowercase with no dashes; use the middle dot (·) or a period instead. Only the name and eyebrows are uppercase, and only through CSS.",
+      "**Do** set all copy lowercase with no dashes; use the middle dot (·) or a period instead. Only the name and card titles are uppercase, and only through CSS.",
       "**Do** keep type to Space Grotesk at weights 400, 500, 700, with tight negative tracking on large sizes and 0.14em on uppercase labels.",
       "**Do** use JetBrains Mono only for swarm HUD text, the status pill, case numbers and schematic text.",
       "**Do** give any new element a `Built` name so the swarm has a label and a box for it, and make hero and heading blocks `width: fit-content` so boxes hug text.",

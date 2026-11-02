@@ -28,13 +28,27 @@ describe.skipIf(!HAVE)('exported html', () => {
   const html = decode(raw);
 
   it('contains every copy string', () => {
-    // logReduced and ghostOff are only rendered at runtime (swarm off), never in the static html.
+    // logReduced, ghostOff and the door's off paragraphs are only rendered at runtime (swarm off), never in the static html.
     // Next embeds the strings in script payloads too, which hid misses; check the markup only.
     const markup = html.replace(/<script[\s\S]*?<\/script>/g, '');
-    for (const s of strings({ ...copy, hero: { ...copy.hero, ghostOff: '' }, about: { ...copy.about, logReduced: '' } })) {
+    for (const s of strings({ ...copy, hero: { ...copy.hero, ghostOff: '' }, about: { ...copy.about, logReduced: '' }, closer: { ...copy.closer, door: { ...copy.closer.door, offParagraph: '', offParagraphPhone: '' } } })) {
       if (s === '' || /^(mailto:|https?:)/.test(s)) continue;
       expect(markup, s).toContain(s);
     }
+  });
+  it('gives every built name a lowercase prompt, and the prompts map has no extras', () => {
+    const names = [...raw.matchAll(/data-build="([^"]+)"/g)].map((m) => decode(m[1]));
+    expect(names.length).toBe(BUILT_TOTAL);
+    for (const n of names) {
+      const p = copy.prompts[n];
+      expect(p, n).toBeTruthy();
+      expect(p, n).toBe(p.toLowerCase());
+      expect(html, n).toContain(`data-prompt="${p}"`);
+    }
+    expect(new Set(Object.keys(copy.prompts))).toEqual(new Set(names));
+  });
+  it('has no eyebrows', () => {
+    expect(raw).not.toMatch(/class="(?:[^"]* )?eyebrow(?: [^"]*)?"/);
   });
   it('contains nothing forbidden', () => {
     expect(raw).not.toMatch(/\$20|#75|notional|contracts|240-810|r[eé]sum[eé]/i);

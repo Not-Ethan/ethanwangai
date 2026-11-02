@@ -17,15 +17,14 @@ export function Hero() {
       <div className="hero__grid" aria-hidden="true" />
       <div className="hero__glow" aria-hidden="true" />
       <div className="wrap hero__inner">
-        <Built name="eyebrow" as="p" className="eyebrow">{h.eyebrow}</Built>
-        <Built name="h1 name" as="h1" className="name">
+        <Built name="h1 name" as="h1" className="name" prompt={copy.prompts['h1 name']}>
           <span>{h.name[0]}</span>
           <span>{h.name[1]}</span>
         </Built>
-        <Built name="headline" as="p" className="headline">
+        <Built name="headline" as="p" className="headline" prompt={copy.prompts.headline}>
           {h.headline.plain} <b>{h.headline.bold}</b>
         </Built>
-        <Built name="actions" className="hero__actions">
+        <Built name="actions" className="hero__actions" prompt={copy.prompts.actions}>
           <a className="btn" href={h.ctaHref}>
             <span>{h.cta}</span>
             <span className="btn__icon"><Arrow /></span>

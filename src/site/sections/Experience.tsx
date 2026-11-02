@@ -8,11 +8,10 @@ export function Experience() {
     <section id="experience" className="sec sec-experience">
       <div className="wrap xp">
         <aside className="xp__index">
-          <Built name="h2 experience" className="section__head">
-            <p className="eyebrow">{e.eyebrow}</p>
+          <Built name="h2 experience" className="section__head" prompt={copy.prompts['h2 experience']}>
             <h2 className="h2">{e.h2}</h2>
           </Built>
-          <Built name="index" as="ol" className="xp__list">
+          <Built name="index" as="ol" className="xp__list" prompt={copy.prompts.index}>
             {e.jobs.map((j) => (
               <li key={j.id} data-xp-item={`job-${j.id}`}>
                 <a href={`#job-${j.id}`}>
@@ -26,8 +25,8 @@ export function Experience() {
         </aside>
         <div className="xp__detail">
           {e.jobs.map((j) => (
-            <Built key={j.id} name={`card ${j.id}`} as="article" className="card job" id={`job-${j.id}`}>
-              <h3 className="job__title only-phone">{j.name} · {j.role}</h3>
+            <Built key={j.id} name={`card ${j.id}`} as="article" className="card job" id={`job-${j.id}`} prompt={copy.prompts[`card ${j.id}`]}>
+              <h3 className="job__title">{j.name} · {j.role}</h3>
               <p className="job__when"><b>{j.when}</b> · <span className="subtle">{j.place}</span></p>
               <p className="job__lede">{j.lede}</p>
               <ul className="job__points">

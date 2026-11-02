@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 // The four drawn schematics for the work cases (spec §6.7). The words inside are decoration, not site copy.
 const INK = 'rgba(22,22,22,.6)';
 const YEL = '#facc00';
@@ -7,6 +9,13 @@ const BIDS = [120, 96, 150, 72, 132, 60, 110, 84];
 const ASKS = [84, 140, 66, 118, 52, 126, 90, 108];
 const SPARK = [0, -6, -2, -8, -4, 3, 6, 1, -3, 5, 8, 2];
 
+// Three bars breathe (scale on x, loops in globals.css): two bids anchored on the centre line, one ask.
+const BREATH: Record<number, { cls: string; style: CSSProperties }> = {
+  0: { cls: 'breath breath--bid', style: { animationDuration: '2.6s' } },
+  4: { cls: 'breath breath--bid', style: { animationDuration: '3.4s' } },
+  9: { cls: 'breath breath--ask', style: { animationDuration: '3s' } },
+};
+
 function Book() {
   const pts = SPARK.map((v, i) => `${40 + i * (400 / 11)},${256 + v * 0.75}`).join(' ');
   return (
@@ -14,8 +23,8 @@ function Book() {
       <line x1="240" y1="24" x2="240" y2="236" stroke="#161616" strokeWidth="1.5" />
       {BIDS.map((w, i) => (
         <g key={i}>
-          <rect x={240 - 6 - w} y={34 + i * 28} width={w} height="14" rx="2" fill={INK} />
-          <rect x={246} y={34 + i * 28} width={ASKS[i]} height="14" rx="2" fill={YEL} />
+          <rect x={240 - 6 - w} y={34 + i * 28} width={w} height="14" rx="2" fill={INK} className={BREATH[i]?.cls} style={BREATH[i]?.style} />
+          <rect x={246} y={34 + i * 28} width={ASKS[i]} height="14" rx="2" fill={YEL} className={BREATH[i + 8]?.cls} style={BREATH[i + 8]?.style} />
         </g>
       ))}
       <polyline points={pts} fill="none" stroke="#161616" strokeWidth="1.5" strokeLinejoin="round" />
@@ -33,8 +42,10 @@ function Tab() {
         <text x="114" y="116">wings · 12.00</text>
         <text x="114" y="144">home team won · yes</text>
       </g>
-      <rect x="108" y="160" width="140" height="28" rx="14" fill="#161616" />
-      <text x="124" y="179" fontFamily={FONT} fontSize="13" fill={YEL}>drinks · free</text>
+      <g className="pulse">
+        <rect x="108" y="160" width="140" height="28" rx="14" fill="#161616" />
+        <text x="124" y="179" fontFamily={FONT} fontSize="13" fill={YEL}>drinks · free</text>
+      </g>
       <line x1="108" y1="208" x2="372" y2="208" stroke="rgba(22,22,22,.2)" strokeWidth="1" strokeDasharray="4 4" />
       <text x="114" y="232" fontFamily={FONT} fontSize="11" fill="rgba(22,22,22,.6)">hedged on kalshi ✓</text>
     </>
@@ -55,7 +66,7 @@ function Grid() {
         </g>
       ))}
       <rect x="30" y="246" width="420" height="6" rx="3" fill="rgba(22,22,22,.12)" />
-      <rect x="30" y="246" width="260" height="6" rx="3" fill={INK} />
+      <rect x="30" y="246" width="168" height="6" rx="3" fill={INK} className="crawl" />
     </>
   );
 }
@@ -70,6 +81,7 @@ function Chat() {
       <text x="244" y="95" fontFamily={FONT} fontSize="12" fill="#161616">{"where's the vpn doc?"}</text>
       <rect x="60" y="124" width="316" height="38" rx="12" fill="#fff" stroke="#161616" strokeWidth="1.5" />
       <text x="74" y="147" fontFamily={FONT} fontSize="12" fill="#161616">{"it-handbook, section 4. here's the link."}</text>
+      <rect x="364" y="135" width="6" height="15" fill="#161616" className="caret" />
       <rect x="60" y="176" width="176" height="24" rx="12" fill={YEL} />
       <text x="74" y="192" fontFamily={FONT} fontSize="11" fill="#161616">cited: it-handbook.pdf</text>
     </>
@@ -78,7 +90,7 @@ function Chat() {
 
 export function Shot({ kind }: { kind: 'book' | 'tab' | 'grid' | 'chat' }) {
   return (
-    <svg viewBox="0 0 480 270" className="shot" aria-hidden="true">
+    <svg viewBox="0 0 480 270" className={`shot shot--${kind}`} aria-hidden="true">
       <rect x="0.5" y="0.5" width="479" height="269" rx="10" fill="#fbfaf6" stroke="rgba(22,22,22,.12)" />
       {kind === 'book' && <Book />}
       {kind === 'tab' && <Tab />}
