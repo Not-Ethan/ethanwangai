@@ -63,6 +63,8 @@ body { font-family: 'Space Grotesk Variable', system-ui, sans-serif; font-size: 
 }
 
 /* ---- Task 2: sections ---- */
+.band-2, .band-3 { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+.closer { border-top: 2px solid var(--ink); }
 .band-2 { background: var(--canvas-2); } .band-3 { background: var(--canvas-3); } .band-4 { background: var(--canvas-4); }
 .sec-about { padding: 108px 0; } .sec-toolbox { padding: 81px 0; } .sec-experience { padding: 108px 0; }
 .sec-work { padding: 108px 0; } .sec-rest { padding: 108px 0; }
@@ -70,19 +72,19 @@ body { font-family: 'Space Grotesk Variable', system-ui, sans-serif; font-size: 
 .section__intro { margin-top: 14px; font-size: 17px; }
 .eyebrow-sm { font-size: 12px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-subtle); line-height: 1.65; margin-bottom: 14px; }
 
-.about__grid { display: grid; grid-template-columns: 386px 1fr; gap: 72px; align-items: start; }
+.about__grid { display: grid; grid-template-columns: minmax(0, 386fr) minmax(0, 578fr); gap: 72px; align-items: start; }
 .lede { font-size: 30px; font-weight: 500; line-height: 1.35; letter-spacing: -.02em; }
+.name, .headline, .lede, .closer__h2, .closer__p, .section__head, .notes, .closer__links, .hero__actions { width: fit-content; max-width: 100%; }
 .notes { margin-top: 28px; } .notes p + p { margin-top: 20px; }
 .log { display: flex; flex-direction: column; height: 482px; overflow: hidden; }
 .log .eyebrow { margin-bottom: 18px; }
 .log__lines { display: flex; flex-direction: column; justify-content: flex-end; flex: 1; gap: 6px; font-size: 13px; line-height: 1.5; color: var(--ink-subtle); list-style: none; }
 .log__agent { color: var(--agent); }
 
-.rows .row { display: grid; grid-template-columns: 152px 1fr; align-items: center; padding: 14px 0; border-top: 1px solid rgba(22,22,22,.1); }
-.rows .row:last-child { border-bottom: 1px solid rgba(22,22,22,.1); }
-.row__label { font-size: 12px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-subtle); }
+.rows .row { display: grid; grid-template-columns: 152px 1fr; column-gap: 24px; align-items: start; padding: 14px 0; border-top: 1px solid rgba(22,22,22,.1); }
+.row__label { padding-top: 8px; font-size: 12px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-subtle); }
 
-.xp { display: grid; grid-template-columns: 319px 1fr; gap: 80px; }
+.xp { display: grid; grid-template-columns: minmax(0, 319fr) minmax(0, 637fr); gap: 80px; }
 .xp__index { position: sticky; top: 96px; align-self: start; }
 .xp__index .section__head { margin-bottom: 28px; }
 .xp__list { list-style: none; }
@@ -90,6 +92,7 @@ body { font-family: 'Space Grotesk Variable', system-ui, sans-serif; font-size: 
 .xp__list li[data-active] a { background: rgba(22,22,22,.05); }
 .xp__dot { grid-row: 1 / span 2; align-self: center; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink); }
 .xp__list li[data-active] .xp__dot { background: var(--accent); }
+.xp__list li:not([data-active]) .xp__name, .job__lede, .job__points { color: var(--ink-muted); }
 .xp__name { font-size: 17px; font-weight: 500; line-height: 1.3; }
 .xp__sub { font-size: 13px; color: var(--ink-subtle); line-height: 1.4; }
 .job { scroll-margin-top: 96px; }
@@ -102,7 +105,7 @@ body { font-family: 'Space Grotesk Variable', system-ui, sans-serif; font-size: 
 .job__points li + li { margin-top: 8px; }
 .job__points li::before { content: ''; position: absolute; left: 0; top: .6em; width: 8px; height: 8px; background: var(--accent); border: 1.5px solid var(--ink); }
 
-.case { display: grid; grid-template-columns: 510px 1fr; gap: 64px; align-items: center; }
+.case { display: grid; grid-template-columns: minmax(0, 510fr) minmax(0, 462fr); gap: 64px; align-items: center; }
 .case + .case { margin-top: 90px; }
 .case[data-flip="true"] { direction: rtl; } .case[data-flip="true"] > * { direction: ltr; }
 .case__no { font-size: 13px; letter-spacing: .1em; color: var(--ink-subtle); }
@@ -144,7 +147,7 @@ body { font-family: 'Space Grotesk Variable', system-ui, sans-serif; font-size: 
   .about__grid, .xp, .case, .creds, .door { grid-template-columns: 1fr; }
   .about__grid { gap: 40px; } .xp { gap: 0; }
   .log { height: 320px; }
-  .xp__index { display: none; }
+  .xp__index { position: static; } .xp__list { display: none; }
   .job__title.only-phone { display: block; }
   .rows .row { grid-template-columns: 1fr; gap: 10px; }
   .case { gap: 28px; } .case + .case { margin-top: 64px; }

@@ -187,6 +187,8 @@ export function Swarm({ children }: { children: ReactNode }) {
         lastSweep = now;
         for (const e of rt.registry.values()) {
           if (e.built || e.queued || !e.el.isConnected) continue;
+          // display:none elements (e.g. the phone nav) never intersect and have no box: build them instantly too
+          if (e.el.getClientRects().length === 0) { observer.unobserve(e.el); markBuilt(e); continue; }
           const r = e.el.getBoundingClientRect();
           if (scrolledPast(r.bottom + view.y, view.y)) { observer.unobserve(e.el); markBuilt(e); }
         }

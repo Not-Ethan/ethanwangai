@@ -8,7 +8,7 @@ const ASKS = [84, 140, 66, 118, 52, 126, 90, 108];
 const SPARK = [0, -6, -2, -8, -4, 3, 6, 1, -3, 5, 8, 2];
 
 function Book() {
-  const pts = SPARK.map((v, i) => `${40 + i * (400 / 11)},${250 + v}`).join(' ');
+  const pts = SPARK.map((v, i) => `${40 + i * (400 / 11)},${256 + v * 0.75}`).join(' ');
   return (
     <>
       <line x1="240" y1="24" x2="240" y2="236" stroke="#161616" strokeWidth="1.5" />
@@ -42,7 +42,7 @@ function Tab() {
 }
 
 function Grid() {
-  const tiles = Array.from({ length: 12 }, (_, i) => ({ x: 40 + (i % 4) * 108, y: 30 + Math.floor(i / 4) * 66, hot: i === 5 }));
+  const tiles = Array.from({ length: 12 }, (_, i) => ({ x: 30 + (i % 4) * 108, y: 30 + Math.floor(i / 4) * 66, hot: i === 5 }));
   return (
     <>
       {tiles.map((t, i) => (
@@ -54,8 +54,8 @@ function Grid() {
           />
         </g>
       ))}
-      <rect x="40" y="246" width="400" height="6" rx="3" fill="rgba(22,22,22,.12)" />
-      <rect x="40" y="246" width="248" height="6" rx="3" fill={INK} />
+      <rect x="30" y="246" width="420" height="6" rx="3" fill="rgba(22,22,22,.12)" />
+      <rect x="30" y="246" width="260" height="6" rx="3" fill={INK} />
     </>
   );
 }
@@ -68,7 +68,7 @@ function Chat() {
       {[0, 1, 2].map((i) => <circle key={i} cx={58 + i * 16} cy="44" r="4" fill={i === 0 ? YEL : 'rgba(22,22,22,.25)'} />)}
       <rect x="230" y="74" width="190" height="34" rx="12" fill="rgba(22,22,22,.08)" />
       <text x="244" y="95" fontFamily={FONT} fontSize="12" fill="#161616">{"where's the vpn doc?"}</text>
-      <rect x="60" y="124" width="280" height="38" rx="12" fill="#fff" stroke="#161616" strokeWidth="1.5" />
+      <rect x="60" y="124" width="316" height="38" rx="12" fill="#fff" stroke="#161616" strokeWidth="1.5" />
       <text x="74" y="147" fontFamily={FONT} fontSize="12" fill="#161616">{"it-handbook, section 4. here's the link."}</text>
       <rect x="60" y="176" width="176" height="24" rx="12" fill={YEL} />
       <text x="74" y="192" fontFamily={FONT} fontSize="11" fill="#161616">cited: it-handbook.pdf</text>

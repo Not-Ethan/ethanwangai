@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 
-/** Marks the index item whose card centre is nearest the viewport centre with data-active. Renders nothing. */
+/** Marks the index item of the last card whose top is at or above 40% of the viewport height (else the first) with data-active. Renders nothing. */
 export function IndexHighlight() {
   useEffect(() => {
     const items = Array.from(document.querySelectorAll<HTMLElement>('[data-xp-item]'));
@@ -9,15 +9,12 @@ export function IndexHighlight() {
     let raf = 0;
     const update = () => {
       raf = 0;
-      const mid = window.innerHeight / 2;
-      let best: HTMLElement | null = null;
-      let bestDist = Infinity;
+      const line = window.innerHeight * 0.4;
+      let best: HTMLElement | null = items[0];
       for (const li of items) {
         const card = document.getElementById(li.dataset.xpItem ?? '');
         if (!card) continue;
-        const r = card.getBoundingClientRect();
-        const d = Math.abs(r.top + r.height / 2 - mid);
-        if (d < bestDist) { bestDist = d; best = li; }
+        if (card.getBoundingClientRect().top <= line) best = li;
       }
       for (const li of items) {
         if (li === best) li.setAttribute('data-active', '1');
