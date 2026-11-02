@@ -230,7 +230,8 @@ export const metadata: Metadata = {
 
 // Runs before the body is parsed: with JS and without reduced motion the page starts hidden and the swarm reveals it
 // (spec §7.3). Without JS the attribute is never set and everything is visible.
-const SWARM_SCRIPT = "(function(){try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.dataset.swarm='on'}}catch(e){}})()";
+// If the app never hydrates (a blocked or failed bundle) the page shows itself after 6 s: Swarm.tsx sets swarmReady on mount.
+const SWARM_SCRIPT = "(function(){try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.dataset.swarm='on';setTimeout(function(){if(!d.dataset.swarmReady){delete d.dataset.swarm}},6000)}catch(e){}})()";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -589,6 +590,7 @@ A client component `<Swarm>{children}</Swarm>` that provides `SwarmContext = { r
 ```
 
 In one `useEffect` on mount:
+0. `document.documentElement.dataset.swarmReady = '1'` first thing (cancels the inline script's 6 s reveal fallback).
 1. `on = document.documentElement.dataset.swarm === 'on'`. If not on: store `{ on: false }`, and `register` becomes a no-op that only increments `total`. Return.
 2. `n = agentCount(window.innerWidth)`; `rand = mulberry32(2026)`; `vp()` reads `{ x: scrollX, y: scrollY, w: innerWidth, h: innerHeight }`; agents = `makeAgent(i, initialPosition(i, vp(), rand), rand() * Math.PI * 2)`; `scheduler = new Scheduler(agents, rand)`.
 3. Overlay nodes, created with `document.createElement` into `overlayRef.current`: per agent a `.cursor` (`<svg>` arrow + `<span class="cursor__tag mono">` with the name, `style="--agent: colour"`), and a pool of `2n` `.selbox` nodes (each with four `.selbox__h` handles and a `.selbox__label mono`). Keep them in arrays.

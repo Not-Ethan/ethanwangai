@@ -133,7 +133,7 @@ The page loads as the cream canvas with the grid and the bar's status pill readi
 
 Every element listed in §7.7 is wrapped in `<Built name="h1 name">`. Before it is built, the element keeps its layout box and is hidden with `clip-path: inset(0 100% 100% 0)`. During the drag the clip follows the box. After the release the inline clip is removed and the element gets `data-built="1"`.
 
-No flash: an inline script in `<head>` runs before paint and sets `document.documentElement.dataset.swarm = "on"` when JS runs and `prefers-reduced-motion` is not `reduce`. CSS: `html[data-swarm="on"] [data-build]:not([data-built]) { clip-path: inset(0 100% 100% 0) }`. Without JS the attribute is never set and the page is fully visible (tested on the exported HTML). With reduced motion the attribute is never set either; elements are simply visible, no cursors, no observer.
+No flash: an inline script in `<head>` runs before paint and sets `document.documentElement.dataset.swarm = "on"` when JS runs and `prefers-reduced-motion` is not `reduce`. CSS: `html[data-swarm="on"] [data-build]:not([data-built]) { clip-path: inset(0 100% 100% 0) }`. Without JS the attribute is never set and the page is fully visible (tested on the exported HTML). With reduced motion the attribute is never set either; elements are simply visible, no cursors, no observer. If the inline script ran but the app never hydrates (a blocked or failed bundle), the script removes the attribute after 6 s and the page shows itself; `Swarm` marks `data-swarm-ready` on mount to cancel that.
 
 ### 7.4 Scheduling
 
