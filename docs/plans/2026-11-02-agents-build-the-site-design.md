@@ -131,9 +131,9 @@ The page loads as the cream canvas with the grid and the bar's status pill readi
 
 ### 7.3 Elements
 
-Every element listed in §7.7 is wrapped in `<Built name="h1 name">`. Before it is built, the element keeps its layout box and is hidden with `clip-path: inset(0 100% 100% 0)`. During the drag the clip follows the box. After the release the inline clip is removed and the element gets `data-built="1"`.
+Every element listed in §7.7 is wrapped in `<Built name="h1 name">`. Before it is built, the element keeps its layout box and is hidden with `opacity: 0; pointer-events: none` (not a full clip: Chrome's IntersectionObserver never reports a fully clipped element as intersecting, found in Task 4). From the press on, the swarm writes inline `opacity: 1` plus the drag clip, so the element appears inside the box as it is drawn. After the release both inline styles are removed and the element gets `data-built="1"`.
 
-No flash: an inline script in `<head>` runs before paint and sets `document.documentElement.dataset.swarm = "on"` when JS runs and `prefers-reduced-motion` is not `reduce`. CSS: `html[data-swarm="on"] [data-build]:not([data-built]) { clip-path: inset(0 100% 100% 0) }`. Without JS the attribute is never set and the page is fully visible (tested on the exported HTML). With reduced motion the attribute is never set either; elements are simply visible, no cursors, no observer. If the inline script ran but the app never hydrates (a blocked or failed bundle), the script removes the attribute after 6 s and the page shows itself; `Swarm` marks `data-swarm-ready` on mount to cancel that.
+No flash: an inline script in `<head>` runs before paint and sets `document.documentElement.dataset.swarm = "on"` when JS runs and `prefers-reduced-motion` is not `reduce`. CSS: `html[data-swarm="on"] [data-build]:not([data-built]) { opacity: 0; pointer-events: none }`. Without JS the attribute is never set and the page is fully visible (tested on the exported HTML). With reduced motion the attribute is never set either; elements are simply visible, no cursors, no observer. If the inline script ran but the app never hydrates (a blocked or failed bundle), the script removes the attribute after 6 s and the page shows itself; `Swarm` marks `data-swarm-ready` on mount to cancel that.
 
 ### 7.4 Scheduling
 
@@ -142,6 +142,7 @@ No flash: an inline script in `<head>` runs before paint and sets `document.docu
 - Assignment, each frame: while the queue is not empty and some agent is idle, pop the oldest job, measure its rect (`getBoundingClientRect` + scroll offsets, once), and give it to the idle agent nearest its top-left corner (Euclidean distance; ties by lower index). The agent starts after a seeded jitter of 0 to 120 ms so simultaneous jobs do not launch in lockstep.
 - Instant rule: when a job is popped and its rect lies entirely outside the viewport expanded by 200 px on each side (the user scrolled past it), it is built instantly with no cursor. When the queue is longer than 2 × agents, the oldest jobs beyond that are built instantly too. Instant builds are not logged; the status pill still counts them.
 - Done: a job completes at release. The agent returns to idle at the box's bottom-right corner plus (6, 8) px.
+- Sweep: every 250 ms the swarm checks every unbuilt, unqueued element; any whose box lies entirely above the viewport (bottom edge above `scrollY - 200`) was scrolled past without ever intersecting (a scrollbar drag or an instant jump) and is built instantly. Nothing above the reader is ever left hidden; things below still wait to be seen.
 - Rebuild (`door` button): every built element loses `data-built` and is hidden again, the log clears, the counts reset, the observer re-observes every element, and jobs flow again for whatever is in view. The button is disabled while a rebuild is in flight (any agent busy or queue non-empty).
 
 ### 7.5 One job's timeline (pure, tested)

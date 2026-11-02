@@ -622,7 +622,7 @@ export function Built({ name, as = 'div', className, id, href, children }: Built
 - [ ] **Step 4: CSS**
 
 ```css
-html[data-swarm="on"] [data-build]:not([data-built]) { clip-path: inset(0 100% 100% 0); }
+html[data-swarm="on"] [data-build]:not([data-built]) { opacity: 0; pointer-events: none; } /* not clip-path: a fully clipped element never intersects */
 .swarm { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: visible; pointer-events: none; z-index: 60; }
 .cursor { position: absolute; top: -1.5px; left: -2px; width: 18px; height: 18px; will-change: transform; filter: drop-shadow(0 1px 1px rgba(22,22,22,.2)); }
 .cursor__tag { position: absolute; left: 14px; top: 16px; white-space: nowrap; font-size: 11px; line-height: 1; padding: 3px 6px; border-radius: 4px; background: var(--agent); color: #fff; }
