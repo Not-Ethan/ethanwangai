@@ -179,6 +179,7 @@ export const copy = {
         "nothing is sent anywhere. there's no server behind this page. it's files on a cdn and some javascript.",
         "they'll do it again if you ask.",
       ],
+      paragraphPhone: "every element on this page was drawn in by a cursor as you scrolled. there are three of them. they don't exist.",
       button: 'rebuild the page ↻',
       note: 'it takes about as long as reading it did.',
     },

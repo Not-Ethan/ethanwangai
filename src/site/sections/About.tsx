@@ -2,14 +2,12 @@
 import type { CSSProperties } from 'react';
 import { copy } from '../copy';
 import { AGENT_COLOURS, agentName } from '@/swarm/agents';
-import { useMounted, useSwarmStats } from '@/swarm/useSwarmStats';
+import { useSwarmStats } from '@/swarm/useSwarmStats';
 import { Built } from '../Built';
 
 export function About() {
   const a = copy.about;
   const s = useSwarmStats();
-  const mounted = useMounted();
-  const reduced = mounted && !s.on && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   return (
     <section id="about" className="sec sec-about">
       <div className="wrap">
@@ -21,7 +19,7 @@ export function About() {
           <Built name="log" className="card log">
             <p className="eyebrow">{a.logTitle}</p>
             <ol className="log__lines mono" data-log>
-              {s.log.length === 0 ? <li>{reduced ? a.logReduced : a.logEmpty}</li> : s.log.map((l) => {
+              {s.log.length === 0 ? <li>{s.reduced ? a.logReduced : a.logEmpty}</li> : s.log.map((l) => {
                 const who = agentName(l.agent);
                 return (
                   <li key={l.id}>

@@ -55,3 +55,9 @@ describe('facts in the copy', () => {
     expect(copy.closer.mail).toBe('ethan.wanq@gmail.com');
   });
 });
+
+describe('door', () => {
+  it('phone paragraph is the first paragraph with six replaced by three', () => {
+    expect(copy.closer.door.paragraphPhone).toBe(copy.closer.door.paragraphs[0].replace('six', 'three'));
+  });
+});

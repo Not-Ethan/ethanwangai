@@ -1,8 +1,8 @@
 export interface LogLine { id: number; agent: number; name: string; seconds: number }
-export interface SwarmSnapshot { on: boolean; agents: number; built: number; total: number; log: readonly LogLine[]; busy: boolean }
+export interface SwarmSnapshot { on: boolean; agents: number; built: number; total: number; log: readonly LogLine[]; busy: boolean; reduced: boolean }
 
 /** What the server renders and what the client's first render must also see (hydration). */
-export const SERVER_SNAPSHOT: SwarmSnapshot = Object.freeze({ on: false, agents: 6, built: 0, total: 43, log: Object.freeze([] as LogLine[]), busy: false });
+export const SERVER_SNAPSHOT: SwarmSnapshot = Object.freeze({ on: false, agents: 6, built: 0, total: 43, log: Object.freeze([] as LogLine[]), busy: false, reduced: false });
 
 export interface SwarmStore {
   get(): SwarmSnapshot;

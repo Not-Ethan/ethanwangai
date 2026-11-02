@@ -19,7 +19,7 @@ const SWARM_SCRIPT = "(function(){try{if(matchMedia('(prefers-reduced-motion: re
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={mono.variable}>
+    <html lang="en" className={mono.variable} suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: SWARM_SCRIPT }} />
         {children}

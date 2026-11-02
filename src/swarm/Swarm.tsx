@@ -53,7 +53,7 @@ function createRuntime(): Runtime {
 }
 
 interface PoolBox { el: HTMLDivElement; until: number; tl: JobTimeline | null; startAt: number }
-interface Active { entry: Entry | undefined; box: PoolBox; built: boolean }
+interface Active { entry: Entry | undefined; built: boolean }
 
 function makeCursor(i: number): HTMLDivElement {
   const c = document.createElement('div');
@@ -91,7 +91,7 @@ export function Swarm({ children }: { children: ReactNode }) {
     const n = agentCount(window.innerWidth);
     rt.mounted = true;
     if (!on || !overlay) {
-      store.set({ on: false, agents: n, total: rt.registry.size });
+      store.set({ on: false, agents: n, total: rt.registry.size, reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches });
       return () => { rt.mounted = false; };
     }
 
@@ -110,6 +110,13 @@ export function Swarm({ children }: { children: ReactNode }) {
     const pool: PoolBox[] = [];
     for (let i = 0; i < 2 * n; i++) { const b = makeBox(); overlay.appendChild(b.el); pool.push(b); }
     const active: (Active | null)[] = agents.map(() => null);
+    const idleSince: number[] = agents.map(() => -Infinity);
+    const hidden: boolean[] = agents.map(() => false);
+    const setHidden = (i: number, h: boolean): void => {
+      if (hidden[i] === h) return;
+      hidden[i] = h;
+      cursors[i].style.visibility = h ? 'hidden' : 'visible';
+    };
 
     let built = 0;
     let logId = 0;
@@ -168,7 +175,7 @@ export function Swarm({ children }: { children: ReactNode }) {
 
       if (started && scheduler.queue.length > 0) {
         const d = scheduler.dispatch(now, view, measure);
-        for (const j of d.instant) { const e = rt.byId.get(j.id); if (e) markBuilt(e); }
+        for (const j of [...d.instant, ...d.dropped]) { const e = rt.byId.get(j.id); if (e) markBuilt(e); }
         for (const s of d.started) {
           let box = pool.find((b) => b.until <= now);
           if (!box) box = pool.reduce((a, b) => (b.until < a.until ? b : a));
@@ -178,20 +185,25 @@ export function Swarm({ children }: { children: ReactNode }) {
           box.el.style.setProperty('--agent', AGENT_COLOURS[s.agent.id % AGENT_COLOURS.length]);
           box.el.style.opacity = '0';
           (box.el.lastElementChild as HTMLElement).textContent = s.job.name;
-          active[s.agent.id] = { entry: rt.byId.get(s.job.id), box, built: false };
+          const tr = s.timeline.rect;
+          (box.el.lastElementChild as HTMLElement).style.top = tr.y - view.y < 28 ? 'calc(100% + 6px)' : '';
+          active[s.agent.id] = { entry: rt.byId.get(s.job.id), built: false };
         }
       }
 
       // sweep: anything scrolled past without ever intersecting (scrollbar drag, jump) is built instantly
       if (started && now - lastSweep >= 250) {
         lastSweep = now;
+        // all reads first, then all writes, so the sweep never interleaves layout reads with style writes
+        const take: Entry[] = [];
         for (const e of rt.registry.values()) {
           if (e.built || e.queued || !e.el.isConnected) continue;
           // display:none elements (e.g. the phone nav) never intersect and have no box: build them instantly too
-          if (e.el.getClientRects().length === 0) { observer.unobserve(e.el); markBuilt(e); continue; }
+          if (e.el.getClientRects().length === 0) { take.push(e); continue; }
           const r = e.el.getBoundingClientRect();
-          if (scrolledPast(r.bottom + view.y, view.y)) { observer.unobserve(e.el); markBuilt(e); }
+          if (scrolledPast(r.bottom + view.y, view.y)) take.push(e);
         }
+        for (const e of take) { observer.unobserve(e.el); markBuilt(e); }
       }
 
       // boxes: active and lingering ones sample their own stored timeline
@@ -217,6 +229,7 @@ export function Swarm({ children }: { children: ReactNode }) {
         if (a.busy && act && a.timeline) {
           const tl = a.timeline;
           const t = now - a.startAt;
+          setHidden(i, false);
           if (t < 0) {
             cursor.style.transform = `translate3d(${a.x}px, ${a.y}px, 0)`;
             continue;
@@ -228,8 +241,7 @@ export function Swarm({ children }: { children: ReactNode }) {
               act.built = true;
               if (act.entry) {
                 markBuilt(act.entry);
-                log.push({ id: ++logId, agent: a.id, name: act.entry.name, seconds: (tl.travel + tl.drag) / 1000 });
-                if (log.length > LOG_KEEP) log = log.slice(-LOG_KEEP);
+                log = [...log, { id: ++logId, agent: a.id, name: act.entry.name, seconds: (tl.travel + tl.drag) / 1000 }].slice(-LOG_KEEP);
                 dirty = true;
               }
             } else if (act.entry && sample.phase !== 'travel') {
@@ -238,9 +250,16 @@ export function Swarm({ children }: { children: ReactNode }) {
               act.entry.el.style.clipPath = clipFor(sample.f);
             }
           }
-          if (t >= tl.tRelease) { if (act.entry) act.entry.queued = false; scheduler.free(a); active[i] = null; }
+          if (t >= tl.tRelease) { if (act.entry) act.entry.queued = false; scheduler.free(a); active[i] = null; idleSince[i] = now; }
         } else if (idlePose(a, view, now / 1000, pt)) {
-          cursor.style.transform = `translate3d(${pt.x}px, ${pt.y}px, 0)`;
+          // ease the drift in over 400 ms after release so the cursor does not jump
+          const k = Math.min(1, (now - idleSince[i]) / 400);
+          const x = a.x + (pt.x - a.x) * k;
+          const y = a.y + (pt.y - a.y) * k;
+          setHidden(i, false);
+          cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        } else {
+          setHidden(i, true);
         }
       }
 
@@ -254,6 +273,8 @@ export function Swarm({ children }: { children: ReactNode }) {
     raf = requestAnimationFrame(frame);
 
     rt.rebuildImpl = () => {
+      // nothing above the reader, so the sweep has nothing to take
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       for (const e of rt.registry.values()) {
         delete e.el.dataset.built;
         e.el.style.clipPath = '';
