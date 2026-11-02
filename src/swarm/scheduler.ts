@@ -1,7 +1,7 @@
 import { jobTimeline, restPoint, type JobTimeline, type Point, type Rect } from './timeline';
 import { jitter } from './agents';
 
-export interface Job { id: number; name: string }
+export interface Job { id: number; name: string; /** cached by dispatch */ rect?: Rect | null }
 export interface AgentState {
   id: number; x: number; y: number;
   /** idle-drift phase, radians (not the job phase) */
@@ -52,24 +52,47 @@ export class Scheduler {
     const out: Dispatch = { started: [], instant: [], dropped: [] };
     const cap = QUEUE_FACTOR * this.agents.length;
     while (this.queue.length > cap) out.instant.push(this.queue.shift()!);
+    // measure every queued job once; off-screen and vanished ones never take an agent
+    for (let k = 0; k < this.queue.length;) {
+      const job = this.queue[k];
+      if (job.rect === undefined) {
+        try { job.rect = measure(job); } catch { job.rect = null; }
+      }
+      if (!job.rect) { out.dropped.push(job); this.queue.splice(k, 1); continue; }
+      if (isOffscreen(job.rect, vp)) { out.instant.push(job); this.queue.splice(k, 1); continue; }
+      k++;
+    }
+    const cx = vp.x + vp.w / 2, cy = vp.y + vp.h / 2;
     while (this.queue.length > 0 && this.agents.some((a) => !a.busy)) {
-      const job = this.queue.shift()!;
-      let rect: Rect | null;
-      try { rect = measure(job); } catch { rect = null; }
-      if (!rect) { out.dropped.push(job); continue; }
-      if (isOffscreen(rect, vp)) { out.instant.push(job); continue; }
+      // the on-screen job nearest the viewport centre, ties by queue order
+      let bi = 0, bd = Infinity;
+      for (let k = 0; k < this.queue.length; k++) {
+        const r = this.queue[k].rect!;
+        const d = (r.x + r.w / 2 - cx) ** 2 + (r.y + r.h / 2 - cy) ** 2;
+        if (d < bd) { bd = d; bi = k; }
+      }
+      const job = this.queue.splice(bi, 1)[0];
+      const rect = job.rect!;
       const i = nearestFreeAgent(this.agents, rect.x, rect.y);
       const agent = this.agents[i];
-      const timeline = jobTimeline({ x: agent.x, y: agent.y }, rect);
+      const tempo = { travel: 0.8 + this.rand() * 0.6, drag: 0.85 + this.rand() * 0.5 };
+      const rest = { dx: 6 + this.rand() * 12, dy: 8 + this.rand() * 14 };
+      const timeline = jobTimeline({ x: agent.x, y: agent.y }, rect, tempo, rest);
       agent.busy = true; agent.job = job; agent.timeline = timeline; agent.startAt = now + jitter(this.rand);
       out.started.push({ agent, job, timeline });
     }
     return out;
   }
 
-  /** The agent is free again (start of linger): it rests at the box's bottom-right plus (6, 8). */
+  /** The agent is free again (start of linger): it rests at the box's bottom-right plus its seeded offset. */
   free(agent: AgentState): void {
     if (agent.timeline) { const p = restPoint(agent.timeline); agent.x = p.x; agent.y = p.y; }
+    agent.busy = false; agent.job = null; agent.timeline = null; agent.startAt = 0;
+  }
+
+  /** The agent leaves its job mid-way (the reader scrolled away) and stops at `at`. */
+  abandon(agent: AgentState, at: Point): void {
+    agent.x = at.x; agent.y = at.y;
     agent.busy = false; agent.job = null; agent.timeline = null; agent.startAt = 0;
   }
 

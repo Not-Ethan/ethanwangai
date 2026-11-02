@@ -1,5 +1,6 @@
 import { copy } from '../copy';
 import { Built } from '../Built';
+import { HeroGhost } from './HeroGhost';
 
 function Arrow() {
   return (
@@ -29,12 +30,7 @@ export function Hero() {
             <span>{h.cta}</span>
             <span className="btn__icon"><Arrow /></span>
           </a>
-          <a className="ghost" href={h.ghostHref}>
-            <span className="ghost__dot" aria-hidden="true" />
-            <span className="only-desktop">{h.ghost}</span>
-            <span className="only-phone">{h.ghostPhone}</span>
-            <span className="badge">{h.ghostBadge}</span>
-          </a>
+          <HeroGhost />
         </Built>
       </div>
     </section>

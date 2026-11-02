@@ -30,6 +30,7 @@ export const copy = {
     ghost: 'six agents are building this page while you read it',
     ghostPhone: 'three agents are building this page while you read it',
     ghostBadge: 'watch them',
+    ghostOff: 'the agents are resting today. the page is already built.',
     ghostHref: '#about',
   },
   about: {
@@ -85,7 +86,7 @@ export const copy = {
         id: 'wvu', name: 'wvu medicine', role: 'ml intern', sub: 'summer 2026', when: 'summer 2026', place: 'morgantown',
         lede: 'a model that watches about a hundred million dollars a year of pharmacy claims and notices when denials spike.',
         points: [
-          'anomaly detection over the claims stream. the modeling core shipped for production integration.',
+          'anomaly detection over the claims stream. i built the modeling core. the team wired it into production.',
           'tooling to plug it into open webui so people could ask it questions.',
         ],
         chips: ['python', 'pytorch', 'pandas'],

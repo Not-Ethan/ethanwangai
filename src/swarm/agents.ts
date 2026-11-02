@@ -21,7 +21,7 @@ export function idleDrift(t: number, phase: number, out: Point): Point {
   return out;
 }
 
-export const JITTER_MAX = 120;
+export const JITTER_MAX = 240;
 export const jitter = (rand: () => number): number => rand() * JITTER_MAX;
 
 export const IDLE_INSET = 12;

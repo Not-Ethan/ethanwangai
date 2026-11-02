@@ -42,7 +42,7 @@ describe('Scheduler', () => {
     for (const { agent, timeline } of d.started) {
       expect(agent.busy).toBe(true);
       expect(agent.startAt).toBeGreaterThanOrEqual(1000);
-      expect(agent.startAt).toBeLessThan(1120);
+      expect(agent.startAt).toBeLessThan(1240);
       expect(timeline.from).toEqual({ x: agent.x, y: agent.y });
     }
   });
@@ -83,6 +83,11 @@ describe('Scheduler', () => {
     s.enqueue(job(1));
     const d = s.dispatch(0, vp, () => rectAt(300, 300));
     const rest = restPoint(d.started[0].timeline);
+    expect(rest.x).toBe(300 + 200 + 4 + d.started[0].timeline.restDx);
+    expect(d.started[0].timeline.restDx).toBeGreaterThanOrEqual(6);
+    expect(d.started[0].timeline.restDx).toBeLessThan(18);
+    expect(d.started[0].timeline.restDy).toBeGreaterThanOrEqual(8);
+    expect(d.started[0].timeline.restDy).toBeLessThan(22);
     s.free(agents[0]);
     expect(agents[0].x).toBe(rest.x);
     expect(agents[0].y).toBe(rest.y);
@@ -112,6 +117,58 @@ describe('Scheduler', () => {
     s.free(agents[0]);
     const second = s.dispatch(0, vp, () => rectAt(300, 300));
     expect(second.started[0].job.id).toBe(2);
+  });
+});
+
+describe('Scheduler: centre-first assignment, tempo, abandon', () => {
+  it('starts the job nearest the viewport centre first, ties by queue order, and caches rects', () => {
+    const agents = makeAgents(3);
+    agents[1].busy = true; agents[2].busy = true;   // one free agent; the cap (6) leaves all three queued
+    const s = new Scheduler(agents, mulberry32(1));
+    const rects: Record<number, Rect> = { 1: rectAt(100, 20), 2: rectAt(620, 410), 3: rectAt(620, 410) };
+    for (const id of [1, 2, 3]) s.enqueue(job(id));
+    let calls = 0;
+    const d = s.dispatch(0, vp, (j) => { calls++; return rects[j.id]; });
+    expect(d.started.map((x) => x.job.id)).toEqual([2]);
+    expect(calls).toBe(3);
+    expect(s.queue.map((j) => j.id)).toEqual([1, 3]);
+    expect(s.queue[0].rect).toEqual(rects[1]);
+    s.free(agents[0]);
+    s.dispatch(0, vp, () => { calls++; return null; });
+    expect(calls).toBe(3);
+  });
+  it('builds off-screen jobs instantly even when no agent is free', () => {
+    const agents = makeAgents(1);
+    agents[0].busy = true;
+    const s = new Scheduler(agents, mulberry32(1));
+    s.enqueue(job(1)); s.enqueue(job(2));
+    const d = s.dispatch(0, vp, (j) => (j.id === 1 ? rectAt(100, 5000) : rectAt(100, 100)));
+    expect(d.instant.map((j) => j.id)).toEqual([1]);
+    expect(s.queue.map((j) => j.id)).toEqual([2]);
+  });
+  it('draws seeded tempo and rest offsets within range and stores them on the timeline', () => {
+    const agents = makeAgents(6);
+    const s = new Scheduler(agents, mulberry32(7));
+    for (let i = 0; i < 6; i++) s.enqueue(job(i));
+    const d = s.dispatch(0, vp, () => rectAt(300, 300));
+    for (const { timeline: tl } of d.started) {
+      expect(tl.tempo.travel).toBeGreaterThanOrEqual(0.8); expect(tl.tempo.travel).toBeLessThan(1.4);
+      expect(tl.tempo.drag).toBeGreaterThanOrEqual(0.85); expect(tl.tempo.drag).toBeLessThan(1.35);
+      expect(tl.restDy).toBeGreaterThanOrEqual(8); expect(tl.restDy).toBeLessThan(22);
+    }
+    expect(new Set(d.started.map((x) => x.timeline.travel)).size).toBeGreaterThan(1);
+  });
+  it('abandon frees a busy agent at the given point', () => {
+    const agents = makeAgents(1);
+    const s = new Scheduler(agents, mulberry32(1));
+    s.enqueue(job(1));
+    s.dispatch(0, vp, () => rectAt(300, 300));
+    expect(agents[0].busy).toBe(true);
+    s.abandon(agents[0], { x: 12, y: 34 });
+    expect([agents[0].x, agents[0].y]).toEqual([12, 34]);
+    expect(agents[0].busy).toBe(false);
+    expect(agents[0].job).toBeNull();
+    expect(agents[0].timeline).toBeNull();
   });
 });
 

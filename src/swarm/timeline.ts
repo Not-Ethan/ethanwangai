@@ -17,15 +17,20 @@ export const LINGER_FADE = 250;    // the last 250 ms of linger fade the box out
 export interface JobTimeline {
   from: Point; rect: Rect;
   travel: number; drag: number;
+  tempo: { travel: number; drag: number };
+  restDx: number; restDy: number;
   tTravel: number; tPress: number; tDrag: number; tRelease: number; tEnd: number;   // phase end times, ms from start
 }
 
-export function jobTimeline(from: Point, rect: Rect): JobTimeline {
+export const REST_DX = 6, REST_DY = 8;
+
+/** `tempo` multiplies the clamped travel and drag; `rest` is the offset of the rest point from the drag end. */
+export function jobTimeline(from: Point, rect: Rect, tempo: { travel: number; drag: number } = { travel: 1, drag: 1 }, rest: { dx: number; dy: number } = { dx: REST_DX, dy: REST_DY }): JobTimeline {
   const dist = Math.hypot(rect.x - PAD - from.x, rect.y - PAD - from.y);
-  const travel = clamp(dist / TRAVEL_SPEED, TRAVEL_MIN, TRAVEL_MAX);
-  const drag = clamp(Math.hypot(rect.w, rect.h) / DRAG_SPEED, DRAG_MIN, DRAG_MAX);
+  const travel = clamp(dist / TRAVEL_SPEED, TRAVEL_MIN, TRAVEL_MAX) * tempo.travel;
+  const drag = clamp(Math.hypot(rect.w, rect.h) / DRAG_SPEED, DRAG_MIN, DRAG_MAX) * tempo.drag;
   const tTravel = travel, tPress = tTravel + PRESS, tDrag = tPress + drag, tRelease = tDrag + RELEASE, tEnd = tRelease + LINGER;
-  return { from: { x: from.x, y: from.y }, rect: { ...rect }, travel, drag, tTravel, tPress, tDrag, tRelease, tEnd };
+  return { from: { x: from.x, y: from.y }, rect: { ...rect }, travel, drag, tempo: { ...tempo }, restDx: rest.dx, restDy: rest.dy, tTravel, tPress, tDrag, tRelease, tEnd };
 }
 
 export interface JobSample {
@@ -37,9 +42,9 @@ export interface JobSample {
   fillAlpha: number;        // fill opacity (1 while dragging, fades through release)
 }
 
-/** Where the agent rests after the job: the drag end plus (6, 8). The cursor arrives there through the release phase. */
+/** Where the agent rests after the job: the drag end plus the timeline's seeded offset. The cursor arrives there through the release phase. */
 export function restPoint(tl: JobTimeline): Point {
-  return { x: tl.rect.x + tl.rect.w + PAD + 6, y: tl.rect.y + tl.rect.h + PAD + 8 };
+  return { x: tl.rect.x + tl.rect.w + PAD + tl.restDx, y: tl.rect.y + tl.rect.h + PAD + tl.restDy };
 }
 
 /** Samples the job at t ms from its start. Allocation-free: writes into `out`. */
@@ -57,13 +62,13 @@ export function sampleJob(tl: JobTimeline, t: number, out: JobSample): JobSample
     out.phase = 'drag'; out.cx = sx + (ex - sx) * f; out.cy = sy + (ey - sy) * f; out.f = f; out.scale = 1; out.boxAlpha = 1; out.fillAlpha = 1;
   } else if (t < tl.tRelease) {
     const u = (t - tl.tDrag) / RELEASE;
-    out.phase = 'release'; out.cx = ex + 6 * u; out.cy = ey + 8 * u; out.f = 1; out.scale = 1; out.boxAlpha = 1; out.fillAlpha = 1 - u;
+    out.phase = 'release'; out.cx = ex + tl.restDx * u; out.cy = ey + tl.restDy * u; out.f = 1; out.scale = 1; out.boxAlpha = 1; out.fillAlpha = 1 - u;
   } else if (t < tl.tEnd) {
     const left = tl.tEnd - t;
-    out.phase = 'linger'; out.cx = ex + 6; out.cy = ey + 8; out.f = 1; out.scale = 1; out.fillAlpha = 0;
+    out.phase = 'linger'; out.cx = ex + tl.restDx; out.cy = ey + tl.restDy; out.f = 1; out.scale = 1; out.fillAlpha = 0;
     out.boxAlpha = left < LINGER_FADE ? left / LINGER_FADE : 1;
   } else {
-    out.phase = 'done'; out.cx = ex + 6; out.cy = ey + 8; out.f = 1; out.scale = 1; out.boxAlpha = 0; out.fillAlpha = 0;
+    out.phase = 'done'; out.cx = ex + tl.restDx; out.cy = ey + tl.restDy; out.f = 1; out.scale = 1; out.boxAlpha = 0; out.fillAlpha = 0;
   }
   return out;
 }

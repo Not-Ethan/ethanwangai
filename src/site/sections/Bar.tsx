@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from 'react';
 import { copy } from '../copy';
 import { useMounted, useSwarmStats } from '@/swarm/useSwarmStats';
 import { Built } from '../Built';
@@ -6,8 +7,17 @@ import { Built } from '../Built';
 export function Bar() {
   const s = useSwarmStats();
   const mounted = useMounted();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const read = (): void => { raf = 0; setScrolled(window.scrollY > 8); };
+    const onScroll = (): void => { if (!raf) raf = requestAnimationFrame(read); };
+    read();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, []);
   return (
-    <header className="bar">
+    <header className="bar" data-scrolled={scrolled ? '' : undefined}>
       <Built name="mark" as="a" className="mark" href="#top">{copy.bar.mark}</Built>
       <div className="bar__right">
         <Built name="nav" as="nav" className="bar__nav">

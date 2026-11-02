@@ -9,6 +9,15 @@ describe('jobTimeline', () => {
     expect(jobTimeline({ x: 0, y: 0 }, { x: 5000, y: 5000, w: 50, h: 50 }).travel).toBe(700);
     expect(jobTimeline({ x: 100, y: 100 }, { x: 110, y: 110, w: 50, h: 50 }).travel).toBe(180);
   });
+  it('multiplies the clamped travel and drag by the tempo; absent tempo changes nothing', () => {
+    const far = { x: 5000, y: 5000, w: 50, h: 50 };
+    expect(jobTimeline({ x: 0, y: 0 }, far, { travel: 1.4, drag: 1 }).travel).toBeCloseTo(980, 6);
+    expect(jobTimeline({ x: 0, y: 0 }, far, { travel: 1, drag: 1 }).travel).toBe(700);
+    expect(jobTimeline({ x: 0, y: 0 }, { x: 0, y: 0, w: 2000, h: 1000 }, { travel: 1, drag: 0.9 }).drag).toBeCloseTo(855, 6);
+    const tl = jobTimeline({ x: 0, y: 0 }, far, { travel: 1.4, drag: 1.2 });
+    expect(tl.tempo).toEqual({ travel: 1.4, drag: 1.2 });
+    expect(tl.tTravel).toBeCloseTo(980, 6);
+  });
   it('clamps drag to 280 for tiny rects and 950 for huge ones', () => {
     expect(jobTimeline({ x: 0, y: 0 }, { x: 0, y: 0, w: 10, h: 10 }).drag).toBe(280);
     expect(jobTimeline({ x: 0, y: 0 }, { x: 0, y: 0, w: 2000, h: 1000 }).drag).toBe(950);
@@ -67,7 +76,17 @@ describe('clipFor and restPoint', () => {
     expect(clipFor(0)).toBe('inset(0 100.00% 100.00% 0)');
     expect(clipFor(1)).toBe('');
   });
-  it('rest point is the drag end plus (6, 8)', () => {
+  it('rest point follows the timeline offsets and the release cursor eases to it', () => {
+    const tl = jobTimeline({ x: 0, y: 0 }, rect, { travel: 1, drag: 1 }, { dx: 15, dy: 20 });
+    const end = sampleJob(tl, tl.tDrag, blank());
+    const p = restPoint(tl);
+    expect(p.x).toBe(end.cx + 15);
+    expect(p.y).toBe(end.cy + 20);
+    const rel = sampleJob(tl, tl.tRelease, blank());
+    expect([rel.cx, rel.cy]).toEqual([p.x, p.y]);
+    expect(sampleJob(tl, tl.tEnd - 1, blank()).cx).toBe(p.x);
+  });
+  it('rest point defaults to the drag end plus (6, 8)', () => {
     const tl = jobTimeline({ x: 0, y: 0 }, rect);
     const end = sampleJob(tl, tl.tDrag, blank());
     const p = restPoint(tl);

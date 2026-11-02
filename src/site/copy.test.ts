@@ -56,6 +56,13 @@ describe('facts in the copy', () => {
   });
 });
 
+describe('ghost when the swarm is off', () => {
+  it('has a lowercase resting line', () => {
+    expect(copy.hero.ghostOff).toBe('the agents are resting today. the page is already built.');
+    expect(copy.hero.ghostOff).toBe(copy.hero.ghostOff.toLowerCase());
+  });
+});
+
 describe('door', () => {
   it('phone paragraph is the first paragraph with six replaced by three', () => {
     expect(copy.closer.door.paragraphPhone).toBe(copy.closer.door.paragraphs[0].replace('six', 'three'));

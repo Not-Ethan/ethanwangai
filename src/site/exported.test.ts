@@ -28,10 +28,10 @@ describe.skipIf(!HAVE)('exported html', () => {
   const html = decode(raw);
 
   it('contains every copy string', () => {
-    // logReduced is only rendered by the swarm at runtime (reduced motion), never in the static html.
+    // logReduced and ghostOff are only rendered at runtime (swarm off), never in the static html.
     // Next embeds the strings in script payloads too, which hid misses; check the markup only.
     const markup = html.replace(/<script[\s\S]*?<\/script>/g, '');
-    for (const s of strings({ ...copy, about: { ...copy.about, logReduced: '' } })) {
+    for (const s of strings({ ...copy, hero: { ...copy.hero, ghostOff: '' }, about: { ...copy.about, logReduced: '' } })) {
       if (s === '' || /^(mailto:|https?:)/.test(s)) continue;
       expect(markup, s).toContain(s);
     }

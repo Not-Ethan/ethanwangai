@@ -40,12 +40,12 @@ describe('agents', () => {
       expect(Math.abs(out.y)).toBeLessThanOrEqual(4);
     }
   });
-  it('jitter is in [0, 120)', () => {
+  it('jitter is in [0, 240)', () => {
     const r = mulberry32(5);
     for (let i = 0; i < 500; i++) {
       const j = jitter(r);
       expect(j).toBeGreaterThanOrEqual(0);
-      expect(j).toBeLessThan(120);
+      expect(j).toBeLessThan(240);
     }
   });
 });
@@ -101,7 +101,7 @@ describe('agents, pinned', () => {
     }
   });
   it('jitter reaches near its max', () => {
-    expect(JITTER_MAX).toBe(120);
+    expect(JITTER_MAX).toBe(240);
     const r = mulberry32(8);
     let max = 0;
     for (let i = 0; i < 500; i++) max = Math.max(max, jitter(r));

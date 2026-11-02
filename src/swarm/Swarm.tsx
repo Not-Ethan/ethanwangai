@@ -2,7 +2,7 @@
 import { createContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { mulberry32 } from './prng';
 import { AGENT_COLOURS, agentCount, agentName, idlePose, initialPosition } from './agents';
-import { Scheduler, makeAgent, scrolledPast, type AgentState, type Job } from './scheduler';
+import { Scheduler, isOffscreen, makeAgent, scrolledPast, type AgentState, type Job } from './scheduler';
 import { clipFor, sampleJob, type JobSample, type JobTimeline, type Point, type Rect } from './timeline';
 import { createSwarmStore, type LogLine, type SwarmStore } from './swarmStore';
 
@@ -112,6 +112,19 @@ export function Swarm({ children }: { children: ReactNode }) {
     const active: (Active | null)[] = agents.map(() => null);
     const idleSince: number[] = agents.map(() => -Infinity);
     const hidden: boolean[] = agents.map(() => false);
+    // cursor tags flip to the left of the tip when they would cross the right edge; widths measured once, and on resize
+    let tagW: number[] = [];
+    const measureTags = (): void => { tagW = cursors.map((c) => (c.lastElementChild as HTMLElement).offsetWidth); };
+    measureTags();
+    window.addEventListener('resize', measureTags);
+    const flipped: boolean[] = agents.map(() => false);
+    const lastPos: Point[] = agents.map((a) => ({ x: a.x, y: a.y }));
+    const place = (i: number, x: number, y: number, extra: string, view: Rect): void => {
+      lastPos[i].x = x; lastPos[i].y = y;
+      const f = x + 14 + tagW[i] + 8 > view.x + view.w;
+      if (f !== flipped[i]) { flipped[i] = f; cursors[i].classList.toggle('cursor--flip', f); }
+      cursors[i].style.transform = `translate3d(${x}px, ${y}px, 0)${extra}`;
+    };
     const setHidden = (i: number, h: boolean): void => {
       if (hidden[i] === h) return;
       hidden[i] = h;
@@ -186,7 +199,7 @@ export function Swarm({ children }: { children: ReactNode }) {
           box.el.style.opacity = '0';
           (box.el.lastElementChild as HTMLElement).textContent = s.job.name;
           const tr = s.timeline.rect;
-          (box.el.lastElementChild as HTMLElement).style.top = tr.y - view.y < 28 ? 'calc(100% + 6px)' : '';
+          (box.el.lastElementChild as HTMLElement).style.top = tr.y - view.y < 88 ? 'calc(100% + 6px)' : '';
           active[s.agent.id] = { entry: rt.byId.get(s.job.id), built: false };
         }
       }
@@ -203,7 +216,22 @@ export function Swarm({ children }: { children: ReactNode }) {
           const r = e.el.getBoundingClientRect();
           if (scrolledPast(r.bottom + view.y, view.y)) take.push(e);
         }
+        // in-flight jobs whose element is now far off-screen: build instantly, hide the box, free the agent where its cursor is
+        const leave: number[] = [];
+        for (let i = 0; i < agents.length; i++) {
+          const a = agents[i];
+          if (a.busy && active[i] && a.timeline && now - a.startAt >= 0 && isOffscreen(a.timeline.rect, view)) leave.push(i);
+        }
         for (const e of take) { observer.unobserve(e.el); markBuilt(e); }
+        for (const i of leave) {
+          const a = agents[i];
+          const act = active[i]!;
+          if (act.entry) markBuilt(act.entry);
+          for (const b of pool) { if (b.tl === a.timeline) { b.el.style.opacity = '0'; b.until = 0; b.tl = null; } }
+          scheduler.abandon(a, { x: lastPos[i].x, y: lastPos[i].y });
+          active[i] = null;
+          idleSince[i] = now;
+        }
       }
 
       // boxes: active and lingering ones sample their own stored timeline
@@ -224,18 +252,17 @@ export function Swarm({ children }: { children: ReactNode }) {
 
       for (let i = 0; i < agents.length; i++) {
         const a = agents[i];
-        const cursor = cursors[i];
         const act = active[i];
         if (a.busy && act && a.timeline) {
           const tl = a.timeline;
           const t = now - a.startAt;
           setHidden(i, false);
           if (t < 0) {
-            cursor.style.transform = `translate3d(${a.x}px, ${a.y}px, 0)`;
+            place(i, a.x, a.y, '', view);
             continue;
           }
           sampleJob(tl, t, sample);
-          cursor.style.transform = `translate3d(${sample.cx}px, ${sample.cy}px, 0) scale(${sample.scale})`;
+          place(i, sample.cx, sample.cy, ` scale(${sample.scale})`, view);
           if (!act.built) {
             if (t >= tl.tDrag) {
               act.built = true;
@@ -257,7 +284,7 @@ export function Swarm({ children }: { children: ReactNode }) {
           const x = a.x + (pt.x - a.x) * k;
           const y = a.y + (pt.y - a.y) * k;
           setHidden(i, false);
-          cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+          place(i, x, y, '', view);
         } else {
           setHidden(i, true);
         }
@@ -294,6 +321,7 @@ export function Swarm({ children }: { children: ReactNode }) {
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
+      window.removeEventListener('resize', measureTags);
       timers.forEach(clearTimeout);
       observer.disconnect();
       rt.observer = null;
