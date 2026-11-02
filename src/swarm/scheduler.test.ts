@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mulberry32 } from './prng';
-import { OFFSCREEN_MARGIN, QUEUE_FACTOR, Scheduler, isOffscreen, makeAgent, nearestFreeAgent, type Job } from './scheduler';
+import { OFFSCREEN_MARGIN, QUEUE_FACTOR, Scheduler, isOffscreen, makeAgent, scrolledPast, nearestFreeAgent, type Job } from './scheduler';
 import { restPoint, type Rect } from './timeline';
 
 const vp: Rect = { x: 0, y: 0, w: 1440, h: 900 };
@@ -126,6 +126,10 @@ describe('scheduler, pinned', () => {
     expect(isOffscreen(r10(1641, 100), vp)).toBe(true);
     expect(isOffscreen({ x: 100, y: -280, w: 10, h: 80 }, vp)).toBe(false);
     expect(isOffscreen({ x: 100, y: -290, w: 10, h: 80 }, vp)).toBe(true);
+  });
+  it('scrolledPast boundaries', () => {
+    expect(scrolledPast(1000 - 201, 1000)).toBe(true);
+    expect(scrolledPast(1000 - 199, 1000)).toBe(false);
   });
   it('pins the constants', () => {
     expect(OFFSCREEN_MARGIN).toBe(200);

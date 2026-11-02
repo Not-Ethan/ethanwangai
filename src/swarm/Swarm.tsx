@@ -2,7 +2,7 @@
 import { createContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { mulberry32 } from './prng';
 import { AGENT_COLOURS, agentCount, agentName, idlePose, initialPosition } from './agents';
-import { Scheduler, makeAgent, type AgentState, type Job } from './scheduler';
+import { Scheduler, makeAgent, scrolledPast, type AgentState, type Job } from './scheduler';
 import { clipFor, sampleJob, type JobSample, type JobTimeline, type Point, type Rect } from './timeline';
 import { createSwarmStore, type LogLine, type SwarmStore } from './swarmStore';
 
@@ -15,7 +15,7 @@ export interface SwarmRuntime {
 
 export const SwarmContext = createContext<SwarmRuntime | null>(null);
 
-interface Entry { id: number; name: string; el: HTMLElement; built: boolean }
+interface Entry { id: number; name: string; el: HTMLElement; built: boolean; queued: boolean }
 interface Runtime extends SwarmRuntime {
   registry: Map<HTMLElement, Entry>;
   byId: Map<number, Entry>;
@@ -36,7 +36,7 @@ function createRuntime(): Runtime {
   const rt: Runtime = {
     store, registry, byId, observer: null, mounted: false, rebuildImpl: null,
     register(el, name) {
-      const entry: Entry = { id: nextId++, name, el, built: false };
+      const entry: Entry = { id: nextId++, name, el, built: false, queued: false };
       registry.set(el, entry);
       byId.set(entry.id, entry);
       rt.observer?.observe(el);
@@ -118,10 +118,12 @@ export function Swarm({ children }: { children: ReactNode }) {
     let lastBusy = false;
     let started = false;
     let raf = 0;
+    let lastSweep = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
     let alive = true;
 
     const markBuilt = (e: Entry): void => {
+      e.queued = false;
       if (e.built) return;
       e.built = true;
       e.el.dataset.built = '1';
@@ -137,7 +139,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       for (const it of hits) {
         const e = rt.registry.get(it.target as HTMLElement);
         rt.observer?.unobserve(it.target);
-        if (e && !e.built) scheduler.enqueue({ id: e.id, name: e.name });
+        if (e && !e.built && !e.queued) { e.queued = true; scheduler.enqueue({ id: e.id, name: e.name }); }
       }
     };
     const observer = new IntersectionObserver(onIntersect, { threshold: 0.1, rootMargin: '0px 0px 80px 0px' });
@@ -177,6 +179,16 @@ export function Swarm({ children }: { children: ReactNode }) {
           box.el.style.opacity = '0';
           (box.el.lastElementChild as HTMLElement).textContent = s.job.name;
           active[s.agent.id] = { entry: rt.byId.get(s.job.id), box, built: false };
+        }
+      }
+
+      // sweep: anything scrolled past without ever intersecting (scrollbar drag, jump) is built instantly
+      if (started && now - lastSweep >= 250) {
+        lastSweep = now;
+        for (const e of rt.registry.values()) {
+          if (e.built || e.queued || !e.el.isConnected) continue;
+          const r = e.el.getBoundingClientRect();
+          if (scrolledPast(r.bottom + view.y, view.y)) { observer.unobserve(e.el); markBuilt(e); }
         }
       }
 
@@ -224,7 +236,7 @@ export function Swarm({ children }: { children: ReactNode }) {
               act.entry.el.style.clipPath = clipFor(sample.f);
             }
           }
-          if (t >= tl.tRelease) { scheduler.free(a); active[i] = null; }
+          if (t >= tl.tRelease) { if (act.entry) act.entry.queued = false; scheduler.free(a); active[i] = null; }
         } else if (idlePose(a, view, now / 1000, pt)) {
           cursor.style.transform = `translate3d(${pt.x}px, ${pt.y}px, 0)`;
         }
@@ -245,6 +257,7 @@ export function Swarm({ children }: { children: ReactNode }) {
         e.el.style.clipPath = '';
         e.el.style.opacity = '';
         e.built = false;
+        e.queued = false;
         observer.unobserve(e.el);
         observer.observe(e.el);
       }

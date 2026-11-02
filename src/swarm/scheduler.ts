@@ -34,6 +34,11 @@ export function isOffscreen(rect: Rect, vp: Rect, margin = OFFSCREEN_MARGIN): bo
   return rect.x + rect.w < vp.x - margin || rect.x > vp.x + vp.w + margin || rect.y + rect.h < vp.y - margin || rect.y > vp.y + vp.h + margin;
 }
 
+/** True when an element's bottom edge (document px) lies more than `margin` above the top of the viewport. */
+export function scrolledPast(rectBottom: number, scrollY: number, margin = OFFSCREEN_MARGIN): boolean {
+  return rectBottom < scrollY - margin;
+}
+
 /** The queue and the assignment rule. Knows nothing about the DOM: the caller measures rects. */
 export class Scheduler {
   readonly queue: Job[] = [];
