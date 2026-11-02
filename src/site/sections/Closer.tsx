@@ -1,8 +1,11 @@
+'use client';
 import { copy } from '../copy';
+import { useSwarmStats } from '@/swarm/useSwarmStats';
 import { Built } from '../Built';
 
 export function Closer() {
   const c = copy.closer;
+  const s = useSwarmStats();
   return (
     <section id="contact" className="sec closer band-4">
       <div className="closer__field" aria-hidden="true" />
@@ -24,7 +27,7 @@ export function Closer() {
             {c.door.paragraphs.map((p) => <p key={p}>{p}</p>)}
           </div>
           <div className="door__go">
-            <button type="button" className="btn btn-accent" data-rebuild>{c.door.button}</button>
+            <button type="button" className="btn btn-accent" data-rebuild disabled={s.busy} onClick={s.rebuild}>{c.door.button}</button>
             <p className="door__note">{c.door.note}</p>
           </div>
         </Built>

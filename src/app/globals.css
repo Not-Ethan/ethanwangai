@@ -154,3 +154,20 @@ body { font-family: 'Space Grotesk Variable', system-ui, sans-serif; font-size: 
   .door { gap: 28px; } .door__go { text-align: left; }
   .lede { font-size: 24px; }
 }
+
+/* ---- Task 4: the swarm ---- */
+/* Hidden state is opacity 0, not a clip-path: Chrome's IntersectionObserver counts a fully clipped element as not intersecting, so it would never be queued.
+   The swarm adds an inline clip-path and opacity 1 while the box is drawn. */
+html[data-swarm="on"] [data-build]:not([data-built]) { opacity: 0; pointer-events: none; }
+.status[data-off] { display: none; }
+.btn[disabled] { opacity: .6; cursor: default; }
+.swarm { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: visible; pointer-events: none; z-index: 60; }
+.cursor { position: absolute; top: -1.5px; left: -2px; width: 18px; height: 18px; transform-origin: 2px 1.5px; will-change: transform; filter: drop-shadow(0 1px 1px rgba(22,22,22,.2)); }
+.cursor svg { display: block; }
+.cursor__tag { position: absolute; left: 14px; top: 16px; white-space: nowrap; font-size: 11px; line-height: 1; padding: 3px 6px; border-radius: 4px; background: var(--agent); color: #fff; }
+.selbox { position: absolute; top: 0; left: 0; opacity: 0; border: 1.5px solid var(--agent); background: color-mix(in srgb, var(--agent) calc(var(--fill, 1) * 8%), transparent); will-change: transform, width, height; }
+.selbox__h { position: absolute; width: 7px; height: 7px; background: #fff; border: 1.5px solid var(--agent); }
+.selbox__h:nth-child(1) { left: -4.5px; top: -4.5px; } .selbox__h:nth-child(2) { right: -4.5px; top: -4.5px; }
+.selbox__h:nth-child(3) { left: -4.5px; bottom: -4.5px; } .selbox__h:nth-child(4) { right: -4.5px; bottom: -4.5px; }
+.selbox__label { position: absolute; left: -1.5px; top: -24px; white-space: nowrap; font-size: 11px; line-height: 1; padding: 3px 6px; border-radius: 4px; background: var(--agent); color: #fff; }
+@media (max-width: 767px) { .cursor__tag, .selbox__label { font-size: 10px; } }

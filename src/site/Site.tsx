@@ -1,3 +1,4 @@
+import { Swarm } from '@/swarm/Swarm';
 import { Bar } from './sections/Bar';
 import { Hero } from './sections/Hero';
 import { About } from './sections/About';
@@ -14,7 +15,7 @@ export const BUILT_TOTAL = 43;
 
 export function Site() {
   return (
-    <>
+    <Swarm>
       <Bar />
       <main>
         <Hero />
@@ -27,6 +28,6 @@ export function Site() {
       </main>
       <Footer />
       <ToTop />
-    </>
+    </Swarm>
   );
 }
