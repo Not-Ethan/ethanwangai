@@ -45,3 +45,6 @@ next-env.d.ts
 
 # gate stills
 .playwright-mcp/
+
+# claude code local config, impeccable skill install and agent worktrees
+.claude/
