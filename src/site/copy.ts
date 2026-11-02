@@ -1,104 +1,193 @@
-// Every user-facing string on the site (spec §3.1, §3.2), in Ethan's voice: lowercase, full sentences, no italics,
-// no title case, no em dashes. Agents do not improvise lines; change a string here only when the spec changes.
-import type { SectionId } from '@/valley/types';
+import { facts } from './facts';
 
-/** The ignition labels, in chain order (spec §3.1 · 01). Keys name what each label sits near. */
-export type IgnitionLabelKey = 'hut' | 'nist' | 'mill' | 'kalshiLamp' | 'wvu' | 'bars' | 'hillside';
-
-const NAV_ITEMS: readonly { label: string; section: SectionId }[] = [
-  { label: 'kalshi', section: 'kalshi' },
-  { label: 'heron', section: 'heron' },
-  { label: 'darch', section: 'darch' },
-  { label: 'summers', section: 'summers' },
-  { label: 'contact', section: 'contact' },
-];
-
-const LABELS: Record<IgnitionLabelKey, string> = {
-  hut: 'discord bots, middle school. my classmates used them.',
-  nist: 'nist, summer 2025',
-  mill: 'darch, june 2025 to may 2026',
-  kalshiLamp: 'kalshi, since jan 2026',
-  wvu: 'wvu medicine, summer 2026',
-  bars: 'heron, since june 2026',
-  hillside: 'things i built, one house each',
-};
-
-const HILLSIDE = [
-  'a discord bot for my middle school server',
-  'a trading algorithm for kalshi',
-  'a pipeline that made three thousand videos a month',
-  'a help-desk assistant that reads the docs for you',
-  'a pricing model for free-drinks promos at bars',
-] as const;
-
-const CONTACT_LINKS: readonly { label: string; href: string; external: boolean }[] = [
-  { label: 'email', href: 'mailto:ethan.wanq@gmail.com', external: false },
-  { label: 'github', href: 'https://github.com/Not-Ethan', external: true },
-  { label: 'linkedin', href: 'https://linkedin.com/in/edw173', external: true },
-];
-
+// Every string on the site. Lowercase, no em or en dashes. The name is uppercase through CSS only.
 export const copy = {
   meta: {
     title: 'ethan wang',
-    description: 'now is the best time in history to build things. everything lit on this page is something i built that people used.',
+    description: 'i build things, then watch them run. a trading algorithm, a video factory, a hedge for bar promos.',
   },
-  nav: {
-    home: 'ethan wang',
-    items: NAV_ITEMS,
-    separator: '·',
+  bar: {
+    mark: 'ew',
+    links: [
+      { label: 'about', href: '#about' },
+      { label: 'work', href: '#work' },
+      { label: 'experience', href: '#experience' },
+      { label: 'contact', href: '#contact' },
+    ],
+    cta: 'say hi ↗',
+    ctaHref: 'mailto:ethan.wanq@gmail.com',
+    status: (agents: number, built: number, total: number): string => `${agents} agents · ${built}/${total} built`,
   },
-  open: {
-    headline: 'now is the best time in history to build things.',
-    deck: 'everything lit here is something i built that people used.',
-    scrollCue: 'scroll',
-    labels: LABELS,
+  hero: {
+    eyebrow: 'cleveland, ohio',
+    name: ['ethan', 'wang'],
+    headline: {
+      plain: 'i build things, then watch them run.',
+      bold: 'a trading algorithm, a video factory, a hedge for bar promos.',
+    },
+    cta: 'see the work',
+    ctaHref: '#work',
+    ghost: 'six agents are building this page while you read it',
+    ghostPhone: 'three agents are building this page while you read it',
+    ghostBadge: 'watch them',
+    ghostHref: '#about',
   },
-  kalshi: {
-    heading: 'every light on that ridge is a trade my algorithm made.',
-    body: 'about thirty thousand of them since january 2026. i built the whole thing: the feeds, the quoting, the risk checks, the replay stack i use to find out what went wrong. somewhere in there it climbed into the top 100 all-time on kalshi\'s crypto leaderboard.',
-    figures: ['about 30,000 trades', 'top 100 all-time, crypto'],
-    mono: 'jan 2026 → oct 2026 · as of oct 2026 · not live',
-    /** The ridge counter (spec §3.1 · 02); n is already rounded and capped by the caller. */
-    counter: (n: number) => `${n.toLocaleString('en-US')} trades`,
+  about: {
+    eyebrow: 'about',
+    h2: "hi. i'm ethan.",
+    logTitle: 'build log',
+    logEmpty: 'waiting for the agents',
+    logReduced: 'the agents are resting. you asked for less motion.',
+    logLine: (agent: string, element: string, seconds: number): string => `${agent} · ${element} · ${seconds.toFixed(2)}s`,
+    lede: "a few sentences of plain language turn into thousands of lines of code now. what used to take months takes an afternoon. i've always loved building things. i never really liked the coding.",
+    notes: [
+      'the best part is watching something i built come alive. my classmates in middle school using my discord bots. a trading algorithm i wrote climbing into the top 100 on kalshi.',
+      "right now i trade on kalshi and i'm co-founding heron, which prices and hedges free-drink promos for bars. before that i co-founded darch, a video factory that ran for a year.",
+      'cwru, computer science and math, class of 2028. i speak mandarin.',
+    ],
   },
-  heron: {
-    heading: 'if the home team wins tonight, your drinks are free.',
-    body: 'the bar doesn\'t eat that. heron prices the promo, covers the payout, and hedges it on prediction markets. the lines from each bar run to the market. co-founded it this summer. we have bars signed in four cities.',
-    mono: 'co-founder · since june 2026 · as of oct 2026',
+  toolbox: {
+    eyebrow: 'toolbox',
+    h2: 'what i build with',
+    rows: [
+      { label: 'languages', chips: ['python', 'typescript', 'java', 'c', 'sql'] },
+      { label: 'backend', chips: ['fastapi', 'node', 'websockets', 'rest', 'ffmpeg'] },
+      { label: 'data', chips: ['postgresql', 'mongodb', 'pandas', 'numpy', 'pytorch'] },
+      { label: 'infra', chips: ['linux', 'docker', 'git'] },
+      { label: 'markets', chips: ['kalshi', 'order books', 'hedging', 'prediction markets'] },
+    ],
   },
-  darch: {
-    heading: 'darch made three thousand videos a month. it ended in may 2026.',
-    body: 'it ran on python, node and ffmpeg. what it made got about twenty million views a month. scroll back and it lights up again. that\'s the only thing on this page that does.',
-    figures: ['3,000 videos a month', '20 million views a month'],
-    mono: 'co-founder · june 2025 to may 2026',
+  experience: {
+    eyebrow: 'experience',
+    h2: "where i've been",
+    jobs: [
+      {
+        id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: 'since jan 2026', when: 'jan 2026 to now', place: 'cleveland',
+        lede: `a trading algorithm that climbed into the top ${facts.kalshi.leaderboardTop} all-time on kalshi's crypto markets.`,
+        points: [
+          "a python platform that reads kalshi's order book and crypto reference feeds from a few venues, places orders, checks risk and reconciles fills.",
+          'a multi-terabyte research and replay stack, so every idea gets tested out of sample before it trades.',
+          `about ${facts.kalshi.trades.toLocaleString('en-US')} live trades so far. it runs while i sleep.`,
+        ],
+        chips: ['python', 'websockets', 'postgresql', 'pandas'],
+      },
+      {
+        id: 'heron', name: 'heron', role: 'co-founder', sub: 'since june 2026', when: 'june 2026 to now', place: 'four cities',
+        lede: "if the home team wins tonight, your drinks are free. the bar doesn't eat that.",
+        points: [
+          'heron prices the promo, covers the payout and hedges it on prediction markets.',
+          'i built the pricing, liability and hedge-execution models.',
+          'bars signed in four cities.',
+        ],
+        chips: ['python', 'fastapi', 'kalshi'],
+      },
+      {
+        id: 'wvu', name: 'wvu medicine', role: 'ml intern', sub: 'summer 2026', when: 'summer 2026', place: 'morgantown',
+        lede: 'a model that watches about a hundred million dollars a year of pharmacy claims and notices when denials spike.',
+        points: [
+          'anomaly detection over the claims stream. the modeling core shipped for production integration.',
+          'tooling to plug it into open webui so people could ask it questions.',
+        ],
+        chips: ['python', 'pytorch', 'pandas'],
+      },
+      {
+        id: 'darch', name: 'darch', role: 'co-founder', sub: '2025 to 2026', when: 'june 2025 to may 2026', place: 'remote',
+        lede: 'a video factory. three thousand videos a month, about twenty million views a month. it ended in may 2026.',
+        points: [
+          'python, node and ffmpeg end to end. scripts in, rendered videos out, distributed.',
+          'i ran engineering. it ran for a year.',
+        ],
+        chips: ['python', 'fastapi', 'node', 'ffmpeg', 'mongodb'],
+      },
+      {
+        id: 'nist', name: 'nist', role: 'software intern', sub: 'summer 2025', when: 'summer 2025', place: 'gaithersburg',
+        lede: "a help-desk assistant that reads the internal docs so people don't have to.",
+        points: [
+          'retrieval, reranking and deep search inside a custom open webui fork.',
+          'structured logging and failure analysis, so we knew when it was wrong.',
+        ],
+        chips: ['python', 'rag', 'docker'],
+      },
+    ],
   },
-  summers: {
-    heading: 'i spent two summers building things for other people.',
-    body: 'at nist i built a help-desk assistant that searches the internal docs and answers from them. at wvu medicine i built a model over about a hundred million dollars a year of pharmacy claims. when denials spike, it notices.',
-    figures: ['about $100m of claims a year'],
-    mono: 'nist, summer 2025 · wvu medicine, summer 2026',
+  work: {
+    eyebrow: 'selected work',
+    h2: 'four things that ran',
+    intro: 'no write-ups. just what each one was and what it did.',
+    cases: [
+      {
+        id: 'kalshi', no: '01', year: '2026', kind: 'trading', title: 'kalshi algo', tag: 'it trades while i sleep.',
+        lede: `a market-making and stat-arb system on kalshi's crypto markets. top ${facts.kalshi.leaderboardTop} all-time, about ${facts.kalshi.trades.toLocaleString('en-US')} trades.`,
+        chips: ['python', 'websockets', 'postgresql'], shot: 'book',
+      },
+      {
+        id: 'heron', no: '02', year: '2026', kind: 'product', title: 'heron', tag: 'free drinks if the home team wins.',
+        lede: "the bar doesn't eat that. heron prices the promo, covers the payout and hedges it on prediction markets. bars in four cities.",
+        chips: ['python', 'fastapi'], shot: 'tab',
+      },
+      {
+        id: 'darch', no: '03', year: '2025', kind: 'system', title: 'darch', tag: 'three thousand videos a month.',
+        lede: 'a content pipeline on python, node and ffmpeg. about twenty million views a month for a year. it ended in may 2026.',
+        chips: ['python', 'node', 'ffmpeg'], shot: 'grid',
+      },
+      {
+        id: 'nist', no: '04', year: '2025', kind: 'tool', title: 'nist help desk', tag: "reads the docs so you don't.",
+        lede: 'a retrieval assistant inside a custom open webui fork, with logging so we knew when it was wrong.',
+        chips: ['python', 'rag', 'docker'], shot: 'chat',
+      },
+    ],
   },
-  alive: {
-    heading: 'a few sentences of plain language turn into thousands of lines of code now.',
-    body: 'people kept making languages higher level so you could do more with less. this is the top of that. what used to take months takes an afternoon. the world doesn\'t need a master programmer who dreams in code. it needs people who\'ve seen so many ideas that they see opportunities everywhere. i never really liked the coding. i liked watching it run.',
+  rest: {
+    eyebrow: 'the rest of it',
+    h2: 'school, awards, the early stuff',
+    cards: [
+      {
+        title: 'education',
+        entries: [
+          { name: 'b.s. computer science', line: `case western reserve university · secondary major in mathematics · class of ${facts.school.classOf}` },
+          { name: 'mandarin', line: 'fluent' },
+        ],
+      },
+      {
+        title: 'awards',
+        entries: [
+          { name: 'top 100 all-time', line: 'kalshi crypto profit leaderboard · 2026' },
+          { name: 'innovation award', line: 'tartanhacks 2025, for orbit' },
+        ],
+      },
+      {
+        title: 'the early stuff',
+        entries: [
+          { name: 'discord bots', line: 'middle school. my classmates used them. the first thing i built that ran.' },
+          { name: 'orbit', line: 'a chrome extension, built in a weekend at tartanhacks, feb 2025' },
+        ],
+      },
+    ],
   },
-  yours: {
-    heading: 'type one sentence about something you\'d build.',
-    body: 'watch it turn into a house with the lights on. yours gets a light too.',
-    placeholder: 'something you\'d build',
-    button: 'build',
-    maxLength: 140,
-    /** The build clock (spec §3.1 · 07); t is already formatted 0.00. */
-    clock: (t: string) => `${t} / 4.40`,
-    /** The tag after the build; parts is the real parts.length of the house. */
-    tag: (words: number, parts: number) => `${words} words in · ${parts.toLocaleString('en-US')} parts out · 4.40 s on the clock`,
-    hint: 'it stays in this browser. nothing is sent anywhere.',
-    hillside: HILLSIDE,
+  closer: {
+    h2: ["i'm probably up", 'building something.'],
+    p: 'email is the fastest way to reach me. i answer all of them.',
+    mail: 'ethan.wanq@gmail.com',
+    links: [
+      { label: 'github ↗', href: 'https://github.com/Not-Ethan' },
+      { label: 'linkedin ↗', href: 'https://linkedin.com/in/edw173' },
+    ],
+    door: {
+      title: 'oh, and about the agents.',
+      paragraphs: [
+        'every element on this page was drawn in by a cursor as you scrolled. there are six of them. they don\'t exist.',
+        "nothing is sent anywhere. there's no server behind this page. it's files on a cdn and some javascript.",
+        "they'll do it again if you ask.",
+      ],
+      button: 'rebuild the page ↻',
+      note: 'it takes about as long as reading it did.',
+    },
   },
-  contact: {
-    heading: 'it\'s late and i\'m probably up building something.',
-    body: 'the first light on this page is still the discord bot.',
-    links: CONTACT_LINKS,
-    mono: 'ethan wang · cleveland · as of oct 2026',
+  footer: {
+    left: 'ethan wang · cleveland',
+    right: "that's everything. the agents are done.",
+    credit: 'layout after',
+    creditLink: { label: 'aahil-khan.xyz', href: 'https://www.aahil-khan.xyz/' },
   },
+  totop: { aria: 'back to top', glyph: '↑' },
 } as const;
