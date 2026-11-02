@@ -55,6 +55,8 @@ function createRuntime(): Runtime {
 interface PoolBox { el: HTMLDivElement; until: number; tl: JobTimeline | null; startAt: number }
 interface Active { entry: Entry | undefined; built: boolean }
 
+const promptOf = (e: Entry | undefined): string | undefined => e?.el.dataset.prompt;
+
 function makeCursor(i: number): HTMLDivElement {
   const c = document.createElement('div');
   c.className = 'cursor';
@@ -64,6 +66,7 @@ function makeCursor(i: number): HTMLDivElement {
   tag.className = 'cursor__tag mono';
   tag.textContent = agentName(i);
   c.appendChild(tag);
+  c.style.opacity = '1';
   return c;
 }
 
@@ -112,6 +115,16 @@ export function Swarm({ children }: { children: ReactNode }) {
     const active: (Active | null)[] = agents.map(() => null);
     const idleSince: number[] = agents.map(() => -Infinity);
     const hidden: boolean[] = agents.map(() => false);
+    const faded: boolean[] = agents.map(() => false);
+    const IDLE_HOLD = 1500;
+    // an idle cursor fades out 1.5 s after it was freed; it comes back at once (no transition) when it gets a job
+    const setFaded = (i: number, f: boolean): void => {
+      if (faded[i] === f) return;
+      faded[i] = f;
+      const st = cursors[i].style;
+      st.transition = f ? 'opacity 300ms linear' : 'none';
+      st.opacity = f ? '0' : '1';
+    };
     // cursor tags flip to the left of the tip when they would cross the right edge; widths measured once, and on resize
     let tagW: number[] = [];
     const measureTags = (): void => { tagW = cursors.map((c) => (c.lastElementChild as HTMLElement).offsetWidth); };
@@ -170,6 +183,32 @@ export function Swarm({ children }: { children: ReactNode }) {
 
     document.fonts.ready.then(() => { if (alive) timers.push(setTimeout(() => { started = true; }, 250)); });
 
+    // keyboard focus on or inside an unbuilt element builds it instantly, so nothing focused is ever invisible
+    const onFocusIn = (ev: FocusEvent): void => {
+      const target = ev.target as Element | null;
+      const host = target && typeof target.closest === 'function' ? target.closest('[data-build]') : null;
+      const e = host ? rt.registry.get(host as HTMLElement) : undefined;
+      if (!e || e.built) return;
+      const i = agents.findIndex((a, k) => a.busy && active[k]?.entry === e);
+      if (i >= 0) {
+        // mid-job: finish it where the cursor is
+        const a = agents[i];
+        for (const b of pool) { if (b.tl === a.timeline) { b.el.style.opacity = '0'; b.until = 0; b.tl = null; } }
+        markBuilt(e);
+        scheduler.abandon(a, { x: lastPos[i].x, y: lastPos[i].y });
+        active[i] = null;
+        idleSince[i] = performance.now();
+        setFaded(i, false);
+        return;
+      }
+      // still waiting in the queue: take it out so no agent draws a box over a built element
+      const qi = scheduler.queue.findIndex((j) => j.id === e.id);
+      if (qi >= 0) scheduler.queue.splice(qi, 1);
+      markBuilt(e);
+      observer.unobserve(e.el);
+    };
+    document.addEventListener('focusin', onFocusIn);
+
     const measure = (job: Job): Rect | null => {
       const e = rt.byId.get(job.id);
       if (!e || !e.el.isConnected) return null;
@@ -197,7 +236,7 @@ export function Swarm({ children }: { children: ReactNode }) {
           box.startAt = s.agent.startAt;
           box.el.style.setProperty('--agent', AGENT_COLOURS[s.agent.id % AGENT_COLOURS.length]);
           box.el.style.opacity = '0';
-          (box.el.lastElementChild as HTMLElement).textContent = s.job.name;
+          (box.el.lastElementChild as HTMLElement).textContent = promptOf(rt.byId.get(s.job.id)) ?? s.job.name;
           const tr = s.timeline.rect;
           (box.el.lastElementChild as HTMLElement).style.top = tr.y - view.y < 88 ? 'calc(100% + 6px)' : '';
           active[s.agent.id] = { entry: rt.byId.get(s.job.id), built: false };
@@ -231,6 +270,7 @@ export function Swarm({ children }: { children: ReactNode }) {
           scheduler.abandon(a, { x: lastPos[i].x, y: lastPos[i].y });
           active[i] = null;
           idleSince[i] = now;
+          setFaded(i, false);
         }
       }
 
@@ -257,6 +297,7 @@ export function Swarm({ children }: { children: ReactNode }) {
           const tl = a.timeline;
           const t = now - a.startAt;
           setHidden(i, false);
+          setFaded(i, false);
           if (t < 0) {
             place(i, a.x, a.y, '', view);
             continue;
@@ -268,7 +309,7 @@ export function Swarm({ children }: { children: ReactNode }) {
               act.built = true;
               if (act.entry) {
                 markBuilt(act.entry);
-                log = [...log, { id: ++logId, agent: a.id, name: act.entry.name, seconds: (tl.travel + tl.drag) / 1000 }].slice(-LOG_KEEP);
+                log = [...log, { id: ++logId, agent: a.id, name: act.entry.name, prompt: promptOf(act.entry) ?? act.entry.name, seconds: (tl.travel + tl.drag) / 1000 }].slice(-LOG_KEEP);
                 dirty = true;
               }
             } else if (act.entry && sample.phase !== 'travel') {
@@ -284,6 +325,7 @@ export function Swarm({ children }: { children: ReactNode }) {
           const x = a.x + (pt.x - a.x) * k;
           const y = a.y + (pt.y - a.y) * k;
           setHidden(i, false);
+          setFaded(i, now - idleSince[i] >= IDLE_HOLD);
           place(i, x, y, '', view);
         } else {
           setHidden(i, true);
@@ -314,6 +356,8 @@ export function Swarm({ children }: { children: ReactNode }) {
       scheduler.reset();
       active.fill(null);
       for (const b of pool) { b.el.style.opacity = '0'; b.until = 0; b.tl = null; }
+      const t0 = performance.now();
+      for (let i = 0; i < agents.length; i++) idleSince[i] = t0;
       built = 0; log = []; dirty = false; lastBusy = false;
       store.set({ built: 0, log: [], busy: false });
     };
@@ -322,6 +366,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       alive = false;
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', measureTags);
+      document.removeEventListener('focusin', onFocusIn);
       timers.forEach(clearTimeout);
       observer.disconnect();
       rt.observer = null;

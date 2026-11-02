@@ -158,6 +158,23 @@ describe('Scheduler: centre-first assignment, tempo, abandon', () => {
     }
     expect(new Set(d.started.map((x) => x.timeline.travel)).size).toBeGreaterThan(1);
   });
+  it('takes tempo 0.6x while more jobs wait than there are agents', () => {
+    const slow = new Scheduler(makeAgents(6), mulberry32(7));
+    for (let i = 0; i < 8; i++) slow.enqueue(job(i));
+    const d = slow.dispatch(0, vp, () => rectAt(300, 300));
+    expect(d.started.length).toBe(6);
+    for (const { timeline: tl } of d.started) {
+      expect(tl.tempo.travel).toBeLessThanOrEqual(0.6 * 1.4); expect(tl.tempo.drag).toBeLessThanOrEqual(0.6 * 1.35);
+    }
+    const fast = new Scheduler(makeAgents(6), mulberry32(7));
+    for (let i = 0; i < 3; i++) fast.enqueue(job(i));
+    const f = fast.dispatch(0, vp, () => rectAt(300, 300));
+    for (const { timeline: tl } of f.started) {
+      expect(tl.tempo.travel).toBeGreaterThanOrEqual(0.8); expect(tl.tempo.drag).toBeGreaterThanOrEqual(0.85);
+    }
+    // same seed, same first draw: exactly 0.6x
+    expect(d.started[0].timeline.tempo.travel).toBeCloseTo(0.6 * f.started[0].timeline.tempo.travel, 10);
+  });
   it('abandon frees a busy agent at the given point', () => {
     const agents = makeAgents(1);
     const s = new Scheduler(agents, mulberry32(1));

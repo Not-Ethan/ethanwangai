@@ -14,6 +14,7 @@ const EMPTY: Readonly<Dispatch> = Object.freeze({ started: [], instant: [], drop
 
 export const OFFSCREEN_MARGIN = 200;
 export const QUEUE_FACTOR = 2;
+export const LONG_QUEUE_TEMPO = 0.6;
 
 export function makeAgent(id: number, at: Point, phase: number): AgentState {
   return { id, x: at.x, y: at.y, phase, busy: false, job: null, timeline: null, startAt: 0 };
@@ -62,6 +63,8 @@ export class Scheduler {
       if (isOffscreen(job.rect, vp)) { out.instant.push(job); this.queue.splice(k, 1); continue; }
       k++;
     }
+    // a long queue (more waiting than agents) is worked through faster
+    const tempoScale = this.queue.length > this.agents.length ? LONG_QUEUE_TEMPO : 1;
     const cx = vp.x + vp.w / 2, cy = vp.y + vp.h / 2;
     while (this.queue.length > 0 && this.agents.some((a) => !a.busy)) {
       // the on-screen job nearest the viewport centre, ties by queue order
@@ -75,7 +78,7 @@ export class Scheduler {
       const rect = job.rect!;
       const i = nearestFreeAgent(this.agents, rect.x, rect.y);
       const agent = this.agents[i];
-      const tempo = { travel: 0.8 + this.rand() * 0.6, drag: 0.85 + this.rand() * 0.5 };
+      const tempo = { travel: (0.8 + this.rand() * 0.6) * tempoScale, drag: (0.85 + this.rand() * 0.5) * tempoScale };
       const rest = { dx: 6 + this.rand() * 12, dy: 8 + this.rand() * 14 };
       const timeline = jobTimeline({ x: agent.x, y: agent.y }, rect, tempo, rest);
       agent.busy = true; agent.job = job; agent.timeline = timeline; agent.startAt = now + jitter(this.rand);

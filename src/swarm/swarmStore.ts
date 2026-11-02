@@ -1,4 +1,4 @@
-export interface LogLine { id: number; agent: number; name: string; seconds: number }
+export interface LogLine { id: number; agent: number; name: string; /** what the agent was told to build (data-prompt), else the name */ prompt: string; seconds: number }
 export interface SwarmSnapshot { on: boolean; agents: number; built: number; total: number; log: readonly LogLine[]; busy: boolean; reduced: boolean }
 
 /** What the server renders and what the client's first render must also see (hydration). */
