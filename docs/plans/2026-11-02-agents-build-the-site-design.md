@@ -290,3 +290,14 @@ The copy tests that pinned old strings change with these; the facts checks stay 
 - The education line is `case western reserve university · secondary major in mathematics · class of 2028` with a no-break space before each `·` so the separator never starts a line.
 - The four shots get one small loop each after they are built (CSS keyframes, paused under reduced motion): the order book's bars breathe (three bars scale on x between 0.85 and 1.15 over 2.6 to 3.4 s), the video grid's progress fill crawls from 40 % to 70 % and back over 6 s, the chat's answer bubble shows a blinking caret, the bar tab's `drinks · free` pill pulses once every 4 s. Nothing moves before the element is built.
 - DESIGN.md token lists gain the 26 px and 4 px radii and the 10, 13, 14, 15, 18, 22 and 24 px sizes its prose already documents.
+
+### 13.8 After the Impeccable audit (14/20)
+
+- Motion is finite: each shot loop runs once (book breath 3.4 s, grid crawl 4.5 s, chat caret six blinks, tab pulse once) after its shot is built; nothing on the page moves forever (WCAG 2.2.2).
+- The off state is CSS, not React: both copy variants are in the server HTML with `when-on` / `when-off` classes and `html[data-swarm="on"]` decides which shows. So the no-JavaScript page and the failed-bundle page (after the 6 s reveal) say the agents stayed home, show no pill and no rebuild button, and the log card collapses to its one line.
+- Focus: the to-top link is `visibility: hidden` while hidden; rebuild focuses the h1 after the jump and uses `aria-disabled`; the mark link is labelled `ethan wang, top of page`.
+- Space Grotesk is self-hosted through `next/font/local` like the mono face (preloaded); the start gate is `fonts.ready` capped at 600 ms, then 150 ms.
+- The animation loop idles when nothing is busy and restarts from the observer, focus, scroll and rebuild.
+- The index sub-line uses `--ink-muted`; phone grids use `minmax(0, 1fr)`; SVG fills use tokens.
+- The bar tab and chat shots carry no made-up line items: bars and lines stand in for text, and the only words are `drinks · free`, `hedged` and `cited`.
+- Tailwind's source scan skips `docs/`.
