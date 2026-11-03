@@ -46,7 +46,7 @@ button.btn { cursor: pointer; font-family: inherit; }
 .bar__nav a { padding: 10px 14px; font-size: 15px; font-weight: 500; color: var(--ink-muted); text-decoration: none; } .bar__nav a:hover { color: var(--ink); }
 .bar__nav a[aria-current] { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 6px; }
 .bar__right { display: flex; align-items: center; gap: 16px; }
-.status { font-size: 12px; height: 32px; min-width: 15ch; justify-content: center; padding: 0 12px; display: inline-flex; align-items: center; border: var(--bw) solid var(--border); border-radius: var(--radius-pill); background: var(--surface); }
+.status { font-size: 12px; height: 32px; min-width: calc(22ch + 28px); justify-content: center; padding: 0 12px; display: inline-flex; align-items: center; border: var(--bw) solid var(--border); border-radius: var(--radius-pill); background: var(--surface); }
 .hero { position: relative; min-height: 100svh; overflow: hidden; }
 .hero__grid { position: absolute; inset: -100px -36px; background-image: linear-gradient(var(--grid) 2px, transparent 2px), linear-gradient(90deg, var(--grid) 2px, transparent 2px); background-size: 88px 88px; }
 .hero__glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 6%, rgba(255,255,255,.7), transparent 40%), radial-gradient(circle 220px at 19% 50%, rgba(250,204,0,.28), transparent); }
@@ -191,16 +191,16 @@ body { position: relative; }
 @media (max-width: 767px) { .cursor__tag, .selbox__label { font-size: 10px; } }
 
 /* ---- Shot loops: one small loop each, started only once the shot's element is built, off under reduced motion ---- */
-.shot--book .breath { transform-box: fill-box; animation: breath 3.4s ease-in-out 1 paused; }
+.shot--book .breath { transform-box: fill-box; animation: shot-breath 3.4s ease-in-out 1 paused; }
 .shot--book .breath--bid { transform-origin: right center; } .shot--book .breath--ask { transform-origin: left center; }
-.shot--grid .crawl { transform-box: fill-box; transform-origin: left center; animation: crawl 4.5s ease-in-out 1 paused; }
-.shot--chat .caret { animation: caret .8s steps(1, end) 6 paused; }
-.shot--tab .pulse { transform-box: fill-box; transform-origin: center; animation: pulse 4s ease-in-out 1 paused; }
+.shot--grid .crawl { transform-box: fill-box; transform-origin: left center; animation: shot-crawl 4.5s ease-in-out 1 paused; }
+.shot--chat .caret { animation: shot-caret .8s steps(1, end) 6 paused; }
+.shot--tab .pulse { transform-box: fill-box; transform-origin: center; animation: shot-pulse 4s ease-in-out 1 paused; }
 [data-build][data-built] .breath, [data-build][data-built] .crawl, [data-build][data-built] .caret, [data-build][data-built] .pulse { animation-play-state: running; }
-@keyframes breath { 0%, 100% { transform: scaleX(1); } 33% { transform: scaleX(.85); } 66% { transform: scaleX(1.15); } }
-@keyframes crawl { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.75); } }
-@keyframes caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-@keyframes pulse { 0%, 12%, 100% { transform: scale(1); } 6% { transform: scale(1.08); } }
+@keyframes shot-breath { 0%, 100% { transform: scaleX(1); } 33% { transform: scaleX(.85); } 66% { transform: scaleX(1.15); } }
+@keyframes shot-crawl { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.75); } }
+@keyframes shot-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes shot-pulse { 0%, 12%, 100% { transform: scale(1); } 6% { transform: scale(1.06); } }
 @media (prefers-reduced-motion: reduce) {
   .shot--book .breath, .shot--grid .crawl, .shot--chat .caret, .shot--tab .pulse { animation: none; }
 }

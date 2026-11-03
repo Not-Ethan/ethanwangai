@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AGENT_COLOURS, IDLE_INSET, JITTER_MAX, agentCount, agentName, idleDrift, idlePose, initialPosition, jitter } from './agents';
+import { AGENT_COLOURS, IDLE_INSET, JITTER_MAX, agentCount, agentName, idleDrift, idlePose, initialPosition, jitter, respawnPoint } from './agents';
 import { mulberry32 } from './prng';
 
 const vp = { x: 0, y: 0, w: 1440, h: 900 };
@@ -106,5 +106,16 @@ describe('agents, pinned', () => {
     let max = 0;
     for (let i = 0; i < 500; i++) max = Math.max(max, jitter(r));
     expect(max).toBeGreaterThan(110);
+  });
+});
+
+describe('respawnPoint', () => {
+  const v = { x: 0, y: 2000, w: 1440, h: 900 };
+  it('uses the side edge for a target well below the top', () => {
+    expect(respawnPoint({ x: 300, y: 2200 }, v)).toEqual({ x: -40, y: 2200 });
+    expect(respawnPoint({ x: 1300, y: 2400 }, v)).toEqual({ x: 1480, y: 2400 });
+  });
+  it('uses the top edge for a target near the top', () => {
+    expect(respawnPoint({ x: 700, y: 2020 }, v)).toEqual({ x: 700, y: 1960 });
   });
 });

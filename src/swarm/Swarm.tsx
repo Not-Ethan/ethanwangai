@@ -1,8 +1,8 @@
 'use client';
 import { createContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { mulberry32 } from './prng';
-import { AGENT_COLOURS, agentCount, agentName, idlePose, initialPosition } from './agents';
-import { Scheduler, isOffscreen, makeAgent, scrolledPast, type AgentState, type Job } from './scheduler';
+import { AGENT_COLOURS, agentCount, agentName, idlePose, initialPosition, respawnPoint } from './agents';
+import { Scheduler, BAR_HEIGHT, isOffscreen, makeAgent, scrolledPast, type AgentState, type Job } from './scheduler';
 import { clipFor, sampleJob, type JobSample, type JobTimeline, type Point, type Rect } from './timeline';
 import { createSwarmStore, type LogLine, type SwarmStore } from './swarmStore';
 
@@ -25,6 +25,9 @@ interface Runtime extends SwarmRuntime {
 }
 
 const LOG_KEEP = 9;
+const LABEL_BELOW = 92;
+// a cursor tag sits 16 px under the tip: a tip higher than this (viewport px) would put the tag over the bar, so the cursor is hidden there
+const TIP_MIN_Y = BAR_HEIGHT - 16;
 const CURSOR_SVG = '<svg viewBox="0 0 18 18" width="18" height="18"><path d="M2 1.5 L2 14.5 L5.6 11.2 L8 16.5 L10.6 15.4 L8.2 10.2 L13 10.2 Z" fill="var(--agent)" style="stroke:var(--surface)" stroke-width="1.5" stroke-linejoin="round"/></svg>';
 
 /** No DOM access here: this runs during render (server and client). */
@@ -52,7 +55,7 @@ function createRuntime(): Runtime {
   return rt;
 }
 
-interface PoolBox { el: HTMLDivElement; until: number; tl: JobTimeline | null; startAt: number }
+interface PoolBox { el: HTMLDivElement; until: number; tl: JobTimeline | null; startAt: number; /** label mode: 0 above the box, 1 below it, 2 hidden */ label: 0 | 1 | 2 }
 interface Active { entry: Entry | undefined; built: boolean }
 
 const promptOf = (e: Entry | undefined): string | undefined => e?.el.dataset.prompt;
@@ -77,7 +80,7 @@ function makeBox(): PoolBox {
   const label = document.createElement('span');
   label.className = 'selbox__label mono';
   el.appendChild(label);
-  return { el, until: 0, tl: null, startAt: 0 };
+  return { el, until: 0, tl: null, startAt: 0, label: 0 };
 }
 
 export function Swarm({ children }: { children: ReactNode }) {
@@ -116,8 +119,10 @@ export function Swarm({ children }: { children: ReactNode }) {
     const idleSince: number[] = agents.map(() => -Infinity);
     const hidden: boolean[] = agents.map(() => false);
     const faded: boolean[] = agents.map(() => false);
-    const IDLE_HOLD = 1500;
-    // an idle cursor fades out 1.5 s after it was freed; it comes back at once (no transition) when it gets a job
+    const IDLE_HOLD = 800;
+    // per cursor: 0 when it was freed on top of other built content (it fades at once), else IDLE_HOLD
+    const holdMs: number[] = agents.map(() => IDLE_HOLD);
+    // an idle cursor fades out 0.8 s after it was freed; it comes back at once (no transition) when it gets a job
     const setFaded = (i: number, f: boolean): void => {
       if (faded[i] === f) return;
       faded[i] = f;
@@ -137,6 +142,8 @@ export function Swarm({ children }: { children: ReactNode }) {
       const f = x + 14 + tagW[i] + 8 > view.x + view.w;
       if (f !== flipped[i]) { flipped[i] = f; cursors[i].classList.toggle('cursor--flip', f); }
       cursors[i].style.transform = `translate3d(${x}px, ${y}px, 0)${extra}`;
+      // a tip outside the viewport hides the whole cursor (no tag slivers), in any phase
+      setHidden(i, x < view.x || x > view.x + view.w || y < view.y + TIP_MIN_Y || y > view.y + view.h);
     };
     const setHidden = (i: number, h: boolean): void => {
       if (hidden[i] === h) return;
@@ -243,7 +250,16 @@ export function Swarm({ children }: { children: ReactNode }) {
       const view = vp();
 
       if (started && scheduler.queue.length > 0) {
-        const d = scheduler.dispatch(now, view, measure);
+        const d = scheduler.dispatch(now, view, measure, {
+          skipCovered: true,
+          // a faded or off-screen cursor reappears just outside the nearest edge, not wherever it last rested
+          prepare: (agent, rect) => {
+            if (faded[agent.id] || hidden[agent.id]) {
+              const p = respawnPoint({ x: rect.x, y: rect.y }, view);
+              agent.x = p.x; agent.y = p.y;
+            }
+          },
+        });
         for (const j of [...d.instant, ...d.dropped]) { const e = rt.byId.get(j.id); if (e) markBuilt(e); }
         for (const s of d.started) {
           let box = pool.find((b) => b.until <= now);
@@ -254,8 +270,6 @@ export function Swarm({ children }: { children: ReactNode }) {
           box.el.style.setProperty('--agent', AGENT_COLOURS[s.agent.id % AGENT_COLOURS.length]);
           box.el.style.opacity = '0';
           (box.el.lastElementChild as HTMLElement).textContent = promptOf(rt.byId.get(s.job.id)) ?? s.job.name;
-          const tr = s.timeline.rect;
-          (box.el.lastElementChild as HTMLElement).style.top = tr.y - view.y < 88 ? 'calc(100% + 6px)' : '';
           active[s.agent.id] = { entry: rt.byId.get(s.job.id), built: false };
         }
       }
@@ -298,6 +312,15 @@ export function Swarm({ children }: { children: ReactNode }) {
         if (now >= b.until) { b.el.style.opacity = '0'; b.tl = null; continue; }
         if (t < 0) continue;
         const r = b.tl.rect;
+        // the label never sits above y = 68 (under the bar): a box whose top is within 92 px of the viewport top gets it below; re-decided every frame since the page scrolls
+        // (and when even the below position would sit under the bar, because the box scrolled up behind it, the label is hidden)
+        const mode: 0 | 1 | 2 = r.y - view.y >= LABEL_BELOW ? 0 : r.y + r.h + 6 < view.y + BAR_HEIGHT ? 2 : 1;
+        if (mode !== b.label) {
+          b.label = mode;
+          const ls = (b.el.lastElementChild as HTMLElement).style;
+          ls.top = mode === 1 ? 'calc(100% + 6px)' : '';
+          ls.visibility = mode === 2 ? 'hidden' : '';
+        }
         sampleJob(b.tl, t, boxSample);
         const st = b.el.style;
         st.transform = `translate3d(${r.x}px, ${r.y}px, 0)`;
@@ -313,8 +336,8 @@ export function Swarm({ children }: { children: ReactNode }) {
         if (a.busy && act && a.timeline) {
           const tl = a.timeline;
           const t = now - a.startAt;
-          setHidden(i, false);
           setFaded(i, false);
+          holdMs[i] = IDLE_HOLD;
           if (t < 0) {
             place(i, a.x, a.y, '', view);
             continue;
@@ -335,14 +358,23 @@ export function Swarm({ children }: { children: ReactNode }) {
               act.entry.el.style.clipPath = clipFor(sample.f);
             }
           }
-          if (t >= tl.tRelease) { if (act.entry) act.entry.queued = false; scheduler.free(a); active[i] = null; idleSince[i] = now; }
+          if (t >= tl.tRelease) { if (act.entry) act.entry.queued = false;
+            scheduler.free(a); active[i] = null; idleSince[i] = now;
+            // freed on top of other built content (the tag would sit over it): fade at once. One layout read per completion.
+            holdMs[i] = IDLE_HOLD;
+            const tx = a.x + 14 - view.x, ty = a.y + 16 - view.y;
+            if (tx >= 0 && ty >= 0 && tx <= view.w && ty <= view.h) {
+              for (const el of document.elementsFromPoint(tx, ty)) {
+                if (el !== act.entry?.el && (el as HTMLElement).dataset?.built) { holdMs[i] = 0; break; }
+              }
+            }
+          }
         } else if (idlePose(a, view, now / 1000, pt)) {
           // ease the drift in over 400 ms after release so the cursor does not jump
           const k = Math.min(1, (now - idleSince[i]) / 400);
           const x = a.x + (pt.x - a.x) * k;
           const y = a.y + (pt.y - a.y) * k;
-          setHidden(i, false);
-          setFaded(i, now - idleSince[i] >= IDLE_HOLD);
+          setFaded(i, now - idleSince[i] >= holdMs[i]);
           place(i, x, y, '', view);
         } else {
           setHidden(i, true);
@@ -385,7 +417,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       active.fill(null);
       for (const b of pool) { b.el.style.opacity = '0'; b.until = 0; b.tl = null; }
       const t0 = performance.now();
-      for (let i = 0; i < agents.length; i++) idleSince[i] = t0;
+      for (let i = 0; i < agents.length; i++) { idleSince[i] = t0; holdMs[i] = IDLE_HOLD; }
       built = 0; log = []; dirty = false; lastBusy = false;
       store.set({ built: 0, log: [], busy: false });
       wake();

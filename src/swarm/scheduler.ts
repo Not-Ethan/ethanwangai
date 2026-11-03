@@ -16,6 +16,22 @@ export const OFFSCREEN_MARGIN = 200;
 export const QUEUE_FACTOR = 2;
 export const LONG_QUEUE_TEMPO = 0.6;
 
+export const BAR_HEIGHT = 64;
+/** True when less than `minShare` of the element's height is visible below the bar line (viewport top + bar) and above the viewport bottom: not worth a cursor. */
+export function mostlyHidden(rect: Rect, vp: Rect, bar = BAR_HEIGHT, minShare = 0.25): boolean {
+  if (rect.h <= 0) return false;
+  const top = Math.max(rect.y, vp.y + bar);
+  const bottom = Math.min(rect.y + rect.h, vp.y + vp.h);
+  return Math.max(0, bottom - top) < minShare * rect.h;
+}
+
+export interface DispatchHooks {
+  /** build jobs the reader can barely see instantly instead of drawing them */
+  skipCovered?: boolean;
+  /** called for the chosen agent right before its timeline is computed (may move the agent) */
+  prepare?: (agent: AgentState, rect: Rect) => void;
+}
+
 export function makeAgent(id: number, at: Point, phase: number): AgentState {
   return { id, x: at.x, y: at.y, phase, busy: false, job: null, timeline: null, startAt: 0 };
 }
@@ -48,7 +64,7 @@ export class Scheduler {
   enqueue(job: Job): void { this.queue.push(job); }
 
   /** Hands queued jobs to idle agents. `measure` returns a job's rect in document px, or null if its element is gone. */
-  dispatch(now: number, vp: Rect, measure: (job: Job) => Rect | null): Readonly<Dispatch> {
+  dispatch(now: number, vp: Rect, measure: (job: Job) => Rect | null, hooks: DispatchHooks = {}): Readonly<Dispatch> {
     if (this.queue.length === 0) return EMPTY;
     const out: Dispatch = { started: [], instant: [], dropped: [] };
     const cap = QUEUE_FACTOR * this.agents.length;
@@ -60,7 +76,7 @@ export class Scheduler {
         try { job.rect = measure(job); } catch { job.rect = null; }
       }
       if (!job.rect) { out.dropped.push(job); this.queue.splice(k, 1); continue; }
-      if (isOffscreen(job.rect, vp)) { out.instant.push(job); this.queue.splice(k, 1); continue; }
+      if (isOffscreen(job.rect, vp) || (hooks.skipCovered && mostlyHidden(job.rect, vp))) { out.instant.push(job); this.queue.splice(k, 1); continue; }
       k++;
     }
     // a long queue (more waiting than agents) is worked through faster
@@ -80,6 +96,7 @@ export class Scheduler {
       const agent = this.agents[i];
       const tempo = { travel: (0.8 + this.rand() * 0.6) * tempoScale, drag: (0.85 + this.rand() * 0.5) * tempoScale };
       const rest = { dx: 6 + this.rand() * 12, dy: 8 + this.rand() * 14 };
+      hooks.prepare?.(agent, rect);
       const timeline = jobTimeline({ x: agent.x, y: agent.y }, rect, tempo, rest);
       agent.busy = true; agent.job = job; agent.timeline = timeline; agent.startAt = now + jitter(this.rand);
       out.started.push({ agent, job, timeline });

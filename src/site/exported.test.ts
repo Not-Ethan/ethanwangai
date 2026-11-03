@@ -51,6 +51,10 @@ describe.skipIf(!HAVE)('exported html', () => {
     }
     expect(new Set(Object.keys(copy.prompts))).toEqual(new Set(names));
   });
+  it('renders the server pill from the one built total', () => {
+    const m = html.match(/<span class="status[^"]*"[^>]*>([^<]*)<\/span>/);
+    expect(m?.[1]).toBe(copy.bar.status(6, 0, BUILT_TOTAL));
+  });
   it('has no eyebrows', () => {
     expect(raw).not.toMatch(/class="(?:[^"]* )?eyebrow(?: [^"]*)?"/);
   });

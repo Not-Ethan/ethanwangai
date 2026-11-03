@@ -14,6 +14,18 @@ export function initialPosition(i: number, vp: Rect, rand: () => number): Point 
   return { x: vp.x + vp.w + OUTSIDE, y: vp.y + rand() * vp.h };
 }
 
+/** Where a faded cursor reappears for a job: OUTSIDE px beyond the viewport edge (top, left or right) nearest the target (top weighted double), keeping the target's x (top) or y (sides). All document px. */
+export function respawnPoint(target: Point, vp: Rect): Point {
+  // the top edge counts double: the bar sits there, so cursors only drop in from above for targets near the top
+  const dTop = 2 * Math.abs(target.y - vp.y);
+  const dLeft = Math.abs(target.x - vp.x);
+  const dRight = Math.abs(vp.x + vp.w - target.x);
+  const m = Math.min(dTop, dLeft, dRight);
+  if (m === dTop) return { x: target.x, y: vp.y - OUTSIDE };
+  if (m === dLeft) return { x: vp.x - OUTSIDE, y: target.y };
+  return { x: vp.x + vp.w + OUTSIDE, y: target.y };
+}
+
 /** Idle breathing, in px, for time t (seconds) and a per-agent phase. */
 export function idleDrift(t: number, phase: number, out: Point): Point {
   out.x = 5 * Math.sin((2 * Math.PI * t) / 2.4 + phase);

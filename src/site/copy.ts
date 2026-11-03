@@ -71,7 +71,7 @@ export const copy = {
         id: 'heron', name: 'heron', role: 'co-founder', sub: 'co-founder · 2026', when: `${facts.heron.since} to now`, place: 'four cities',
         lede: 'heron hedges free-drink promos for bars. i built the models.',
         points: [
-          'pricing, liability and hedge execution on prediction markets.',
+          'i priced the promos, sized the liability and placed the hedges on prediction markets.',
           'bars signed in four cities.',
         ],
         chips: ['python', 'fastapi', 'kalshi'],
@@ -80,7 +80,7 @@ export const copy = {
         id: 'wvu', name: 'wvu medicine', role: 'ml intern', sub: 'ml intern · summer 2026', when: 'summer 2026', place: 'morgantown',
         lede: 'a model that watches pharmacy claims and notices when denials spike.',
         points: [
-          'anomaly detection over about a hundred million dollars a year of claims.',
+          'it watches about a hundred million dollars a year of claims and flags the weeks that look wrong.',
           'i built the modeling core. the team wired it into production.',
           'tooling to plug it into open webui so people could ask it questions.',
         ],
@@ -99,7 +99,7 @@ export const copy = {
         id: 'nist', name: 'nist', role: 'software intern', sub: 'software intern · summer 2025', when: 'summer 2025', place: 'gaithersburg',
         lede: "a help-desk assistant that reads the internal docs so people don't have to.",
         points: [
-          'retrieval, reranking and deep search inside a custom open webui fork.',
+          'it finds the right doc, reranks the candidates and digs deeper when the first pass is thin, all inside a custom open webui fork.',
           'logging and failure analysis, so we knew when it was wrong.',
         ],
         chips: ['python', 'retrieval', 'docker'],
@@ -122,12 +122,12 @@ export const copy = {
       },
       {
         id: 'darch', year: '2025', kind: 'system', title: 'darch', tag: 'three thousand videos a month.',
-        lede: 'a content pipeline on python, node and ffmpeg. about twenty million views a month, for a year.',
+        lede: 'a content pipeline that rendered and shipped the videos itself. about twenty million views a month, for a year.',
         chips: ['python', 'node', 'ffmpeg'], shot: 'grid',
       },
       {
         id: 'nist', year: '2025', kind: 'tool', title: 'nist help desk', tag: "reads the docs so you don't.",
-        lede: 'a retrieval assistant inside a custom open webui fork. it answers from the internal docs and says which one.',
+        lede: 'a retrieval assistant for nist\'s internal docs. it answers and says which doc it used.',
         chips: ['python', 'retrieval', 'docker'], shot: 'chat',
       },
     ],
@@ -145,7 +145,7 @@ export const copy = {
       {
         title: 'awards',
         entries: [
-          { name: `top ${facts.kalshi.leaderboardTop} all-time`, line: 'kalshi crypto profit leaderboard · 2026' },
+          { name: `top ${facts.kalshi.leaderboardTop} all-time`, line: 'kalshi crypto profit leaderboard\u00a0· 2026' },
           { name: 'innovation award', line: 'tartanhacks 2025, for orbit' },
         ],
       },
@@ -176,8 +176,8 @@ export const copy = {
       paragraphPhone: "every element on this page was drawn in by a cursor as you scrolled. there are three of them. they don't exist.",
       button: 'rebuild the page ↻',
       note: 'it jumps to the top and takes about as long as reading it did.',
-      offParagraph: 'this page is usually drawn in by six cursors while you read it. you asked for less motion, so they stayed home.',
-      offParagraphPhone: 'this page is usually drawn in by three cursors while you read it. you asked for less motion, so they stayed home.',
+      offParagraph: 'this page is usually drawn in by six cursors while you read it. today they stayed home.',
+      offParagraphPhone: 'this page is usually drawn in by three cursors while you read it. today they stayed home.',
     },
   },
   footer: {

@@ -84,6 +84,12 @@ describe('job and case shape', () => {
   });
 });
 
+describe('rest cards', () => {
+  it('never lets a separator start a line', () => {
+    for (const c of copy.rest.cards) for (const e of c.entries) expect(e.line, e.line).not.toMatch(/[^\u00a0] · /);
+  });
+});
+
 describe('door', () => {
   it('has an off paragraph and a phone variant', () => {
     expect(copy.closer.door.offParagraphPhone).toBe(copy.closer.door.offParagraph.replace('six', 'three'));

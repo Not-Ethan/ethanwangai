@@ -25,7 +25,7 @@ export function About() {
                   <li key={l.id}>
                     <span className="log__swatch" aria-hidden="true" style={{ '--agent': AGENT_COLOURS[l.agent % AGENT_COLOURS.length] } as CSSProperties} />
                     <span className="log__agent">{who}</span>
-                    {a.logLine(who, l.name, l.seconds).slice(who.length)}
+                    {a.logLine(who, l.prompt || l.name, l.seconds).slice(who.length)}
                   </li>
                 );
               })}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mulberry32 } from './prng';
-import { OFFSCREEN_MARGIN, QUEUE_FACTOR, Scheduler, isOffscreen, makeAgent, scrolledPast, nearestFreeAgent, type Job } from './scheduler';
+import { OFFSCREEN_MARGIN, QUEUE_FACTOR, Scheduler, isOffscreen, mostlyHidden, makeAgent, scrolledPast, nearestFreeAgent, type Job } from './scheduler';
 import { restPoint, type Rect } from './timeline';
 
 const vp: Rect = { x: 0, y: 0, w: 1440, h: 900 };
@@ -235,5 +235,17 @@ describe('scheduler, pinned', () => {
     expect(d.started).toEqual([]);
     expect(d.instant).toEqual([]);
     expect(d.dropped).toEqual([]);
+  });
+});
+
+describe('mostlyHidden', () => {
+  const v = { x: 0, y: 1000, w: 1440, h: 900 };
+  it('flags an element mostly under the bar or below the viewport', () => {
+    expect(mostlyHidden({ x: 0, y: 1000, w: 300, h: 70 }, v)).toBe(true);
+    expect(mostlyHidden({ x: 0, y: 1880, w: 300, h: 200 }, v)).toBe(true);
+  });
+  it('keeps an element that mostly shows', () => {
+    expect(mostlyHidden({ x: 0, y: 1030, w: 300, h: 100 }, v)).toBe(false);
+    expect(mostlyHidden({ x: 0, y: 1500, w: 300, h: 100 }, v)).toBe(false);
   });
 });
