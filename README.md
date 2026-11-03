@@ -10,4 +10,5 @@ a one-page portfolio that a swarm of cursors builds in front of you. every main 
 - reduced motion shows the page at once with no cursors; if the bundle never loads, the inline script in `src/app/layout.tsx` reveals the page after 6 s
 - `public/og.png` is a committed screenshot of the exported hero at 1200×630; regenerate it when the hero changes
 - no api routes, no fetches, no storage, no env vars, no analytics
+- visual gate: serve `out` on 3011 and run `scripts/gate-capture.js` through the Playwright MCP (stills in `.playwright-mcp/gate/`); impeccable critique snapshots live in `.impeccable/critique/`
 - spec: `docs/plans/2026-11-02-agents-build-the-site-design.md`; plan beside it
