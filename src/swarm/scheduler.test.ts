@@ -42,7 +42,7 @@ describe('Scheduler', () => {
     for (const [k, { agent, timeline }] of d.started.entries()) {
       expect(agent.busy).toBe(true);
       expect(agent.startAt).toBeGreaterThanOrEqual(1000 + k * 100);
-      expect(agent.startAt).toBeLessThan(1240 + k * 100);
+      expect(agent.startAt).toBeLessThan(1240 + k * 100 + 400);
       expect(timeline.from).toEqual({ x: agent.x, y: agent.y });
     }
   });
@@ -54,7 +54,7 @@ describe('Scheduler', () => {
     expect(d.started).toHaveLength(3);
     const starts = d.started.map((x) => x.agent.startAt);
     for (let k = 1; k < 3; k++) expect(starts[k]).toBeGreaterThanOrEqual(k * 100);
-    expect(starts[2] - 200).toBeLessThan(240);
+    expect(starts[2] - 200).toBeLessThan(240 + 400);
   });
   it('aims at the point 35 % down the viewport, not the centre', () => {
     const agents = makeAgents(1);
@@ -270,5 +270,46 @@ describe('mostlyHidden', () => {
   it('keeps an element that mostly shows', () => {
     expect(mostlyHidden({ x: 0, y: 1030, w: 300, h: 100 }, v)).toBe(false);
     expect(mostlyHidden({ x: 0, y: 1500, w: 300, h: 100 }, v)).toBe(false);
+  });
+});
+
+describe('dispatch with skipCovered', () => {
+  const v = { x: 0, y: 1000, w: 1440, h: 900 };
+  const run = (r: Rect) => {
+    const s = new Scheduler(makeAgents(2), mulberry32(3));
+    s.enqueue(job(1));
+    const d = s.dispatch(0, v, () => r, { skipCovered: true });
+    return { d, s };
+  };
+  it('leaves an element below the viewport queued: neither started nor built instantly', () => {
+    const { d, s } = run({ x: 0, y: 1910, w: 300, h: 80 });
+    expect(d.started).toHaveLength(0); expect(d.instant).toHaveLength(0);
+    expect(s.queue).toHaveLength(1);
+  });
+  it('builds an element 80 % hidden above the bar line instantly', () => {
+    const { d, s } = run({ x: 0, y: 1064 - 0.8 * 100, w: 300, h: 100 });
+    expect(d.instant).toHaveLength(1); expect(d.started).toHaveLength(0); expect(s.queue).toHaveLength(0);
+  });
+  it('starts an element 30 % visible below the bar line', () => {
+    const { d } = run({ x: 0, y: 1900 - 30, w: 300, h: 100 });
+    expect(d.started).toHaveLength(1); expect(d.instant).toHaveLength(0);
+  });
+  it('skips a waiting element and still picks the next candidate', () => {
+    const s = new Scheduler(makeAgents(2), mulberry32(3));
+    s.enqueue(job(1)); s.enqueue(job(2));
+    const d = s.dispatch(0, v, (j) => (j.id === 1 ? { x: 0, y: 1910, w: 300, h: 80 } : { x: 0, y: 1300, w: 300, h: 80 }), { skipCovered: true });
+    expect(d.started.map((x) => x.job.id)).toEqual([2]); expect(s.queue.map((j) => j.id)).toEqual([1]);
+  });
+});
+
+describe('press and release spacing', () => {
+  it('keeps presses and releases of six identical jobs 120 ms apart', () => {
+    const s = new Scheduler(makeAgents(6, 50), mulberry32(7));
+    for (let i = 0; i < 6; i++) s.enqueue(job(i));
+    const d = s.dispatch(0, vp, () => rectAt(300, 300));
+    expect(d.started).toHaveLength(6);
+    const press = d.started.map((x) => x.agent.startAt + x.timeline.tTravel);
+    const rel = d.started.map((x) => x.agent.startAt + x.timeline.tDrag);
+    for (const arr of [press, rel]) for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) expect(Math.abs(arr[i] - arr[j])).toBeGreaterThanOrEqual(120);
   });
 });

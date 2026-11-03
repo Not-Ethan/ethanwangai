@@ -97,7 +97,7 @@ export const copy = {
       },
       {
         id: 'heron', year: '2026', kind: 'product', title: 'heron', tag: 'free drinks if the home team wins.',
-        lede: "the bar doesn't eat that. heron prices the promo, covers the payout and hedges it on prediction markets. bars in four cities.",
+        lede: "the bar doesn't eat that. heron prices the promo, covers the payout and hedges it on prediction markets.",
         chips: ['python', 'fastapi'], shot: 'tab',
       },
       {

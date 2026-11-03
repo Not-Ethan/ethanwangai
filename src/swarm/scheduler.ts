@@ -29,6 +29,15 @@ export function mostlyHidden(rect: Rect, vp: Rect, bar = BAR_HEIGHT, minShare = 
   return Math.max(0, bottom - top) < minShare * rect.h;
 }
 
+/** True when the element's hidden part is below the viewport (its top is at or under the bar line): it is still arriving, so it waits instead of being built instantly. */
+export function hiddenBelow(rect: Rect, vp: Rect, bar = BAR_HEIGHT): boolean {
+  return rect.y - vp.y >= bar;
+}
+
+export const SPACING_MS = 120;
+export const SPACING_STEP_MS = 40;
+export const SPACING_MAX_STEPS = 25;
+
 export interface DispatchHooks {
   /** build jobs the reader can barely see instantly instead of drawing them */
   skipCovered?: boolean;
@@ -80,7 +89,8 @@ export class Scheduler {
         try { job.rect = measure(job); } catch { job.rect = null; }
       }
       if (!job.rect) { out.dropped.push(job); this.queue.splice(k, 1); continue; }
-      if (isOffscreen(job.rect, vp) || (hooks.skipCovered && mostlyHidden(job.rect, vp))) { out.instant.push(job); this.queue.splice(k, 1); continue; }
+      // hidden above the bar line: built instantly; hidden below the viewport: stays queued until a quarter is in view
+      if (isOffscreen(job.rect, vp) || (hooks.skipCovered && mostlyHidden(job.rect, vp) && !hiddenBelow(job.rect, vp))) { out.instant.push(job); this.queue.splice(k, 1); continue; }
       k++;
     }
     // a long queue (more waiting than agents) is worked through faster
@@ -89,12 +99,14 @@ export class Scheduler {
     const cx = vp.x + vp.w / 2, cy = vp.y + vp.h * TARGET_Y;
     while (this.queue.length > 0 && this.agents.some((a) => !a.busy)) {
       // the on-screen job nearest the target point, ties by queue order
-      let bi = 0, bd = Infinity;
+      let bi = -1, bd = Infinity;
       for (let k = 0; k < this.queue.length; k++) {
         const r = this.queue[k].rect!;
+        if (hooks.skipCovered && mostlyHidden(r, vp)) continue; // still arriving below the viewport: not this dispatch
         const d = (r.x + r.w / 2 - cx) ** 2 + (r.y + r.h / 2 - cy) ** 2;
         if (d < bd) { bd = d; bi = k; }
       }
+      if (bi < 0) break;
       const job = this.queue.splice(bi, 1)[0];
       const rect = job.rect!;
       const i = nearestFreeAgent(this.agents, rect.x, rect.y);
@@ -104,7 +116,24 @@ export class Scheduler {
       hooks.prepare?.(agent, rect);
       const timeline = jobTimeline({ x: agent.x, y: agent.y }, rect, tempo, rest);
       // the k-th job of one dispatch starts k x 100 ms later, so a group does not move in formation
-      agent.busy = true; agent.job = job; agent.timeline = timeline; agent.startAt = now + jitter(this.rand) + out.started.length * STAGGER_MS;
+      let startAt = now + jitter(this.rand) + out.started.length * STAGGER_MS;
+      // no two presses or two releases within 120 ms of each other: push later in 40 ms steps (if none of the 10 steps is clear, take the widest gap)
+      const others = this.agents.filter((o) => o.busy && o.timeline);
+      const gap = (at: number) => {
+        let g = Infinity;
+        for (const o of others) {
+          const op = o.startAt + o.timeline!.tTravel, or = o.startAt + o.timeline!.tDrag;
+          g = Math.min(g, Math.abs(op - (at + timeline.tTravel)), Math.abs(or - (at + timeline.tDrag)));
+        }
+        return g;
+      };
+      let bestAt = startAt, bestGap = gap(startAt);
+      for (let step = 1; step <= SPACING_MAX_STEPS && bestGap < SPACING_MS; step++) {
+        const g = gap(startAt + step * SPACING_STEP_MS);
+        if (g > bestGap) { bestGap = g; bestAt = startAt + step * SPACING_STEP_MS; }
+      }
+      startAt = bestAt;
+      agent.busy = true; agent.job = job; agent.timeline = timeline; agent.startAt = startAt;
       out.started.push({ agent, job, timeline });
     }
     return out;
