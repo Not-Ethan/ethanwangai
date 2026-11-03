@@ -4,12 +4,17 @@ import { copy } from '../copy';
 export function HeroGhost() {
   const h = copy.hero;
   return (
-    <a className="ghost" href={h.ghostHref}>
-      <span className="ghost__dot" aria-hidden="true" />
-      <span className="when-on only-desktop">{h.ghost}</span>
-      <span className="when-on only-phone">{h.ghostPhone}</span>
-      <span className="when-on badge">{h.ghostBadge}</span>
-      <span className="when-off">{h.ghostOff}</span>
-    </a>
+    <>
+      <a className="ghost when-on" href={h.ghostHref}>
+        <span className="ghost__dot" aria-hidden="true" />
+        <span className="only-desktop">{h.ghost}</span>
+        <span className="only-phone">{h.ghostPhone}</span>
+        <span className="badge">{h.ghostBadge}</span>
+      </a>
+      <span className="ghost when-off">
+        <span className="ghost__dot" aria-hidden="true" />
+        <span>{h.ghostOff}</span>
+      </span>
+    </>
   );
 }

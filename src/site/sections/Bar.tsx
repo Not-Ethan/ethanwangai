@@ -18,7 +18,7 @@ export function Bar() {
   }, []);
   return (
     <header className="bar" data-scrolled={scrolled ? '' : undefined}>
-      <Built name="mark" as="a" className="mark" href="#top" prompt={copy.prompts.mark} label="ethan wang, top of page">{copy.bar.mark}</Built>
+      <Built name="mark" as="a" className="mark" href="#top" prompt={copy.prompts.mark} label="ew, ethan wang, top of page">{copy.bar.mark}</Built>
       <div className="bar__right">
         <Built name="nav" as="nav" className="bar__nav" prompt={copy.prompts.nav}>
           {copy.bar.links.map((l) => <a key={l.label} href={l.href}>{l.label}</a>)}

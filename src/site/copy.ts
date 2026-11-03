@@ -36,12 +36,13 @@ export const copy = {
     h2: "hi. i'm ethan.",
     logTitle: 'build log',
     logEmpty: 'waiting for the agents',
+    logOff: 'the agents stayed home today.',
     logReduced: 'the agents are resting. you asked for less motion.',
     logLine: (agent: string, element: string, seconds: number): string => `${agent} · ${element} · ${seconds.toFixed(2)}s`,
     lede: "a few sentences of plain language turn into thousands of lines of code now. what used to take months takes an afternoon. i've always loved building things. i never really liked the coding.",
     notes: [
       `the best part is watching something i built come alive. my classmates in middle school using my discord bots. a trading algorithm i wrote climbing into the top ${facts.kalshi.leaderboardTop} on kalshi.`,
-      "right now i trade on kalshi and i'm co-founding heron, which prices and hedges free-drink promos for bars. before that i co-founded darch, a video factory that ran for a year.",
+      "most of what i've built started as a bet that i could. the ones that worked are below.",
       `cwru, computer science and math, class of ${facts.school.classOf}. i speak mandarin.`,
     ],
   },
@@ -61,48 +62,27 @@ export const copy = {
       {
         id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: 'independent trader · 2026', when: `${facts.kalshi.since} to now`, place: 'cleveland',
         lede: "i trade my own money on kalshi's crypto markets with a system i wrote.",
-        points: [
-          'it reads the order book and a few crypto venues, places orders, checks risk and reconciles fills.',
-          'every idea gets tested out of sample on a replay stack before it trades.',
-        ],
-        chips: ['python', 'websockets', 'postgresql', 'pandas'],
+        body: "it reads the order book and a few crypto venues, places the orders, checks the risk and checks the fills. every idea runs against a replay of old data before it touches real money.",
       },
       {
         id: 'heron', name: 'heron', role: 'co-founder', sub: 'co-founder · 2026', when: `${facts.heron.since} to now`, place: 'four cities',
-        lede: 'heron hedges free-drink promos for bars. i built the models.',
-        points: [
-          'i priced the promos, sized the liability and placed the hedges on prediction markets.',
-          'bars signed in four cities.',
-        ],
-        chips: ['python', 'fastapi', 'kalshi'],
+        lede: "heron sells bars a promo they couldn't afford on their own. i built the models behind it.",
+        body: "i priced the promos, sized the liability and placed the hedges on prediction markets. the first bars signed this summer.",
       },
       {
         id: 'wvu', name: 'wvu medicine', role: 'ml intern', sub: 'ml intern · summer 2026', when: 'summer 2026', place: 'morgantown',
         lede: 'a model that watches pharmacy claims and notices when denials spike.',
-        points: [
-          'it watches about a hundred million dollars a year of claims and flags the weeks that look wrong.',
-          'i built the modeling core. the team wired it into production.',
-          'tooling to plug it into open webui so people could ask it questions.',
-        ],
-        chips: ['python', 'pytorch', 'pandas'],
+        body: "it watches about a hundred million dollars a year of pharmacy claims and flags the weeks that look wrong. i built the modeling core, the team wired it into production, and i added tooling so people could ask it questions in open webui.",
       },
       {
         id: 'darch', name: 'darch', role: 'co-founder', sub: 'co-founder · 2025 to 2026', when: `${facts.darch.from} to ${facts.darch.to}`, place: 'remote',
         lede: 'i ran engineering at a video factory for a year.',
-        points: [
-          'python, node and ffmpeg end to end. scripts in, rendered videos out, distributed.',
-          `it ended in ${facts.darch.to}.`,
-        ],
-        chips: ['python', 'fastapi', 'node', 'ffmpeg', 'mongodb'],
+        body: `python, node and ffmpeg end to end: scripts in, rendered videos out, distributed. it ended in ${facts.darch.to}.`,
       },
       {
         id: 'nist', name: 'nist', role: 'software intern', sub: 'software intern · summer 2025', when: 'summer 2025', place: 'gaithersburg',
         lede: "a help-desk assistant that reads the internal docs so people don't have to.",
-        points: [
-          'it finds the right doc, reranks the candidates and digs deeper when the first pass is thin, all inside a custom open webui fork.',
-          'logging and failure analysis, so we knew when it was wrong.',
-        ],
-        chips: ['python', 'retrieval', 'docker'],
+        body: "it finds the right doc, sorts the candidates and digs deeper when the first pass is thin, inside a custom open webui fork. i added logging and failure analysis so we knew when it was wrong.",
       },
     ],
   },
@@ -112,7 +92,7 @@ export const copy = {
     cases: [
       {
         id: 'kalshi', year: '2026', kind: 'trading', title: 'kalshi algo', tag: 'it trades while i sleep.',
-        lede: `it makes markets and trades price gaps between kalshi's crypto markets. top ${facts.kalshi.leaderboardTop} all-time on the profit leaderboard, about ${facts.kalshi.trades.toLocaleString('en-US')} trades.`,
+        lede: `it makes markets and trades price gaps between kalshi's crypto markets. about ${facts.kalshi.trades.toLocaleString('en-US')} trades so far.`,
         chips: ['python', 'websockets', 'postgresql'], shot: 'book',
       },
       {
@@ -169,11 +149,11 @@ export const copy = {
     door: {
       title: 'oh, and about the agents.',
       paragraphs: [
-        'every element on this page was drawn in by a cursor as you scrolled. there are six of them. they don\'t exist.',
+        'most of this page was drawn in by a cursor while you read. there are six of them. they don\'t exist.',
         "nothing is sent anywhere. there's no server behind this page. it's files on a cdn and some javascript.",
         "they'll do it again if you ask.",
       ],
-      paragraphPhone: "every element on this page was drawn in by a cursor as you scrolled. there are three of them. they don't exist.",
+      paragraphPhone: "most of this page was drawn in by a cursor while you read. there are three of them. they don't exist.",
       button: 'rebuild the page ↻',
       note: 'it jumps to the top and takes about as long as reading it did.',
       offParagraph: 'this page is usually drawn in by six cursors while you read it. today they stayed home.',

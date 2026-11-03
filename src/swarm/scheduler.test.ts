@@ -39,14 +39,32 @@ describe('Scheduler', () => {
     const d = s.dispatch(1000, vp, () => rectAt(300, 300));
     expect(d.started).toHaveLength(3);
     expect(s.queue).toHaveLength(2);
-    for (const { agent, timeline } of d.started) {
+    for (const [k, { agent, timeline }] of d.started.entries()) {
       expect(agent.busy).toBe(true);
-      expect(agent.startAt).toBeGreaterThanOrEqual(1000);
-      expect(agent.startAt).toBeLessThan(1240);
+      expect(agent.startAt).toBeGreaterThanOrEqual(1000 + k * 100);
+      expect(agent.startAt).toBeLessThan(1240 + k * 100);
       expect(timeline.from).toEqual({ x: agent.x, y: agent.y });
     }
   });
 
+  it('adds k x 100 ms to the start of the k-th job in one dispatch', () => {
+    const s1 = new Scheduler(makeAgents(3), mulberry32(5));
+    for (let i = 0; i < 3; i++) s1.enqueue(job(i));
+    const d = s1.dispatch(0, vp, () => rectAt(300, 300));
+    expect(d.started).toHaveLength(3);
+    const starts = d.started.map((x) => x.agent.startAt);
+    for (let k = 1; k < 3; k++) expect(starts[k]).toBeGreaterThanOrEqual(k * 100);
+    expect(starts[2] - 200).toBeLessThan(240);
+  });
+  it('aims at the point 35 % down the viewport, not the centre', () => {
+    const agents = makeAgents(1);
+    const s = new Scheduler(agents, mulberry32(1));
+    s.enqueue(job(1)); s.enqueue(job(2));
+    // job 1 sits at the 35 % line (y 315), job 2 at the centre (y 450): the 35 % one goes first
+    const rects: Record<number, Rect> = { 1: { x: 620, y: 275, w: 200, h: 80 }, 2: { x: 620, y: 410, w: 200, h: 80 } };
+    const d = s.dispatch(0, vp, (j) => rects[j.id]);
+    expect(d.started.map((x) => x.job.id)).toEqual([1]);
+  });
   it('turns the oldest jobs beyond 2 x agents into instant builds', () => {
     const agents = makeAgents(6);
     const s = new Scheduler(agents, mulberry32(1));
@@ -239,6 +257,11 @@ describe('scheduler, pinned', () => {
 });
 
 describe('mostlyHidden', () => {
+  it('never hides an element that sits inside the fixed bar', () => {
+    const v = { x: 0, y: 3000, w: 1440, h: 900 };
+    expect(mostlyHidden({ x: 72, y: 3009, w: 46, h: 46 }, v)).toBe(false);
+    expect(mostlyHidden({ x: 72, y: 2950, w: 46, h: 100 }, v)).toBe(true);
+  });
   const v = { x: 0, y: 1000, w: 1440, h: 900 };
   it('flags an element mostly under the bar or below the viewport', () => {
     expect(mostlyHidden({ x: 0, y: 1000, w: 300, h: 70 }, v)).toBe(true);

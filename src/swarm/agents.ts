@@ -1,7 +1,7 @@
 import { clamp } from './easing';
 import type { Point, Rect } from './timeline';
 
-export const AGENT_COLOURS = ['#2563eb', '#e5484d', '#16a34a', '#7c3aed', '#f97316', '#db2777'] as const;
+export const AGENT_COLOURS = ['#2563eb', '#dc2626', '#15803d', '#7c3aed', '#c2410c', '#db2777'] as const;
 export const agentName = (i: number): string => `agent ${String(i + 1).padStart(2, '0')}`;
 export const agentCount = (viewportWidth: number): number => (viewportWidth >= 768 ? 6 : 3);
 export const OUTSIDE = 40;
@@ -14,16 +14,22 @@ export function initialPosition(i: number, vp: Rect, rand: () => number): Point 
   return { x: vp.x + vp.w + OUTSIDE, y: vp.y + rand() * vp.h };
 }
 
-/** Where a faded cursor reappears for a job: OUTSIDE px beyond the viewport edge (top, left or right) nearest the target (top weighted double), keeping the target's x (top) or y (sides). All document px. */
-export function respawnPoint(target: Point, vp: Rect): Point {
+/** Where a faded cursor reappears for a job: 40 to 200 px beyond the viewport edge (top, left or right) nearest the target (top weighted double), keeping the target's x (top) or y (sides). All document px. */
+export const RESPAWN_SPREAD = 150;
+export const RESPAWN_NEAR = 40;
+export const RESPAWN_FAR = 200;
+export function respawnPoint(target: Point, vp: Rect, rand: () => number): Point {
+  // a seeded slide along the edge (+-150 px) and a seeded distance outside it (40 to 200 px), so a group of jobs does not draw in formation
+  const along = (rand() * 2 - 1) * RESPAWN_SPREAD;
+  const out = RESPAWN_NEAR + rand() * (RESPAWN_FAR - RESPAWN_NEAR);
   // the top edge counts double: the bar sits there, so cursors only drop in from above for targets near the top
   const dTop = 2 * Math.abs(target.y - vp.y);
   const dLeft = Math.abs(target.x - vp.x);
   const dRight = Math.abs(vp.x + vp.w - target.x);
   const m = Math.min(dTop, dLeft, dRight);
-  if (m === dTop) return { x: target.x, y: vp.y - OUTSIDE };
-  if (m === dLeft) return { x: vp.x - OUTSIDE, y: target.y };
-  return { x: vp.x + vp.w + OUTSIDE, y: target.y };
+  if (m === dTop) return { x: target.x + along, y: vp.y - out };
+  if (m === dLeft) return { x: vp.x - out, y: target.y + along };
+  return { x: vp.x + vp.w + out, y: target.y + along };
 }
 
 /** Idle breathing, in px, for time t (seconds) and a per-agent phase. */

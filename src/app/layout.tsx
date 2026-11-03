@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 
 // Runs before the body is parsed: with JS and without reduced motion the page starts hidden and the swarm reveals it
 // (spec §7.3). Without JS the attribute is never set and everything is visible.
-// If the app never hydrates (a blocked or failed bundle) the page shows itself after 6 s: Swarm.tsx sets swarmReady on mount.
-const SWARM_SCRIPT = "(function(){try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.dataset.swarm='on';setTimeout(function(){if(!d.dataset.swarmReady){delete d.dataset.swarm}},6000)}catch(e){}})()";
+// If the app never hydrates (a blocked or failed bundle) the page shows itself 1.5 s after window load or at 6 s, whichever comes first: Swarm.tsx sets swarmReady on mount, and both timers check it.
+const SWARM_SCRIPT = "(function(){try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var d=document.documentElement;d.dataset.swarm='on';var t=[];var show=function(){if(!d.dataset.swarmReady){delete d.dataset.swarm}};t.push(setTimeout(show,6000));window.addEventListener('load',function(){t.push(setTimeout(show,1500))})}catch(e){}})()";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

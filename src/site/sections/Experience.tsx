@@ -29,12 +29,7 @@ export function Experience() {
               <h3 className="job__title">{j.name} · {j.role}</h3>
               <p className="job__when"><b>{j.when}</b> · <span className="subtle">{j.place}</span></p>
               <p className="job__lede">{j.lede}</p>
-              <ul className="job__points">
-                {j.points.map((p) => <li key={p}>{p}</li>)}
-              </ul>
-              <div className="chips">
-                {j.chips.map((c) => <span key={c} className="chip">{c}</span>)}
-              </div>
+              <p className="job__body">{j.body}</p>
             </Built>
           ))}
         </div>

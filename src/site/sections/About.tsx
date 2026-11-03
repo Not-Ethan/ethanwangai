@@ -17,15 +17,16 @@ export function About() {
         <div className="about__grid">
           <Built name="log" className="card log" prompt={copy.prompts.log}>
             <p className="eyebrow-sm">{a.logTitle}</p>
-            <ol className="log__lines mono when-off"><li>{a.logReduced}</li></ol>
+            <ol className="log__lines mono when-off"><li className="rm-no">{a.logOff}</li><li className="rm-yes">{a.logReduced}</li></ol>
             <ol className="log__lines mono when-on" data-log>
-              {s.log.length === 0 ? <li>{a.logEmpty}</li> : s.log.map((l) => {
+              {s.log.length === 0 ? <li className="log__empty">{a.logEmpty}</li> : s.log.map((l) => {
                 const who = agentName(l.agent);
                 return (
                   <li key={l.id}>
                     <span className="log__swatch" aria-hidden="true" style={{ '--agent': AGENT_COLOURS[l.agent % AGENT_COLOURS.length] } as CSSProperties} />
                     <span className="log__agent">{who}</span>
-                    {a.logLine(who, l.prompt || l.name, l.seconds).slice(who.length)}
+                    <span className="log__prompt">{l.prompt || l.name}</span>
+                    <span className="log__time">{`\u00a0· ${l.seconds.toFixed(2)}s`}</span>
                   </li>
                 );
               })}

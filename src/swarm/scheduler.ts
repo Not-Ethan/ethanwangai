@@ -16,10 +16,14 @@ export const OFFSCREEN_MARGIN = 200;
 export const QUEUE_FACTOR = 2;
 export const LONG_QUEUE_TEMPO = 0.6;
 
+export const STAGGER_MS = 100;
+export const TARGET_Y = 0.35;
 export const BAR_HEIGHT = 64;
 /** True when less than `minShare` of the element's height is visible below the bar line (viewport top + bar) and above the viewport bottom: not worth a cursor. */
 export function mostlyHidden(rect: Rect, vp: Rect, bar = BAR_HEIGHT, minShare = 0.25): boolean {
   if (rect.h <= 0) return false;
+  // an element that sits inside the fixed bar (its top is under the bar line) is always drawn, never skipped
+  if (rect.y - vp.y < bar && rect.h <= bar) return false;
   const top = Math.max(rect.y, vp.y + bar);
   const bottom = Math.min(rect.y + rect.h, vp.y + vp.h);
   return Math.max(0, bottom - top) < minShare * rect.h;
@@ -81,9 +85,10 @@ export class Scheduler {
     }
     // a long queue (more waiting than agents) is worked through faster
     const tempoScale = this.queue.length > this.agents.length ? LONG_QUEUE_TEMPO : 1;
-    const cx = vp.x + vp.w / 2, cy = vp.y + vp.h / 2;
+    // headings first after a jump: the target is 35 % down the viewport, not its centre
+    const cx = vp.x + vp.w / 2, cy = vp.y + vp.h * TARGET_Y;
     while (this.queue.length > 0 && this.agents.some((a) => !a.busy)) {
-      // the on-screen job nearest the viewport centre, ties by queue order
+      // the on-screen job nearest the target point, ties by queue order
       let bi = 0, bd = Infinity;
       for (let k = 0; k < this.queue.length; k++) {
         const r = this.queue[k].rect!;
@@ -98,7 +103,8 @@ export class Scheduler {
       const rest = { dx: 6 + this.rand() * 12, dy: 8 + this.rand() * 14 };
       hooks.prepare?.(agent, rect);
       const timeline = jobTimeline({ x: agent.x, y: agent.y }, rect, tempo, rest);
-      agent.busy = true; agent.job = job; agent.timeline = timeline; agent.startAt = now + jitter(this.rand);
+      // the k-th job of one dispatch starts k x 100 ms later, so a group does not move in formation
+      agent.busy = true; agent.job = job; agent.timeline = timeline; agent.startAt = now + jitter(this.rand) + out.started.length * STAGGER_MS;
       out.started.push({ agent, job, timeline });
     }
     return out;

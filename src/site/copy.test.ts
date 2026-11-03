@@ -26,14 +26,14 @@ describe('facts in the copy', () => {
   it('prints kalshi facts from facts.ts', () => {
     const k = copy.experience.jobs.find((j) => j.id === 'kalshi')!;
     expect(k.when).toBe(`${facts.kalshi.since} to now`);
-    expect(copy.work.cases[0].lede).toContain(`top ${facts.kalshi.leaderboardTop}`);
+    expect(copy.work.cases[0].lede).not.toContain('top ');
     expect(copy.work.cases[0].lede).toContain(`${facts.kalshi.trades.toLocaleString('en-US')} trades`);
   });
   it('spells the word numbers to match facts', () => {
     expect(facts.darch.videosPerMonth).toBe(3_000); expect(copy.work.cases[2].tag).toContain('three thousand videos a month');
     expect(facts.darch.viewsPerMonth).toBe(20_000_000); expect(copy.work.cases[2].lede).toContain('twenty million views a month');
     expect(facts.heron.cities).toBe(4); expect(copy.work.cases[1].lede).toContain('four cities');
-    expect(facts.wvu.claimsPerYearUsd).toBe(100_000_000); expect(copy.experience.jobs.find((j) => j.id === 'wvu')!.points[0]).toContain('a hundred million dollars');
+    expect(facts.wvu.claimsPerYearUsd).toBe(100_000_000); expect(copy.experience.jobs.find((j) => j.id === 'wvu')!.body).toContain('a hundred million dollars');
     expect(copy.rest.cards[0].entries[0].line).toContain(`class of ${facts.school.classOf}`);
   });
   it('builds notes, awards and dates from facts', () => {

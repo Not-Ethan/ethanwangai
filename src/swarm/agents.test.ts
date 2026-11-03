@@ -52,7 +52,7 @@ describe('agents', () => {
 
 describe('agents, pinned', () => {
   it('has the spec colours in order', () => {
-    expect([...AGENT_COLOURS]).toEqual(['#2563eb', '#e5484d', '#16a34a', '#7c3aed', '#f97316', '#db2777']);
+    expect([...AGENT_COLOURS]).toEqual(['#2563eb', '#dc2626', '#15803d', '#7c3aed', '#c2410c', '#db2777']);
   });
   it('pins idle drift values', () => {
     const out = { x: 0, y: 0 };
@@ -112,10 +112,23 @@ describe('agents, pinned', () => {
 describe('respawnPoint', () => {
   const v = { x: 0, y: 2000, w: 1440, h: 900 };
   it('uses the side edge for a target well below the top', () => {
-    expect(respawnPoint({ x: 300, y: 2200 }, v)).toEqual({ x: -40, y: 2200 });
-    expect(respawnPoint({ x: 1300, y: 2400 }, v)).toEqual({ x: 1480, y: 2400 });
+    for (let s = 1; s <= 20; s++) {
+      const l = respawnPoint({ x: 300, y: 2200 }, v, mulberry32(s));
+      expect(l.x).toBeLessThanOrEqual(-40); expect(l.x).toBeGreaterThanOrEqual(-200);
+      expect(Math.abs(l.y - 2200)).toBeLessThanOrEqual(150);
+      const r = respawnPoint({ x: 1300, y: 2400 }, v, mulberry32(s));
+      expect(r.x).toBeGreaterThanOrEqual(1480); expect(r.x).toBeLessThanOrEqual(1640);
+      expect(Math.abs(r.y - 2400)).toBeLessThanOrEqual(150);
+    }
   });
   it('uses the top edge for a target near the top', () => {
-    expect(respawnPoint({ x: 700, y: 2020 }, v)).toEqual({ x: 700, y: 1960 });
+    const ys = new Set<number>();
+    for (let s = 1; s <= 20; s++) {
+      const p = respawnPoint({ x: 700, y: 2020 }, v, mulberry32(s));
+      expect(p.y).toBeLessThanOrEqual(1960); expect(p.y).toBeGreaterThanOrEqual(1800);
+      expect(Math.abs(p.x - 700)).toBeLessThanOrEqual(150);
+      ys.add(p.y);
+    }
+    expect(ys.size).toBeGreaterThan(5);
   });
 });

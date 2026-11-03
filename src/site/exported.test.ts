@@ -36,7 +36,7 @@ describe.skipIf(!HAVE)('exported html', () => {
     }
   });
   it('renders the off copy statically, switched by CSS', () => {
-    for (const s of [copy.about.logReduced, copy.hero.ghostOff, copy.closer.door.offParagraph, copy.closer.door.offParagraphPhone]) expect(html, s).toContain(s);
+    for (const s of [copy.about.logOff, copy.about.logReduced, copy.hero.ghostOff, copy.closer.door.offParagraph, copy.closer.door.offParagraphPhone]) expect(html, s).toContain(s);
     expect(raw).toContain('when-off');
     expect(raw).toContain('when-on');
   });

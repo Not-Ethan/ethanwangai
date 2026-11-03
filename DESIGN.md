@@ -13,10 +13,10 @@ colors:
   grid-line: "rgba(22,22,22,0.11)"
   accent: "#facc00"
   agent-blue: "#2563eb"
-  agent-red: "#e5484d"
-  agent-green: "#16a34a"
+  agent-red: "#dc2626"
+  agent-green: "#15803d"
   agent-violet: "#7c3aed"
-  agent-orange: "#f97316"
+  agent-orange: "#c2410c"
   agent-pink: "#db2777"
 typography:
   name:
@@ -244,7 +244,7 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 - **Marker Yellow** (`{colors.accent}`, #facc00): the single accent. Fills the circular arrow icon inside `btn`, the whole `btn-accent`, the `badge`, the `mark` square, the active dot and square bullets (outlined in ink), and the 3px underline under the contact email. Also appears as two soft static glows (rgba(250,204,0,.28) in the hero, .35 in the closer) and as the yellow bars in the drawn schematics. It is never used for text or large panels.
 
 ### Secondary (the agent set; swarm only)
-- **Agent Blue** (#2563eb), **Agent Red** (#e5484d), **Agent Green** (#16a34a), **Agent Violet** (#7c3aed), **Agent Orange** (#f97316), **Agent Pink** (#db2777): agent 01 to 06, in that order. Each agent's color is its cursor fill, name tag background, selection box border and 8% box fill, handle border, box label background, and the agent name in the build log. Phones use the first three. Colors are set per element through the `--agent` custom property. Tag and label text is white on these fills.
+- **Agent Blue** (#2563eb), **Agent Red** (#dc2626), **Agent Green** (#15803d), **Agent Violet** (#7c3aed), **Agent Orange** (#c2410c), **Agent Pink** (#db2777): agent 01 to 06, in that order. Each agent's color is its cursor fill, name tag background, selection box border and 8% box fill, handle border, box label background, and the agent name in the build log. Phones use the first three. Colors are set per element through the `--agent` custom property. Tag and label text is white on these fills.
 
 ### Neutral
 - **Paper** (`{colors.canvas}`, #f7f5ee): page background, hero, about, experience, rest; also the bar at 88% alpha.
@@ -266,7 +266,7 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 
 ## Typography
 
-**Display Font:** Space Grotesk Variable (with system-ui, sans-serif), loaded from `@fontsource-variable/space-grotesk`
+**Display Font:** Space Grotesk Variable (with system-ui, sans-serif), self-hosted through `next/font/local` (preloaded)
 **Body Font:** Space Grotesk Variable (same)
 **Label/Mono Font:** JetBrains Mono (variable, weights 100 to 800, latin, self-hosted via `next/font/local` as `--font-mono`, fallback ui-monospace), tabular numerals
 
