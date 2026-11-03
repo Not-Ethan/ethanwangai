@@ -301,3 +301,11 @@ The copy tests that pinned old strings change with these; the facts checks stay 
 - The index sub-line uses `--ink-muted`; phone grids use `minmax(0, 1fr)`; SVG fills use tokens.
 - The bar tab and chat shots carry no made-up line items: bars and lines stand in for text, and the only words are `drinks · free`, `hedged` and `cited`.
 - Tailwind's source scan skips `docs/`.
+
+### 13.9 After the second visual gate
+
+- The log line's element column is the prompt (`agent 02 · my name, huge · 0.61s`); the shot keyframes are namespaced `shot-*` (Tailwind ships a `pulse` of its own) and the tab pulse is a scale, never an opacity change.
+- `BUILT_TOTAL` lives in `src/swarm/inventory.ts` and feeds both the site and the store's server snapshot; the pill is `min-width: calc(22ch + 28px)` so double digits never move the nav.
+- A job whose element is less than a quarter visible between the bar line (64 px) and the viewport bottom is built instantly; a box whose top is within 92 px of the viewport top gets its label below, so no label is ever drawn over the bar.
+- Idle cursors drift 0.8 s before fading; one whose tag lands on another built element fades at once. A faded cursor that gets a job respawns 40 px outside the viewport edge nearest the target, so after a jump the first boxes appear within half a second. A cursor whose tip is outside the viewport is not drawn.
+- Copy: rest-card lines carry a no-break space before every `·`; the off paragraph reads `this page is usually drawn in by six cursors while you read it. today they stayed home.` (phone: three); the heron, wvu and nist first points are full sentences in his voice (`i priced the promos, sized the liability and placed the hedges on prediction markets.` / `it watches about a hundred million dollars a year of claims and flags the weeks that look wrong.` / `it finds the right doc, reranks the candidates and digs deeper when the first pass is thin, all inside a custom open webui fork.`); the nist work lede is `a retrieval assistant for nist's internal docs. it answers and says which doc it used.` and the darch work lede `a content pipeline that rendered and shipped the videos itself. about twenty million views a month, for a year.` so experience and work share no phrase.
