@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     ".playwright-mcp/**",
     ".claude/**",
     ".impeccable/**",
+    "scripts/**",
   ]),
 ]);
 
