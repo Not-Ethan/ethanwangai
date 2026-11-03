@@ -69,15 +69,16 @@ async (page) => {
     const vh = window.innerHeight;
     const els = [...document.querySelectorAll('[data-build]')];
     const below = els.filter((el) => el.getBoundingClientRect().top >= vh);
-    const prompts = below.map((el) => el.getAttribute('data-prompt'));
     const drawn = new Set();
     const norm = (t) => (t || '').trim().toLowerCase();
+    // drawn = a visible selbox carrying the element's prompt overlaps the element's current rect while the element is at least partly in the viewport
     const sample = setInterval(() => {
-      const inView = new Set(below.filter((el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; }).map((el) => norm(el.getAttribute('data-prompt'))));
-      for (const b of document.querySelectorAll('.selbox')) {
-        if (Number(getComputedStyle(b).opacity) <= 0.05) continue;
-        const label = norm(b.textContent);
-        if (inView.has(label)) drawn.add(label);
+      const boxes = [...document.querySelectorAll('.selbox')].filter((b) => Number(getComputedStyle(b).opacity) > 0.05).map((b) => ({ label: norm(b.textContent), r: b.getBoundingClientRect() }));
+      for (const el of below) {
+        const r = el.getBoundingClientRect();
+        if (!(r.bottom > 0 && r.top < window.innerHeight)) continue;
+        const label = norm(el.getAttribute('data-prompt'));
+        if (boxes.some((b) => b.label === label && Math.min(b.r.right, r.right) > Math.max(b.r.left, r.left) && Math.min(b.r.bottom, r.bottom) > Math.max(b.r.top, r.top))) drawn.add(label);
       }
     }, 100);
     await new Promise((resolve) => {
@@ -87,6 +88,7 @@ async (page) => {
     });
     await new Promise((r) => setTimeout(r, 150));
     clearInterval(sample);
+    const prompts = below.map((el) => el.getAttribute('data-prompt'));
     const undrawn = prompts.filter((p) => !drawn.has(norm(p)));
     const belowFold = prompts.length;
     return { belowFold, drawn: belowFold - undrawn.length, pct: belowFold ? Math.round(((belowFold - undrawn.length) / belowFold) * 100) : 100, undrawn };
@@ -94,6 +96,54 @@ async (page) => {
   };
   report.continuous = await continuousPass(4);
   report.continuousFast = await continuousPass(20);
+
+  // Sticky passes: the experience column's heading and index stick at top: 96px. From each start offset and speed, scroll through the section; both must get an overlapping box while on screen. All 8 runs must pass.
+  const stickyPass = async (start, px) => {
+    await page.goto(BASE, { waitUntil: 'load' });
+    await page.waitForTimeout(3000);
+    await page.evaluate((y) => { document.documentElement.style.scrollBehavior = 'auto'; window.scrollTo(0, y); }, start);
+    await page.waitForTimeout(300);
+    return page.evaluate(async (px) => {
+      const names = ['h2 experience', 'index'];
+      const targets = names.map((n) => document.querySelector(`[data-build="${n}"]`));
+      const seen = { 'h2 experience': false, index: false };
+      const norm = (t) => (t || '').trim().toLowerCase();
+      const check = () => {
+        const boxes = [...document.querySelectorAll('.selbox')].filter((b) => Number(getComputedStyle(b).opacity) > 0.05).map((b) => ({ label: norm(b.textContent), r: b.getBoundingClientRect() }));
+        names.forEach((n, i) => {
+          const el = targets[i]; if (!el) return;
+          const r = el.getBoundingClientRect();
+          if (!(r.bottom > 0 && r.top < window.innerHeight)) return;
+          const label = norm(el.getAttribute('data-prompt'));
+          if (boxes.some((b) => b.label === label && Math.min(b.r.right, r.right) > Math.max(b.r.left, r.left) && Math.min(b.r.bottom, r.bottom) > Math.max(b.r.top, r.top))) seen[n] = true;
+        });
+      };
+      const sample = setInterval(check, 50);
+      const section = document.getElementById('experience');
+      await new Promise((resolve) => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const tick = () => {
+          window.scrollBy(0, px);
+          const bottom = section.getBoundingClientRect().bottom;
+          if (bottom < 0 || window.scrollY >= max - 1) resolve(); else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+      await new Promise((r) => setTimeout(r, 100));
+      clearInterval(sample);
+      return seen;
+    }, px);
+  };
+  const stickyFailures = [];
+  let stickyRuns = 0, stickyPassed = 0;
+  for (const start of [800, 1200, 1600, 1800]) {
+    for (const px of [8, 16]) {
+      const seen = await stickyPass(start, px);
+      stickyRuns++;
+      if (seen['h2 experience'] && seen.index) stickyPassed++; else stickyFailures.push({ start, px, seen });
+    }
+  }
+  report.stickyPasses = { runs: stickyRuns, passed: stickyPassed, failures: stickyFailures };
 
   // Rebuild button.
   await scrollToId('contact');

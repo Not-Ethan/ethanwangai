@@ -47,6 +47,13 @@ export function restPoint(tl: JobTimeline): Point {
   return { x: tl.rect.x + tl.rect.w + PAD + tl.restDx, y: tl.rect.y + tl.rect.h + PAD + tl.restDy };
 }
 
+/** Moves a timeline by (dx, dy) document px, in place: the box and the cursor's path follow an element that moved (a sticky one). */
+export function shiftTimeline(tl: JobTimeline, dx: number, dy: number): JobTimeline {
+  tl.rect.x += dx; tl.rect.y += dy;
+  tl.from.x += dx; tl.from.y += dy;
+  return tl;
+}
+
 /** Samples the job at t ms from its start. Allocation-free: writes into `out`. */
 export function sampleJob(tl: JobTimeline, t: number, out: JobSample): JobSample {
   const { rect } = tl;

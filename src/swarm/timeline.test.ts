@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DRAG_SPEED, LINGER, LINGER_FADE, PAD, PRESS, RELEASE, TRAVEL_SPEED, clipFor, jobTimeline, restPoint, sampleJob, type JobSample } from './timeline';
+import { DRAG_SPEED, LINGER, LINGER_FADE, PAD, PRESS, RELEASE, TRAVEL_SPEED, clipFor, jobTimeline, restPoint, sampleJob, shiftTimeline, type JobSample } from './timeline';
 
 const blank = (): JobSample => ({ phase: 'travel', cx: 0, cy: 0, f: 0, scale: 1, boxAlpha: 0, fillAlpha: 0 });
 const rect = { x: 300, y: 200, w: 400, h: 120 };
@@ -151,5 +151,22 @@ describe('jobTimeline floors', () => {
     const tl = jobTimeline({ x: 300, y: 200 }, { x: 304, y: 204, w: 10, h: 10 }, { travel: 0.3, drag: 0.3 }, undefined, { travel: 90, drag: 120 });
     expect(tl.travel).toBe(90);
     expect(tl.drag).toBe(120);
+  });
+});
+
+describe('shiftTimeline', () => {
+  it('moves the rect and the start point together, so the drag geometry stays the same', () => {
+    const tl = jobTimeline({ x: 50, y: 60 }, rect);
+    const a = blank(), b = blank();
+    const before = { ...sampleJob(tl, tl.tPress + tl.drag / 2, a) };
+    const out = shiftTimeline(tl, -3, 40);
+    expect(out).toBe(tl);
+    expect(tl.rect).toEqual({ x: 297, y: 240, w: 400, h: 120 });
+    expect(tl.from).toEqual({ x: 47, y: 100 });
+    sampleJob(tl, tl.tPress + tl.drag / 2, b);
+    expect(b.cx).toBeCloseTo(before.cx - 3);
+    expect(b.cy).toBeCloseTo(before.cy + 40);
+    expect(b.f).toBe(before.f);
+    expect(restPoint(tl).y).toBe(240 + 120 + PAD + tl.restDy);
   });
 });

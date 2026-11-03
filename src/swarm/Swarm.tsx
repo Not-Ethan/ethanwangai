@@ -3,7 +3,7 @@ import { createContext, useEffect, useRef, useState, type ReactNode } from 'reac
 import { mulberry32 } from './prng';
 import { AGENT_COLOURS, IDLE_INSET, agentCount, agentName, idlePose, initialPosition, respawnPoint } from './agents';
 import { Scheduler, BAR_HEIGHT, FAST_SCROLL_SPEED, isOffscreen, makeAgent, scrolledPast, type AgentState, type Job } from './scheduler';
-import { clipFor, sampleJob, type JobSample, type JobTimeline, type Point, type Rect } from './timeline';
+import { clipFor, sampleJob, shiftTimeline, type JobSample, type JobTimeline, type Point, type Rect } from './timeline';
 import { createSwarmStore, type LogLine, type SwarmStore } from './swarmStore';
 
 export interface SwarmRuntime {
@@ -15,7 +15,7 @@ export interface SwarmRuntime {
 
 export const SwarmContext = createContext<SwarmRuntime | null>(null);
 
-interface Entry { id: number; name: string; el: HTMLElement; built: boolean; queued: boolean }
+interface Entry { id: number; name: string; el: HTMLElement; built: boolean; queued: boolean; /** the element or an ancestor is position: sticky (decided once, at registration) */ sticky: boolean; /** inside the fixed header */ bar: boolean }
 interface Runtime extends SwarmRuntime {
   registry: Map<HTMLElement, Entry>;
   byId: Map<number, Entry>;
@@ -25,6 +25,13 @@ interface Runtime extends SwarmRuntime {
 }
 
 const LOG_KEEP = 9;
+
+function hasStickyAncestor(el: HTMLElement): boolean {
+  for (let n: HTMLElement | null = el; n && n !== document.body; n = n.parentElement) {
+    if (getComputedStyle(n).position === 'sticky') return true;
+  }
+  return false;
+}
 const LABEL_BELOW = 92;
 // a cursor tag sits 16 px under the tip: a tip higher than this (viewport px) would put the tag over the bar, so the cursor is hidden there
 const TIP_MIN_Y = BAR_HEIGHT - 16;
@@ -39,7 +46,7 @@ function createRuntime(): Runtime {
   const rt: Runtime = {
     store, registry, byId, observer: null, mounted: false, rebuildImpl: null,
     register(el, name) {
-      const entry: Entry = { id: nextId++, name, el, built: false, queued: false };
+      const entry: Entry = { id: nextId++, name, el, built: false, queued: false, sticky: hasStickyAncestor(el), bar: !!el.closest('.bar') };
       registry.set(el, entry);
       byId.set(entry.id, entry);
       rt.observer?.observe(el);
@@ -55,7 +62,7 @@ function createRuntime(): Runtime {
   return rt;
 }
 
-interface PoolBox { el: HTMLDivElement; until: number; tl: JobTimeline | null; startAt: number; /** label mode: 0 above the box, 1 below it, 2 hidden */ label: 0 | 1 | 2 }
+interface PoolBox { entry: Entry | undefined; /** current top clip in px (content boxes only) */ clipN: number; el: HTMLDivElement; until: number; tl: JobTimeline | null; startAt: number; /** label mode: 0 above the box, 1 below it, 2 hidden */ label: 0 | 1 | 2 }
 interface Active { entry: Entry | undefined; built: boolean }
 
 const promptOf = (e: Entry | undefined): string | undefined => e?.el.dataset.prompt;
@@ -80,7 +87,7 @@ function makeBox(): PoolBox {
   const label = document.createElement('span');
   label.className = 'selbox__label mono';
   el.appendChild(label);
-  return { el, until: 0, tl: null, startAt: 0, label: 0 };
+  return { entry: undefined, clipN: 0, el, until: 0, tl: null, startAt: 0, label: 0 };
 }
 
 export function Swarm({ children }: { children: ReactNode }) {
@@ -133,7 +140,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       }
     };
     // will-change only while a box is drawn
-    const clearBox = (b: PoolBox): void => { b.el.style.opacity = '0'; b.until = 0; b.tl = null; b.el.classList.remove('is-working'); };
+    const clearBox = (b: PoolBox): void => { b.el.style.opacity = '0'; b.until = 0; b.tl = null; b.entry = undefined; if (b.clipN) { b.clipN = 0; b.el.style.clipPath = ''; } b.el.classList.remove('is-working'); };
     const working: boolean[] = agents.map(() => false);
     const setWorking = (i: number, w: boolean): void => {
       if (working[i] === w) return;
@@ -287,6 +294,15 @@ export function Swarm({ children }: { children: ReactNode }) {
     };
     window.addEventListener('scroll', onScrollSample, { passive: true });
 
+    const stickyRects = new Map<Entry, Rect | null>();
+    const follow = (e: Entry, tl: JobTimeline): void => {
+      let r = stickyRects.get(e);
+      if (r === undefined) { r = e.el.isConnected ? measure({ id: e.id, name: e.name }) : null; stickyRects.set(e, r); }
+      if (!r) return;
+      const dx = r.x - tl.rect.x, dy = r.y - tl.rect.y;
+      if (dx !== 0 || dy !== 0) shiftTimeline(tl, dx, dy);
+    };
+
     const sample: JobSample = { phase: 'travel', cx: 0, cy: 0, f: 0, scale: 1, boxAlpha: 0, fillAlpha: 0 };
     const boxSample: JobSample = { phase: 'travel', cx: 0, cy: 0, f: 0, scale: 1, boxAlpha: 0, fillAlpha: 0 };
     const pt: Point = { x: 0, y: 0 };
@@ -295,6 +311,15 @@ export function Swarm({ children }: { children: ReactNode }) {
       raf = 0;
       const now = performance.now();
       const view = vp();
+
+      // sticky elements move on screen without the page scrolling past them: shift their timelines by how far they moved,
+      // so the box and the cursor follow, and the off-screen checks below see the element where it is now (one read per sticky element)
+      stickyRects.clear();
+      for (let i = 0; i < agents.length; i++) {
+        const e = agents[i].busy ? active[i]?.entry : undefined;
+        if (e?.sticky && agents[i].timeline) follow(e, agents[i].timeline!);
+      }
+      for (const b of pool) { if (b.tl && b.entry?.sticky) follow(b.entry, b.tl); }
 
       if (started && scheduler.queue.length > 0) {
         const d = scheduler.dispatch(now, view, measure, {
@@ -314,6 +339,7 @@ export function Swarm({ children }: { children: ReactNode }) {
           if (!box) box = pool.reduce((a, b) => (b.until < a.until ? b : a));
           box.until = s.agent.startAt + s.timeline.tEnd;
           box.tl = s.timeline;
+          box.entry = rt.byId.get(s.job.id);
           box.el.classList.add('is-working');
           box.startAt = s.agent.startAt;
           box.el.style.setProperty('--agent', AGENT_COLOURS[s.agent.id % AGENT_COLOURS.length]);
@@ -378,6 +404,11 @@ export function Swarm({ children }: { children: ReactNode }) {
         st.height = `${boxSample.f * r.h}px`;
         st.opacity = String(boxSample.boxAlpha);
         st.setProperty('--fill', String(boxSample.fillAlpha));
+        // a content box never draws over the bar: clip its top at the bar line (the other sides are open so the label and handles survive)
+        if (b.entry && !b.entry.bar) {
+          const n = Math.max(0, BAR_HEIGHT - (r.y - view.y));
+          if (n !== b.clipN) { b.clipN = n; st.clipPath = n > 0 ? `inset(${n}px -999px -999px -999px)` : ''; }
+        }
       }
 
       for (let i = 0; i < agents.length; i++) {
