@@ -1,9 +1,9 @@
-import '@fontsource-variable/space-grotesk';
 import localFont from 'next/font/local';
 import './globals.css';
 import type { Metadata } from 'next';
 import { copy } from '@/site/copy';
 
+const display = localFont({ src: './fonts/space-grotesk-latin-wght-normal.woff2', variable: '--font-display', weight: '300 700', display: 'swap' });
 const mono = localFont({ src: './fonts/jetbrains-mono-latin-wght-normal.woff2', variable: '--font-mono', weight: '100 800', display: 'swap', adjustFontFallback: false });
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ const SWARM_SCRIPT = "(function(){try{if(matchMedia('(prefers-reduced-motion: re
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={mono.variable} suppressHydrationWarning>
+    <html lang="en" className={`${mono.variable} ${display.variable}`} suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: SWARM_SCRIPT }} />
         {children}

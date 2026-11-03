@@ -17,7 +17,7 @@ export function Hero() {
       <div className="hero__grid" aria-hidden="true" />
       <div className="hero__glow" aria-hidden="true" />
       <div className="wrap hero__inner">
-        <Built name="h1 name" as="h1" className="name" prompt={copy.prompts['h1 name']}>
+        <Built name="h1 name" as="h1" className="name" tabIndex={-1} prompt={copy.prompts['h1 name']}>
           <span>{h.name[0]}</span>
           <span>{h.name[1]}</span>
         </Built>

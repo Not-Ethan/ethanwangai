@@ -25,7 +25,7 @@ interface Runtime extends SwarmRuntime {
 }
 
 const LOG_KEEP = 9;
-const CURSOR_SVG = '<svg viewBox="0 0 18 18" width="18" height="18"><path d="M2 1.5 L2 14.5 L5.6 11.2 L8 16.5 L10.6 15.4 L8.2 10.2 L13 10.2 Z" fill="var(--agent)" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+const CURSOR_SVG = '<svg viewBox="0 0 18 18" width="18" height="18"><path d="M2 1.5 L2 14.5 L5.6 11.2 L8 16.5 L10.6 15.4 L8.2 10.2 L13 10.2 Z" fill="var(--agent)" style="stroke:var(--surface)" stroke-width="1.5" stroke-linejoin="round"/></svg>';
 
 /** No DOM access here: this runs during render (server and client). */
 function createRuntime(): Runtime {
@@ -152,6 +152,7 @@ export function Swarm({ children }: { children: ReactNode }) {
     let started = false;
     let raf = 0;
     let lastSweep = 0;
+    let lastWake = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
     let alive = true;
 
@@ -166,9 +167,16 @@ export function Swarm({ children }: { children: ReactNode }) {
       dirty = true;
     };
 
+    // the loop idles when nothing is moving; anything that can create work restarts it (see wake)
+    let frame: () => void = () => {};
+    const wake = (): void => {
+      lastWake = performance.now();
+      if (alive && !raf) raf = requestAnimationFrame(frame);
+    };
     const onIntersect = (items: IntersectionObserverEntry[]): void => {
       const hits = items.filter((it) => it.isIntersecting);
       hits.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top || a.boundingClientRect.left - b.boundingClientRect.left);
+      if (hits.length > 0) wake();
       for (const it of hits) {
         const e = rt.registry.get(it.target as HTMLElement);
         rt.observer?.unobserve(it.target);
@@ -181,7 +189,15 @@ export function Swarm({ children }: { children: ReactNode }) {
 
     store.set({ on: true, agents: n, total: rt.registry.size, built: 0, log: [], busy: false });
 
-    document.fonts.ready.then(() => { if (alive) timers.push(setTimeout(() => { started = true; }, 250)); });
+    // start when the fonts are ready or after 600 ms, whichever is first, then wait 150 ms
+    let startArmed = false;
+    const armStart = (): void => {
+      if (startArmed || !alive) return;
+      startArmed = true;
+      timers.push(setTimeout(() => { started = true; wake(); }, 150));
+    };
+    document.fonts.ready.then(armStart);
+    timers.push(setTimeout(armStart, 600));
 
     // keyboard focus on or inside an unbuilt element builds it instantly, so nothing focused is ever invisible
     const onFocusIn = (ev: FocusEvent): void => {
@@ -189,6 +205,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       const host = target && typeof target.closest === 'function' ? target.closest('[data-build]') : null;
       const e = host ? rt.registry.get(host as HTMLElement) : undefined;
       if (!e || e.built) return;
+      wake();
       const i = agents.findIndex((a, k) => a.busy && active[k]?.entry === e);
       if (i >= 0) {
         // mid-job: finish it where the cursor is
@@ -220,8 +237,8 @@ export function Swarm({ children }: { children: ReactNode }) {
     const boxSample: JobSample = { phase: 'travel', cx: 0, cy: 0, f: 0, scale: 1, boxAlpha: 0, fillAlpha: 0 };
     const pt: Point = { x: 0, y: 0 };
 
-    const frame = (): void => {
-      raf = requestAnimationFrame(frame);
+    frame = (): void => {
+      raf = 0;
       const now = performance.now();
       const view = vp();
 
@@ -338,12 +355,23 @@ export function Swarm({ children }: { children: ReactNode }) {
         lastBusy = busy;
         store.set({ built, log, busy });
       }
+
+      // keep going while anything is moving: a busy agent or queued job, a lingering box, an idle cursor still drifting
+      // (visible and not yet faded), or within 300 ms of a wake so the sweep runs once after the last scroll
+      let more = busy || now - lastWake < 300 || !started;
+      if (!more) more = pool.some((b) => b.tl !== null);
+      if (!more) more = agents.some((a, i) => !a.busy && !hidden[i] && !faded[i]);
+      if (more && alive) raf = requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
+    window.addEventListener('scroll', wake, { passive: true });
+    window.addEventListener('resize', wake);
+    wake();
 
     rt.rebuildImpl = () => {
       // nothing above the reader, so the sweep has nothing to take
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      // keyboard focus moves to the h1 (already built, so the focusin handler leaves it alone) instead of falling to the body
+      document.querySelector<HTMLElement>('h1')?.focus({ preventScroll: true });
       for (const e of rt.registry.values()) {
         delete e.el.dataset.built;
         e.el.style.clipPath = '';
@@ -360,12 +388,15 @@ export function Swarm({ children }: { children: ReactNode }) {
       for (let i = 0; i < agents.length; i++) idleSince[i] = t0;
       built = 0; log = []; dirty = false; lastBusy = false;
       store.set({ built: 0, log: [], busy: false });
+      wake();
     };
 
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', measureTags);
+      window.removeEventListener('scroll', wake);
+      window.removeEventListener('resize', wake);
       document.removeEventListener('focusin', onFocusIn);
       timers.forEach(clearTimeout);
       observer.disconnect();

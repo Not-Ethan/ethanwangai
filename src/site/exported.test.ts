@@ -28,13 +28,17 @@ describe.skipIf(!HAVE)('exported html', () => {
   const html = decode(raw);
 
   it('contains every copy string', () => {
-    // logReduced, ghostOff and the door's off paragraphs are only rendered at runtime (swarm off), never in the static html.
-    // Next embeds the strings in script payloads too, which hid misses; check the markup only.
+    // Both variants of the swarm copy (on and off) are in the server html; CSS picks one. Next embeds the strings in script payloads too, which hid misses; check the markup only.
     const markup = html.replace(/<script[\s\S]*?<\/script>/g, '');
-    for (const s of strings({ ...copy, hero: { ...copy.hero, ghostOff: '' }, about: { ...copy.about, logReduced: '' }, closer: { ...copy.closer, door: { ...copy.closer.door, offParagraph: '', offParagraphPhone: '' } } })) {
+    for (const s of strings(copy)) {
       if (s === '' || /^(mailto:|https?:)/.test(s)) continue;
       expect(markup, s).toContain(s);
     }
+  });
+  it('renders the off copy statically, switched by CSS', () => {
+    for (const s of [copy.about.logReduced, copy.hero.ghostOff, copy.closer.door.offParagraph, copy.closer.door.offParagraphPhone]) expect(html, s).toContain(s);
+    expect(raw).toContain('when-off');
+    expect(raw).toContain('when-on');
   });
   it('gives every built name a lowercase prompt, and the prompts map has no extras', () => {
     const names = [...raw.matchAll(/data-build="([^"]+)"/g)].map((m) => decode(m[1]));

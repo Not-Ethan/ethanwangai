@@ -2,25 +2,24 @@
 import type { CSSProperties } from 'react';
 import { copy } from '../copy';
 import { AGENT_COLOURS, agentName } from '@/swarm/agents';
-import { useMounted, useSwarmStats } from '@/swarm/useSwarmStats';
+import { useSwarmStats } from '@/swarm/useSwarmStats';
 import { Built } from '../Built';
 
 export function About() {
   const a = copy.about;
   const s = useSwarmStats();
-  const mounted = useMounted();
-  const off = mounted && !s.on;
   return (
     <section id="about" className="sec sec-about">
       <div className="wrap">
         <Built name="h2 about" className="section__head" prompt={copy.prompts['h2 about']}>
           <h2 className="h2">{a.h2}</h2>
         </Built>
-        <div className="about__grid" data-off={off ? '' : undefined}>
+        <div className="about__grid">
           <Built name="log" className="card log" prompt={copy.prompts.log}>
             <p className="eyebrow-sm">{a.logTitle}</p>
-            <ol className="log__lines mono" data-log>
-              {off ? <li>{a.logReduced}</li> : s.log.length === 0 ? <li>{a.logEmpty}</li> : s.log.map((l) => {
+            <ol className="log__lines mono when-off"><li>{a.logReduced}</li></ol>
+            <ol className="log__lines mono when-on" data-log>
+              {s.log.length === 0 ? <li>{a.logEmpty}</li> : s.log.map((l) => {
                 const who = agentName(l.agent);
                 return (
                   <li key={l.id}>
