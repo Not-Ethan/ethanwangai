@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mulberry32 } from './prng';
-import { OFFSCREEN_MARGIN, QUEUE_FACTOR, Scheduler, isOffscreen, mostlyHidden, makeAgent, scrolledPast, nearestFreeAgent, type Job } from './scheduler';
+import { FAST_DRAG_MIN, FAST_TRAVEL_MIN, OFFSCREEN_MARGIN, QUEUE_FACTOR, Scheduler, isOffscreen, mostlyHidden, makeAgent, scrolledPast, nearestFreeAgent, type Job } from './scheduler';
 import { restPoint, type Rect } from './timeline';
 
 const vp: Rect = { x: 0, y: 0, w: 1440, h: 900 };
@@ -139,7 +139,7 @@ describe('Scheduler', () => {
 });
 
 describe('Scheduler: centre-first assignment, tempo, abandon', () => {
-  it('starts the job nearest the viewport centre first, ties by queue order, and caches rects', () => {
+  it('starts the job nearest the viewport centre first, ties by queue order, and re-measures queued jobs each dispatch', () => {
     const agents = makeAgents(3);
     agents[1].busy = true; agents[2].busy = true;   // one free agent; the cap (6) leaves all three queued
     const s = new Scheduler(agents, mulberry32(1));
@@ -152,8 +152,21 @@ describe('Scheduler: centre-first assignment, tempo, abandon', () => {
     expect(s.queue.map((j) => j.id)).toEqual([1, 3]);
     expect(s.queue[0].rect).toEqual(rects[1]);
     s.free(agents[0]);
-    s.dispatch(0, vp, () => { calls++; return null; });
-    expect(calls).toBe(3);
+    s.dispatch(0, vp, () => { calls++; return rects[3]; });
+    expect(calls).toBe(5);   // jobs 1 and 3 measured again: sticky elements move without a scroll
+  });
+  it('uses the re-measured rect for the timeline when it differs from the cached one', () => {
+    const agents = makeAgents(1);
+    const s = new Scheduler(agents, mulberry32(1));
+    const j = job(1);
+    j.rect = rectAt(300, 20);   // stale: this would be mostly under the bar
+    s.enqueue(j);
+    const fresh = rectAt(620, 410);
+    const d = s.dispatch(0, vp, () => fresh, { skipCovered: true });
+    expect(d.instant).toHaveLength(0);
+    expect(d.started).toHaveLength(1);
+    expect(d.started[0].timeline.rect).toEqual(fresh);
+    expect(j.rect).toEqual(fresh);
   });
   it('builds off-screen jobs instantly even when no agent is free', () => {
     const agents = makeAgents(1);
@@ -176,22 +189,42 @@ describe('Scheduler: centre-first assignment, tempo, abandon', () => {
     }
     expect(new Set(d.started.map((x) => x.timeline.travel)).size).toBeGreaterThan(1);
   });
-  it('takes tempo 0.6x while more jobs wait than there are agents', () => {
-    const slow = new Scheduler(makeAgents(6), mulberry32(7));
-    for (let i = 0; i < 8; i++) slow.enqueue(job(i));
-    const d = slow.dispatch(0, vp, () => rectAt(300, 300));
-    expect(d.started.length).toBe(6);
-    for (const { timeline: tl } of d.started) {
-      expect(tl.tempo.travel).toBeLessThanOrEqual(0.6 * 1.4); expect(tl.tempo.drag).toBeLessThanOrEqual(0.6 * 1.35);
-    }
+  it('compresses travel and drag to 0.3x (within the floors) with fast, or with more than agents.length jobs in view', () => {
+    const base = new Scheduler(makeAgents(6), mulberry32(7));
+    for (let i = 0; i < 3; i++) base.enqueue(job(i));
+    const b = base.dispatch(0, vp, () => rectAt(300, 300));
+    for (const { timeline: tl } of b.started) { expect(tl.tempo.travel).toBeGreaterThanOrEqual(0.8); expect(tl.tempo.drag).toBeGreaterThanOrEqual(0.85); }
     const fast = new Scheduler(makeAgents(6), mulberry32(7));
     for (let i = 0; i < 3; i++) fast.enqueue(job(i));
-    const f = fast.dispatch(0, vp, () => rectAt(300, 300));
-    for (const { timeline: tl } of f.started) {
-      expect(tl.tempo.travel).toBeGreaterThanOrEqual(0.8); expect(tl.tempo.drag).toBeGreaterThanOrEqual(0.85);
+    const f = fast.dispatch(0, vp, () => rectAt(300, 300), { fast: true });
+    for (let k = 0; k < 3; k++) {
+      expect(f.started[k].timeline.tempo.travel).toBeCloseTo(0.3 * b.started[k].timeline.tempo.travel, 10);
+      expect(f.started[k].timeline.tempo.drag).toBeCloseTo(0.3 * b.started[k].timeline.tempo.drag, 10);
+      expect(f.started[k].timeline.travel).toBeGreaterThanOrEqual(FAST_TRAVEL_MIN);
+      expect(f.started[k].timeline.drag).toBeGreaterThanOrEqual(FAST_DRAG_MIN);
+      expect(f.started[k].timeline.travel).toBeLessThan(b.started[k].timeline.travel);
     }
-    // same seed, same first draw: exactly 0.6x
-    expect(d.started[0].timeline.tempo.travel).toBeCloseTo(0.6 * f.started[0].timeline.tempo.travel, 10);
+    // more queued jobs in view than agents: same compression without the flag
+    const crowd = new Scheduler(makeAgents(6), mulberry32(7));
+    for (let i = 0; i < 8; i++) crowd.enqueue(job(i));
+    const c = crowd.dispatch(0, vp, () => rectAt(300, 300));
+    expect(c.started[0].timeline.tempo.travel).toBeCloseTo(0.3 * b.started[0].timeline.tempo.travel, 10);
+    // queued jobs still below the viewport do not count
+    const below = new Scheduler(makeAgents(2), mulberry32(7));
+    for (let i = 0; i < 4; i++) below.enqueue(job(i));
+    const bl = below.dispatch(0, vp, (j) => (j.id === 0 ? rectAt(300, 300) : rectAt(300, 950)), { skipCovered: true });
+    expect(bl.started[0].timeline.tempo.travel).toBeGreaterThanOrEqual(0.8);
+  });
+  it('keeps presses and releases 60 ms apart (not 120) when compressed', () => {
+    const s = new Scheduler(makeAgents(6, 50), mulberry32(7));
+    for (let i = 0; i < 6; i++) s.enqueue(job(i));
+    const d = s.dispatch(0, vp, () => rectAt(300, 300), { fast: true });
+    const press = d.started.map((x) => x.agent.startAt + x.timeline.tTravel);
+    const rel = d.started.map((x) => x.agent.startAt + x.timeline.tDrag);
+    let min = Infinity;
+    for (const arr of [press, rel]) for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) min = Math.min(min, Math.abs(arr[i] - arr[j]));
+    expect(min).toBeGreaterThanOrEqual(60);
+    expect(min).toBeLessThan(120);
   });
   it('abandon frees a busy agent at the given point', () => {
     const agents = makeAgents(1);
@@ -293,6 +326,12 @@ describe('dispatch with skipCovered', () => {
   it('starts an element 30 % visible below the bar line', () => {
     const { d } = run({ x: 0, y: 1900 - 30, w: 300, h: 100 });
     expect(d.started).toHaveLength(1); expect(d.instant).toHaveLength(0);
+  });
+  it('waits while the top is 10 px under the viewport bottom, starts once it is 10 px above it', () => {
+    const waiting = run({ x: 0, y: 1910, w: 300, h: 200 });
+    expect(waiting.d.started).toHaveLength(0); expect(waiting.s.queue).toHaveLength(1);
+    const early = run({ x: 0, y: 1890, w: 300, h: 200 });   // only 5 % in view: no longer waits for a quarter
+    expect(early.d.started).toHaveLength(1); expect(early.d.instant).toHaveLength(0);
   });
   it('skips a waiting element and still picks the next candidate', () => {
     const s = new Scheduler(makeAgents(2), mulberry32(3));

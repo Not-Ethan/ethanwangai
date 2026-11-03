@@ -60,10 +60,11 @@ async (page) => {
   await full('d-full');
   report['d-final'] = await state();
 
-  // Continuous scroll (wheel / trackpad): 4 px per frame on a fresh load; how many below-the-fold elements were drawn by a selbox while in view.
+  // Continuous scroll (wheel / trackpad) on a fresh load: how many below-the-fold elements were drawn by a selbox while in view. 4 px per frame must reach 100 %, 20 px per frame (about 1200 px/s) at least 80 %.
+  const continuousPass = async (px) => {
   await page.goto(BASE, { waitUntil: 'load' });
   await page.waitForTimeout(4000);
-  report.continuous = await page.evaluate(async () => {
+  return page.evaluate(async (px) => {
     document.documentElement.style.scrollBehavior = 'auto';
     const vh = window.innerHeight;
     const els = [...document.querySelectorAll('[data-build]')];
@@ -81,7 +82,7 @@ async (page) => {
     }, 100);
     await new Promise((resolve) => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      const tick = () => { window.scrollBy(0, 4); if (window.scrollY >= max - 1) resolve(); else requestAnimationFrame(tick); };
+      const tick = () => { window.scrollBy(0, px); if (window.scrollY >= max - 1) resolve(); else requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     });
     await new Promise((r) => setTimeout(r, 150));
@@ -89,7 +90,10 @@ async (page) => {
     const undrawn = prompts.filter((p) => !drawn.has(norm(p)));
     const belowFold = prompts.length;
     return { belowFold, drawn: belowFold - undrawn.length, pct: belowFold ? Math.round(((belowFold - undrawn.length) / belowFold) * 100) : 100, undrawn };
-  });
+  }, px);
+  };
+  report.continuous = await continuousPass(4);
+  report.continuousFast = await continuousPass(20);
 
   // Rebuild button.
   await scrollToId('contact');

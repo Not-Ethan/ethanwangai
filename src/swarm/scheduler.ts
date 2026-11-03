@@ -14,7 +14,11 @@ const EMPTY: Readonly<Dispatch> = Object.freeze({ started: [], instant: [], drop
 
 export const OFFSCREEN_MARGIN = 200;
 export const QUEUE_FACTOR = 2;
-export const LONG_QUEUE_TEMPO = 0.6;
+/** Newly started jobs take this share of their travel and drag time while the reader scrolls fast or many jobs are in view. */
+export const FAST_TEMPO = 0.3;
+export const FAST_TRAVEL_MIN = 90, FAST_DRAG_MIN = 120;
+/** Scroll speed (px/s) above which the swarm works at FAST_TEMPO. */
+export const FAST_SCROLL_SPEED = 600;
 
 export const STAGGER_MS = 100;
 export const TARGET_Y = 0.35;
@@ -34,13 +38,30 @@ export function hiddenBelow(rect: Rect, vp: Rect, bar = BAR_HEIGHT): boolean {
   return rect.y - vp.y >= bar;
 }
 
+/** True when at least `px` of the element shows between the bar line and the viewport bottom (or it sits inside the fixed bar): an agent may start towards it. */
+export function startable(rect: Rect, vp: Rect, bar = BAR_HEIGHT, px = 1): boolean {
+  if (rect.h <= 0) return true;
+  if (rect.y - vp.y < bar && rect.h <= bar) return true;
+  const top = Math.max(rect.y, vp.y + bar);
+  const bottom = Math.min(rect.y + rect.h, vp.y + vp.h);
+  return bottom - top >= px;
+}
+
+/** True when any part of the rect lies inside the viewport (rows, not the bar line). */
+function partlyInView(rect: Rect, vp: Rect): boolean {
+  return rect.y < vp.y + vp.h && rect.y + rect.h > vp.y;
+}
+
 export const SPACING_MS = 120;
+export const SPACING_FAST_MS = 60;
 export const SPACING_STEP_MS = 40;
 export const SPACING_MAX_STEPS = 25;
 
 export interface DispatchHooks {
   /** build jobs the reader can barely see instantly instead of drawing them */
   skipCovered?: boolean;
+  /** the reader is scrolling fast: new jobs are compressed to FAST_TEMPO (so is a dispatch with more than `agents.length` queued jobs in view) */
+  fast?: boolean;
   /** called for the chosen agent right before its timeline is computed (may move the agent) */
   prepare?: (agent: AgentState, rect: Rect) => void;
 }
@@ -82,19 +103,20 @@ export class Scheduler {
     const out: Dispatch = { started: [], instant: [], dropped: [] };
     const cap = QUEUE_FACTOR * this.agents.length;
     while (this.queue.length > cap) out.instant.push(this.queue.shift()!);
-    // measure every queued job once; off-screen and vanished ones never take an agent
+    // measure every queued job afresh (the queue is capped at 2 x agents, so this is cheap; sticky elements move without the page scrolling past them);
+    // off-screen and vanished ones never take an agent
     for (let k = 0; k < this.queue.length;) {
       const job = this.queue[k];
-      if (job.rect === undefined) {
-        try { job.rect = measure(job); } catch { job.rect = null; }
-      }
+      try { job.rect = measure(job); } catch { job.rect = null; }
       if (!job.rect) { out.dropped.push(job); this.queue.splice(k, 1); continue; }
       // hidden above the bar line: built instantly; hidden below the viewport: stays queued until a quarter is in view
       if (isOffscreen(job.rect, vp) || (hooks.skipCovered && mostlyHidden(job.rect, vp) && !hiddenBelow(job.rect, vp))) { out.instant.push(job); this.queue.splice(k, 1); continue; }
       k++;
     }
-    // a long queue (more waiting than agents) is worked through faster
-    const tempoScale = this.queue.length > this.agents.length ? LONG_QUEUE_TEMPO : 1;
+    // fast scrolling, or more waiting in view than there are agents: new jobs are worked through at 0.3x
+    const fast = !!hooks.fast || this.queue.filter((j) => partlyInView(j.rect!, vp)).length > this.agents.length;
+    const tempoScale = fast ? FAST_TEMPO : 1;
+    const spacing = fast ? SPACING_FAST_MS : SPACING_MS;
     // headings first after a jump: the target is 35 % down the viewport, not its centre
     const cx = vp.x + vp.w / 2, cy = vp.y + vp.h * TARGET_Y;
     while (this.queue.length > 0 && this.agents.some((a) => !a.busy)) {
@@ -102,7 +124,7 @@ export class Scheduler {
       let bi = -1, bd = Infinity;
       for (let k = 0; k < this.queue.length; k++) {
         const r = this.queue[k].rect!;
-        if (hooks.skipCovered && mostlyHidden(r, vp)) continue; // still arriving below the viewport: not this dispatch
+        if (hooks.skipCovered && !startable(r, vp)) continue; // not yet in view below the viewport: not this dispatch
         const d = (r.x + r.w / 2 - cx) ** 2 + (r.y + r.h / 2 - cy) ** 2;
         if (d < bd) { bd = d; bi = k; }
       }
@@ -114,10 +136,10 @@ export class Scheduler {
       const tempo = { travel: (0.8 + this.rand() * 0.6) * tempoScale, drag: (0.85 + this.rand() * 0.5) * tempoScale };
       const rest = { dx: 6 + this.rand() * 12, dy: 8 + this.rand() * 14 };
       hooks.prepare?.(agent, rect);
-      const timeline = jobTimeline({ x: agent.x, y: agent.y }, rect, tempo, rest);
+      const timeline = jobTimeline({ x: agent.x, y: agent.y }, rect, tempo, rest, fast ? { travel: FAST_TRAVEL_MIN, drag: FAST_DRAG_MIN } : undefined);
       // the k-th job of one dispatch starts k x 100 ms later, so a group does not move in formation
       let startAt = now + jitter(this.rand) + out.started.length * STAGGER_MS;
-      // no two presses or two releases within 120 ms of each other: push later in 40 ms steps (if none of the 10 steps is clear, take the widest gap)
+      // no two presses or two releases within 120 ms (60 ms when compressed) of each other: push later in 40 ms steps (if none of the 25 steps is clear, take the widest gap)
       const others = this.agents.filter((o) => o.busy && o.timeline);
       const gap = (at: number) => {
         let g = Infinity;
@@ -128,7 +150,7 @@ export class Scheduler {
         return g;
       };
       let bestAt = startAt, bestGap = gap(startAt);
-      for (let step = 1; step <= SPACING_MAX_STEPS && bestGap < SPACING_MS; step++) {
+      for (let step = 1; step <= SPACING_MAX_STEPS && bestGap < spacing; step++) {
         const g = gap(startAt + step * SPACING_STEP_MS);
         if (g > bestGap) { bestGap = g; bestAt = startAt + step * SPACING_STEP_MS; }
       }

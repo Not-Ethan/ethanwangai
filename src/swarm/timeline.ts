@@ -24,11 +24,11 @@ export interface JobTimeline {
 
 export const REST_DX = 6, REST_DY = 8;
 
-/** `tempo` multiplies the clamped travel and drag; `rest` is the offset of the rest point from the drag end. */
-export function jobTimeline(from: Point, rect: Rect, tempo: { travel: number; drag: number } = { travel: 1, drag: 1 }, rest: { dx: number; dy: number } = { dx: REST_DX, dy: REST_DY }): JobTimeline {
+/** `tempo` multiplies the clamped travel and drag (never below `floors`); `rest` is the offset of the rest point from the drag end. */
+export function jobTimeline(from: Point, rect: Rect, tempo: { travel: number; drag: number } = { travel: 1, drag: 1 }, rest: { dx: number; dy: number } = { dx: REST_DX, dy: REST_DY }, floors: { travel: number; drag: number } = { travel: 0, drag: 0 }): JobTimeline {
   const dist = Math.hypot(rect.x - PAD - from.x, rect.y - PAD - from.y);
-  const travel = clamp(dist / TRAVEL_SPEED, TRAVEL_MIN, TRAVEL_MAX) * tempo.travel;
-  const drag = clamp(Math.hypot(rect.w, rect.h) / DRAG_SPEED, DRAG_MIN, DRAG_MAX) * tempo.drag;
+  const travel = Math.max(floors.travel, clamp(dist / TRAVEL_SPEED, TRAVEL_MIN, TRAVEL_MAX) * tempo.travel);
+  const drag = Math.max(floors.drag, clamp(Math.hypot(rect.w, rect.h) / DRAG_SPEED, DRAG_MIN, DRAG_MAX) * tempo.drag);
   const tTravel = travel, tPress = tTravel + PRESS, tDrag = tPress + drag, tRelease = tDrag + RELEASE, tEnd = tRelease + LINGER;
   return { from: { x: from.x, y: from.y }, rect: { ...rect }, travel, drag, tempo: { ...tempo }, restDx: rest.dx, restDy: rest.dy, tTravel, tPress, tDrag, tRelease, tEnd };
 }

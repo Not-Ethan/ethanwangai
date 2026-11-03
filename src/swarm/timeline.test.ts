@@ -145,3 +145,11 @@ describe('pinned numbers', () => {
     expect(clipFor(0.25)).toBe('inset(0 75.00% 75.00% 0)');
   });
 });
+
+describe('jobTimeline floors', () => {
+  it('never lets a compressed travel or drag fall below its floor', () => {
+    const tl = jobTimeline({ x: 300, y: 200 }, { x: 304, y: 204, w: 10, h: 10 }, { travel: 0.3, drag: 0.3 }, undefined, { travel: 90, drag: 120 });
+    expect(tl.travel).toBe(90);
+    expect(tl.drag).toBe(120);
+  });
+});

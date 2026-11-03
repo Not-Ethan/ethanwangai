@@ -2,7 +2,7 @@
 import { createContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { mulberry32 } from './prng';
 import { AGENT_COLOURS, IDLE_INSET, agentCount, agentName, idlePose, initialPosition, respawnPoint } from './agents';
-import { Scheduler, BAR_HEIGHT, isOffscreen, makeAgent, scrolledPast, type AgentState, type Job } from './scheduler';
+import { Scheduler, BAR_HEIGHT, FAST_SCROLL_SPEED, isOffscreen, makeAgent, scrolledPast, type AgentState, type Job } from './scheduler';
 import { clipFor, sampleJob, type JobSample, type JobTimeline, type Point, type Rect } from './timeline';
 import { createSwarmStore, type LogLine, type SwarmStore } from './swarmStore';
 
@@ -272,6 +272,21 @@ export function Swarm({ children }: { children: ReactNode }) {
       return { x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height };
     };
 
+    // scroll speed in px/s over the last ~120 ms of scroll events; 0 once the page has been still that long
+    const scrollLog: { t: number; y: number }[] = [];
+    const onScrollSample = (): void => {
+      const t = performance.now();
+      scrollLog.push({ t, y: window.scrollY });
+      while (scrollLog.length > 1 && t - scrollLog[0].t > 120) scrollLog.shift();
+    };
+    const scrollSpeed = (now: number): number => {
+      while (scrollLog.length > 0 && now - scrollLog[0].t > 120) scrollLog.shift();
+      if (scrollLog.length < 2) return 0;
+      const a = scrollLog[0], b = scrollLog[scrollLog.length - 1];
+      return (Math.abs(b.y - a.y) / Math.max(b.t - a.t, 16)) * 1000;
+    };
+    window.addEventListener('scroll', onScrollSample, { passive: true });
+
     const sample: JobSample = { phase: 'travel', cx: 0, cy: 0, f: 0, scale: 1, boxAlpha: 0, fillAlpha: 0 };
     const boxSample: JobSample = { phase: 'travel', cx: 0, cy: 0, f: 0, scale: 1, boxAlpha: 0, fillAlpha: 0 };
     const pt: Point = { x: 0, y: 0 };
@@ -284,6 +299,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       if (started && scheduler.queue.length > 0) {
         const d = scheduler.dispatch(now, view, measure, {
           skipCovered: true,
+          fast: scrollSpeed(now) > FAST_SCROLL_SPEED,
           // a faded or off-screen cursor reappears just outside the nearest edge, not wherever it last rested
           prepare: (agent, rect) => {
             if (faded[agent.id] || hidden[agent.id]) {
@@ -456,6 +472,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', measureTags);
       window.removeEventListener('scroll', wake);
+      window.removeEventListener('scroll', onScrollSample);
       window.removeEventListener('resize', wake);
       document.removeEventListener('focusin', onFocusIn);
       timers.forEach(clearTimeout);
