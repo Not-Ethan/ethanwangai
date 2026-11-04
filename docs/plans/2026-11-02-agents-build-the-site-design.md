@@ -330,3 +330,32 @@ The copy tests that pinned old strings change with these; the facts checks stay 
 - **Skimming:** when the reader scrolls faster than about 600 px/s, or more queued jobs are in view than there are agents, new jobs run at 0.3× tempo (travel ≥ 90 ms, drag ≥ 120 ms) with 60 ms separation, so even a fast skim (20 px per frame) shows a box on at least 80 % of what passes; an agent may set off as soon as an element's top enters the viewport. The chosen job's rect is re-measured at assignment, so elements inside sticky columns are never mistaken for scrolled-past ones. The gate script measures 4 px and 20 px per frame.
 - **From the final judge:** an agent may start towards an element as soon as 1 px of it shows between the bar line and the viewport bottom (the quarter-visible rule now only decides instant builds of parts hidden above the bar line); every dispatch re-measures all queued jobs (the queue is capped at 2 × agents), so a sticky element (`.xp__index`) is judged where it is now, not where it was when it was queued; the gate script adds a 20 px per frame pass (`continuousFast`, at least 80 %).
 - **Sticky elements:** a job on an element inside a sticky container is re-measured every frame and its box and cursor follow the element, and its off-screen checks use the current position, so the experience column's heading and index are drawn wherever they stick. Content boxes are clipped at the bar line, so a skim never draws over the nav. The gate counts an element as drawn only when its box overlaps it on screen, and runs eight sticky passes (offsets 800 to 1800 px at 8 and 16 px per frame).
+
+## 14. Spawn beat and completion flourish (2026-11-03)
+
+Ethan: "spawn in a swarm of cursors over an empty background first, and also whenever an element is completed it should have a little animation play."
+
+### 14.1 The spawn beat
+
+Before any element is built, the swarm appears over the empty canvas and mills about, then goes to work.
+
+- When the start gate opens (fonts ready, capped at 600 ms), nothing is dispatched yet. Each agent spawns at a seeded point inside the viewport: points are drawn by rejection sampling inside the central 70 % of the viewport width and the band from 18 % to 78 % of its height, at least 110 px apart from one another (30 tries, then accept). The spawn order is seeded; agents spawn 90 ms apart.
+- Spawn-in: the cursor (arrow and tag together, `transform-origin` at the tip) scales from 0.4 to 1 and its opacity from 0 to 1 over 260 ms with an overshooting ease-out (`cubic-bezier(.34,1.56,.64,1)`), as a CSS animation on a `cursor--spawn` class.
+- Milling: from its spawn until dispatch begins, each cursor wanders around its spawn point with `x = 34·sin(2πt/1.9 + φ) + 14·sin(2πt/0.7 + 2φ)`, `y = 26·cos(2πt/2.3 + φ) + 10·cos(2πt/0.9 + 3φ)` px (φ per agent), clamped 12 px inside the viewport. Tags flip at the right edge as usual.
+- Dispatch begins `MILL = 800 ms` after the last spawn (about 1.5 s after the gate on desktop). The first jobs start from wherever each cursor is milling, so the first boxes appear within a few hundred ms of that moment.
+- Rebuild replays the beat: cursors fade out over 200 ms, the page resets, and the swarm spawns in again at fresh seeded points before building.
+- A cursor that reappears later (after fading idle, respawning at an edge for a job) uses the same spawn-in animation at 200 ms so every appearance reads the same way.
+- No change to the pill, the log or the fallbacks (no JavaScript, reduced motion and the failed bundle never run the swarm).
+
+### 14.2 The completion flourish
+
+At release (the moment `data-built` is set), three things happen together, all within the box's existing 120 ms release and 600 ms linger:
+
+- The box flashes: stroke, handles and label background jump to the accent `#facc00` (label text ink) and ease back to the agent colour over 260 ms; the four handles pop from scale 1 to 1.6 and back over 220 ms; the label text gets a leading `✓ ` for the rest of the linger.
+- The element stamps into place: a `built-in` class runs a one-shot 420 ms animation from `translate(-2px, 2px) scale(.985)` to identity with `cubic-bezier(.16,1,.3,1)`. On the cards this reads as the hard shadow settling; on text as a small drop into place. Nothing changes opacity, so the reveal never dims. The class is removed on `animationend`. `will-change` is not left on afterwards.
+- Instant builds (scrolled past, focus, overflow) get no flourish; only cursor-drawn releases do.
+- The spec's timing table in §7.5 is unchanged; the flourish rides inside release and linger.
+
+### 14.3 Gate additions
+
+The gate script captures the opening at 0.3, 0.7, 1.1 and 1.5 s (expect: empty canvas with cursors spawning and milling, no box before about 1.3 s; all agents visible by 0.9 s) and a 120 ms burst of three stills around a release in the about section (expect the yellow flash and the check in the label). Reduced motion and no-JS stills unchanged.
