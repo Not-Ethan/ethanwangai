@@ -51,3 +51,33 @@ export function idlePose(a: { x: number; y: number; phase: number }, vp: Rect, t
   out.y = clamp(a.y + out.y, vp.y + IDLE_INSET, vp.y + vp.h - IDLE_INSET);
   return true;
 }
+
+/** The spawn beat (spec 14.1): agents appear 90 ms apart over the empty canvas and mill for 800 ms after the last one. */
+export const SPAWN_STAGGER = 90;
+export const SPAWN_IN = 260;
+export const RESPAWN_IN = 200;
+export const MILL = 800;
+const SPAWN_GAP = 110;
+const SPAWN_TRIES = 30;
+
+/** n spawn points (document px) inside the central 70 % of the viewport width and the 18 % to 78 % height band, at least 110 px apart (30 tries per point, then the last try is accepted). */
+export function spawnPoints(n: number, vp: Rect, rand: () => number): Point[] {
+  const pts: Point[] = [];
+  for (let i = 0; i < n; i++) {
+    let p: Point = { x: 0, y: 0 };
+    for (let k = 0; k < SPAWN_TRIES; k++) {
+      p = { x: vp.x + vp.w * (0.15 + 0.7 * rand()), y: vp.y + vp.h * (0.18 + 0.6 * rand()) };
+      if (pts.every((q) => Math.hypot(q.x - p.x, q.y - p.y) >= SPAWN_GAP)) break;
+    }
+    pts.push(p);
+  }
+  return pts;
+}
+
+/** Milling wander, in px, around a spawn point for time t (seconds since its spawn) and a per-agent phase. At most 48 px in x and 36 px in y. */
+export function millOffset(tSec: number, phase: number, out: Point): Point {
+  const TAU = 2 * Math.PI;
+  out.x = 34 * Math.sin((TAU * tSec) / 1.9 + phase) + 14 * Math.sin((TAU * tSec) / 0.7 + 2 * phase);
+  out.y = 26 * Math.cos((TAU * tSec) / 2.3 + phase) + 10 * Math.cos((TAU * tSec) / 0.9 + 3 * phase);
+  return out;
+}

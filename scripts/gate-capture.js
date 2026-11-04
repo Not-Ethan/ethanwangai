@@ -60,6 +60,52 @@ async (page) => {
   await full('d-full');
   report['d-final'] = await state();
 
+  // Opening (spec 14.3): stills at 0.3, 0.7, 1.1 and 1.5 s after load, while an in-page sampler (every 50 ms) counts the visible cursors and notes the first visible selbox.
+  // Expect an empty canvas with cursors spawning and milling, all agents visible by 0.9 s, and no box before about 1.3 s.
+  await page.goto(BASE, { waitUntil: 'load' });
+  const o0 = Date.now();
+  const sampler = page.evaluate(() => new Promise((resolve) => {
+    const start = performance.now();
+    const samples = [];
+    let firstBoxAt = null;
+    const tick = () => {
+      const t = performance.now() - start;
+      const cursors = [...document.querySelectorAll('.cursor')].filter((c) => { const cs = getComputedStyle(c); return cs.visibility !== 'hidden' && Number(cs.opacity) > 0.05; }).length;
+      samples.push({ t, cursors });
+      if (firstBoxAt === null && [...document.querySelectorAll('.selbox')].some((b) => Number(getComputedStyle(b).opacity) > 0.05)) firstBoxAt = Math.round(t);
+      if (t > 3000) resolve({ samples, firstBoxAt }); else setTimeout(tick, 50);
+    };
+    tick();
+  }));
+  for (const ms of [300, 700, 1100, 1500]) {
+    const wait = o0 + ms - Date.now(); if (wait > 0) await page.waitForTimeout(wait);
+    await shot(`d-open-${ms / 1000}`);
+  }
+  const op = await sampler;
+  const at = (ms) => { const near = op.samples.reduce((a, b) => (Math.abs(b.t - ms) < Math.abs(a.t - ms) ? b : a)); return near.cursors; };
+  report.opening = { cursorsVisibleAt: { 300: at(300), 700: at(700), 1100: at(1100), 1500: at(1500) }, firstBoxAt: op.firstBoxAt };
+
+  // Release burst: in the about section, poll every 20 ms for a box carrying selbox--done, then three stills 60 ms apart.
+  await page.evaluate(() => { window.__rel = null; });
+  await scrollToId('about');
+  const relHandle = await page.waitForFunction(() => {
+    const about = document.getElementById('about').getBoundingClientRect();
+    for (const b of document.querySelectorAll('.selbox--done')) {
+      const r = b.getBoundingClientRect();
+      if (r.top + r.height / 2 < about.top || r.top + r.height / 2 > about.bottom) continue;
+      window.__rel = { border: getComputedStyle(b).borderTopColor, label: b.lastElementChild.textContent, at: Math.round(performance.now()) };
+      return true;
+    }
+    return false;
+  }, null, { polling: 20, timeout: 8000 }).catch(() => null);
+  if (relHandle) {
+    for (let k = 0; k < 3; k++) { await shot(`d-release-${k}`); await page.waitForTimeout(60); }
+    const rel = await page.evaluate(() => window.__rel);
+    const m = /rgb\((\d+), (\d+), (\d+)\)/.exec(rel.border);
+    const accent = !!m && Number(m[1]) === 250 && Number(m[2]) === 204 && Number(m[3]) === 0;
+    report.release = { border: rel.border, borderIsAccentAtFirstStill: accent, label: rel.label, labelStartsWithCheck: rel.label.startsWith('\u2713') };
+  } else report.release = { error: 'no selbox--done seen in about' };
+
   // Continuous scroll (wheel / trackpad) on a fresh load: how many below-the-fold elements were drawn by a selbox while in view. 4 px per frame must reach 100 %, 20 px per frame (about 1200 px/s) at least 80 %.
   const continuousPass = async (px) => {
   await page.goto(BASE, { waitUntil: 'load' });

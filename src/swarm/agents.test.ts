@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AGENT_COLOURS, IDLE_INSET, JITTER_MAX, agentCount, agentName, idleDrift, idlePose, initialPosition, jitter, respawnPoint } from './agents';
+import { AGENT_COLOURS, IDLE_INSET, JITTER_MAX, MILL, SPAWN_IN, SPAWN_STAGGER, agentCount, agentName, idleDrift, idlePose, initialPosition, jitter, millOffset, respawnPoint, spawnPoints } from './agents';
 import { mulberry32 } from './prng';
 
 const vp = { x: 0, y: 0, w: 1440, h: 900 };
@@ -130,5 +130,37 @@ describe('respawnPoint', () => {
       ys.add(p.y);
     }
     expect(ys.size).toBeGreaterThan(5);
+  });
+});
+
+describe('spawn beat', () => {
+  it('places 6 points in the band, 110 px apart, deterministically', () => {
+    for (const seed of [1, 2026, 77]) {
+      const pts = spawnPoints(6, vp, mulberry32(seed));
+      expect(pts).toHaveLength(6);
+      for (const p of pts) {
+        expect(p.x).toBeGreaterThanOrEqual(1440 * 0.15);
+        expect(p.x).toBeLessThanOrEqual(1440 * 0.85);
+        expect(p.y).toBeGreaterThanOrEqual(900 * 0.18);
+        expect(p.y).toBeLessThanOrEqual(900 * 0.78);
+      }
+      for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) expect(Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y)).toBeGreaterThanOrEqual(110);
+      expect(spawnPoints(6, vp, mulberry32(seed))).toEqual(pts);
+    }
+  });
+  it('offsets spawn points by the viewport origin', () => {
+    const pts = spawnPoints(3, { x: 100, y: 2000, w: 800, h: 600 }, mulberry32(5));
+    for (const p of pts) { expect(p.x).toBeGreaterThanOrEqual(100 + 120); expect(p.y).toBeGreaterThanOrEqual(2000 + 108); }
+  });
+  it('mills within 48 and 36 px', () => {
+    const out = { x: 0, y: 0 };
+    for (let i = 0; i < 1000; i++) {
+      millOffset(i * 0.013, i % 7, out);
+      expect(Math.abs(out.x)).toBeLessThanOrEqual(48);
+      expect(Math.abs(out.y)).toBeLessThanOrEqual(36);
+    }
+  });
+  it('has the spec constants', () => {
+    expect([SPAWN_STAGGER, SPAWN_IN, MILL]).toEqual([90, 260, 800]);
   });
 });

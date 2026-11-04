@@ -1,7 +1,8 @@
 'use client';
 import { createContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { mulberry32 } from './prng';
-import { AGENT_COLOURS, IDLE_INSET, agentCount, agentName, idlePose, initialPosition, respawnPoint } from './agents';
+import { AGENT_COLOURS, IDLE_INSET, MILL, SPAWN_STAGGER, agentCount, agentName, idlePose, initialPosition, millOffset, respawnPoint, spawnPoints } from './agents';
+import { clamp } from './easing';
 import { Scheduler, BAR_HEIGHT, FAST_SCROLL_SPEED, isOffscreen, makeAgent, scrolledPast, type AgentState, type Job } from './scheduler';
 import { clipFor, sampleJob, shiftTimeline, type JobSample, type JobTimeline, type Point, type Rect } from './timeline';
 import { createSwarmStore, type LogLine, type SwarmStore } from './swarmStore';
@@ -67,16 +68,23 @@ interface Active { entry: Entry | undefined; built: boolean }
 
 const promptOf = (e: Entry | undefined): string | undefined => e?.el.dataset.prompt;
 
+type Phase = 'waiting' | 'spawning' | 'milling' | 'building';
+
 function makeCursor(i: number): HTMLDivElement {
   const c = document.createElement('div');
   c.className = 'cursor';
   c.style.setProperty('--agent', AGENT_COLOURS[i % AGENT_COLOURS.length]);
-  c.innerHTML = CURSOR_SVG;
+  // arrow and tag live in one inner node so the spawn-in animation scales them together without touching the cursor's own position transform
+  const body = document.createElement('div');
+  body.className = 'cursor__in';
+  body.innerHTML = CURSOR_SVG;
   const tag = document.createElement('span');
   tag.className = 'cursor__tag mono';
   tag.textContent = agentName(i);
-  c.appendChild(tag);
-  c.style.opacity = '1';
+  body.appendChild(tag);
+  c.appendChild(body);
+  // invisible until its spawn (the spawn beat) or its first job
+  c.style.opacity = '0';
   return c;
 }
 
@@ -140,7 +148,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       }
     };
     // will-change only while a box is drawn
-    const clearBox = (b: PoolBox): void => { b.el.style.opacity = '0'; b.until = 0; b.tl = null; b.entry = undefined; if (b.clipN) { b.clipN = 0; b.el.style.clipPath = ''; } b.el.classList.remove('is-working'); };
+    const clearBox = (b: PoolBox): void => { b.el.style.opacity = '0'; b.until = 0; b.tl = null; b.entry = undefined; if (b.clipN) { b.clipN = 0; b.el.style.clipPath = ''; } b.el.classList.remove('is-working', 'selbox--done'); };
     const working: boolean[] = agents.map(() => false);
     const setWorking = (i: number, w: boolean): void => {
       if (working[i] === w) return;
@@ -154,12 +162,24 @@ export function Swarm({ children }: { children: ReactNode }) {
       const st = cursors[i].style;
       st.transition = f ? 'opacity 300ms linear' : 'none';
       st.opacity = f ? '0' : '1';
+      if (!f) popIn(i, true);
+    };
+    // the spawn-in animation: 260 ms for the opening beat, 200 ms whenever a faded or hidden cursor reappears
+    const popIn = (i: number, fast: boolean): void => {
+      const cl = cursors[i].classList;
+      cl.remove('cursor--spawn', 'cursor--spawn-fast');
+      void cursors[i].offsetWidth;
+      cl.add(fast ? 'cursor--spawn-fast' : 'cursor--spawn');
     };
     // cursor tags flip to the left of the tip when they would cross the right edge; widths measured once, and on resize
     let tagW: number[] = [];
-    const measureTags = (): void => { tagW = cursors.map((c) => (c.lastElementChild as HTMLElement).offsetWidth); };
+    const measureTags = (): void => { tagW = cursors.map((c) => (c.querySelector('.cursor__tag') as HTMLElement).offsetWidth); };
     measureTags();
     window.addEventListener('resize', measureTags);
+    const onCursorAnimEnd = (ev: AnimationEvent): void => {
+      if (ev.animationName === 'cursor-spawn') (ev.currentTarget as HTMLElement).classList.remove('cursor--spawn', 'cursor--spawn-fast');
+    };
+    for (const c of cursors) c.addEventListener('animationend', onCursorAnimEnd);
     const flipped: boolean[] = agents.map(() => false);
     const lastPos: Point[] = agents.map((a) => ({ x: a.x, y: a.y }));
     const tagShift: number[] = agents.map(() => 0);
@@ -187,6 +207,10 @@ export function Swarm({ children }: { children: ReactNode }) {
       if (hidden[i] === h) return;
       hidden[i] = h;
       cursors[i].style.visibility = h ? 'hidden' : 'visible';
+      const t = performance.now();
+      // reappearing after a real absence pops in again; a tip flickering across the edge or the bar line does not
+      if (h) hiddenAt[i] = t;
+      else if (!faded[i] && spawned[i] && t - hiddenAt[i] > 300) popIn(i, true);
     };
 
     let built = 0;
@@ -195,6 +219,15 @@ export function Swarm({ children }: { children: ReactNode }) {
     let dirty = false;
     let lastBusy = false;
     let started = false;
+    // the spawn beat: waiting (until beatStart) -> spawning (agents appear 90 ms apart) -> milling -> building (dispatch runs)
+    let phase: Phase = 'waiting';
+    let beatStart = Infinity;
+    let buildAt = 0;
+    const spawnAt: number[] = agents.map(() => Infinity);
+    const spawned: boolean[] = agents.map(() => false);
+    const hiddenAt: number[] = agents.map(() => 0);
+    const spawnPt: Point[] = agents.map(() => ({ x: 0, y: 0 }));
+    const mill: Point = { x: 0, y: 0 };
     let raf = 0;
     let lastSweep = 0;
     let lastWake = 0;
@@ -210,6 +243,27 @@ export function Swarm({ children }: { children: ReactNode }) {
       e.el.style.opacity = '';
       built++;
       dirty = true;
+    };
+
+    // completion flourish (spec 14.2), for cursor-drawn releases only: the box flashes the accent with popped handles and a check in its label, the element stamps into place
+    const flourish = (tl: JobTimeline, e: Entry): void => {
+      const b = pool.find((x) => x.tl === tl);
+      if (b) {
+        b.el.classList.remove('selbox--done');
+        void b.el.offsetWidth;
+        b.el.classList.add('selbox--done');
+        (b.el.lastElementChild as HTMLElement).textContent = `\u2713 ${promptOf(e) ?? e.name}`;
+      }
+      const el = e.el;
+      el.classList.remove('built-in');
+      void el.offsetWidth;
+      el.classList.add('built-in');
+      const end = (ev: AnimationEvent): void => {
+        if (ev.target !== el || ev.animationName !== 'built-in') return;
+        el.classList.remove('built-in');
+        el.removeEventListener('animationend', end);
+      };
+      el.addEventListener('animationend', end);
     };
 
     // the loop idles when nothing is moving; anything that can create work restarts it (see wake)
@@ -239,7 +293,7 @@ export function Swarm({ children }: { children: ReactNode }) {
     const armStart = (): void => {
       if (startArmed || !alive) return;
       startArmed = true;
-      timers.push(setTimeout(() => { started = true; wake(); }, 150));
+      timers.push(setTimeout(() => { started = true; beatStart = performance.now(); wake(); }, 150));
     };
     document.fonts.ready.then(armStart);
     timers.push(setTimeout(armStart, 600));
@@ -321,7 +375,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       }
       for (const b of pool) { if (b.tl && b.entry?.sticky) follow(b.entry, b.tl); }
 
-      if (started && scheduler.queue.length > 0) {
+      if (phase === 'building' && scheduler.queue.length > 0) {
         const d = scheduler.dispatch(now, view, measure, {
           skipCovered: true,
           fast: scrollSpeed(now) > FAST_SCROLL_SPEED,
@@ -341,6 +395,7 @@ export function Swarm({ children }: { children: ReactNode }) {
           box.tl = s.timeline;
           box.entry = rt.byId.get(s.job.id);
           box.el.classList.add('is-working');
+          box.el.classList.remove('selbox--done');
           box.startAt = s.agent.startAt;
           box.el.style.setProperty('--agent', AGENT_COLOURS[s.agent.id % AGENT_COLOURS.length]);
           box.el.style.opacity = '0';
@@ -411,7 +466,38 @@ export function Swarm({ children }: { children: ReactNode }) {
         }
       }
 
-      for (let i = 0; i < agents.length; i++) {
+      // the spawn beat: agents appear one by one over the empty canvas and mill about before anything is dispatched
+      if (phase === 'waiting' && now >= beatStart) {
+        phase = 'spawning';
+        const pts = spawnPoints(agents.length, view, rand);
+        const order = agents.map((_, i) => i);
+        for (let k = order.length - 1; k > 0; k--) { const j = Math.floor(rand() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
+        order.forEach((ai, k) => { spawnAt[ai] = now + k * SPAWN_STAGGER; spawned[ai] = false; spawnPt[ai] = pts[ai]; });
+        buildAt = now + (agents.length - 1) * SPAWN_STAGGER + MILL;
+      }
+      if (phase === 'spawning' && now >= buildAt - MILL) phase = 'milling';
+      if (phase === 'milling' && now >= buildAt) {
+        // the first jobs start from wherever each cursor is milling right now
+        phase = 'building';
+        for (let i = 0; i < agents.length; i++) { agents[i].x = lastPos[i].x; agents[i].y = lastPos[i].y; idleSince[i] = now; holdMs[i] = IDLE_HOLD; }
+      }
+      if (phase === 'spawning' || phase === 'milling') {
+        for (let i = 0; i < agents.length; i++) {
+          if (now < spawnAt[i]) continue;
+          const st = cursors[i].style;
+          if (!spawned[i]) {
+            spawned[i] = true; faded[i] = false; hidden[i] = false;
+            st.transition = 'none'; st.visibility = 'visible'; st.opacity = '1';
+            popIn(i, false);
+          }
+          millOffset((now - spawnAt[i]) / 1000, agents[i].phase, mill);
+          const x = clamp(spawnPt[i].x + mill.x, view.x + IDLE_INSET, view.x + view.w - IDLE_INSET);
+          const y = clamp(spawnPt[i].y + mill.y, view.y + IDLE_INSET, view.y + view.h - IDLE_INSET);
+          place(i, x, y, '', view);
+        }
+      }
+
+      if (phase === 'building') for (let i = 0; i < agents.length; i++) {
         const a = agents[i];
         const act = active[i];
         setWorking(i, a.busy && !!act && !!a.timeline);
@@ -431,6 +517,7 @@ export function Swarm({ children }: { children: ReactNode }) {
               act.built = true;
               if (act.entry) {
                 markBuilt(act.entry);
+                flourish(tl, act.entry);
                 log = [...log, { id: ++logId, agent: a.id, name: act.entry.name, prompt: promptOf(act.entry) ?? act.entry.name, seconds: (tl.travel + tl.drag) / 1000 }].slice(-LOG_KEEP);
                 dirty = true;
               }
@@ -465,7 +552,7 @@ export function Swarm({ children }: { children: ReactNode }) {
 
       // keep going while anything is moving: a busy agent or queued job, a lingering box, an idle cursor still drifting
       // (visible and not yet faded), or within 300 ms of a wake so the sweep runs once after the last scroll
-      let more = busy || now - lastWake < 300 || !started;
+      let more = busy || now - lastWake < 300 || !started || phase !== 'building';
       if (!more) more = pool.some((b) => b.tl !== null);
       if (!more) more = agents.some((a, i) => !a.busy && !hidden[i] && !faded[i]);
       if (more && alive) raf = requestAnimationFrame(frame);
@@ -480,6 +567,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       // keyboard focus moves to the h1 (already built, so the focusin handler leaves it alone) instead of falling to the body
       document.querySelector<HTMLElement>('h1')?.focus({ preventScroll: true });
       for (const e of rt.registry.values()) {
+        e.el.classList.remove('built-in');
         delete e.el.dataset.built;
         e.el.style.clipPath = '';
         e.el.style.opacity = '';
@@ -493,6 +581,15 @@ export function Swarm({ children }: { children: ReactNode }) {
       for (const b of pool) { clearBox(b); }
       const t0 = performance.now();
       for (let i = 0; i < agents.length; i++) { idleSince[i] = t0; holdMs[i] = IDLE_HOLD; }
+      // the beat replays: every cursor fades over 200 ms, then the swarm spawns in again at fresh seeded points
+      phase = 'waiting'; beatStart = t0 + 200;
+      for (let i = 0; i < agents.length; i++) {
+        const st = cursors[i].style;
+        spawned[i] = false; spawnAt[i] = Infinity; faded[i] = true;
+        st.transition = 'opacity 200ms linear'; st.opacity = '0';
+        cursors[i].classList.remove('cursor--spawn', 'cursor--spawn-fast');
+        setWorking(i, false);
+      }
       built = 0; log = []; dirty = false; lastBusy = false;
       store.set({ built: 0, log: [], busy: false });
       wake();
@@ -502,6 +599,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       alive = false;
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', measureTags);
+      for (const c of cursors) c.removeEventListener('animationend', onCursorAnimEnd);
       window.removeEventListener('scroll', wake);
       window.removeEventListener('scroll', onScrollSample);
       window.removeEventListener('resize', wake);
