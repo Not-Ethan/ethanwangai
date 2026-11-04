@@ -343,7 +343,8 @@ Before any element is built, the swarm appears over the empty canvas and mills a
 - Spawn-in: the cursor (arrow and tag together, `transform-origin` at the tip) scales from 0.4 to 1 and its opacity from 0 to 1 over 260 ms with an overshooting ease-out (`cubic-bezier(.34,1.56,.64,1)`), as a CSS animation on a `cursor--spawn` class.
 - Milling: from its spawn until dispatch begins, each cursor wanders around its spawn point with `x = 34·sin(2πt/1.9 + φ) + 14·sin(2πt/0.7 + 2φ)`, `y = 26·cos(2πt/2.3 + φ) + 10·cos(2πt/0.9 + 3φ)` px (φ per agent), clamped 12 px inside the viewport. Tags flip at the right edge as usual.
 - Dispatch begins `MILL = 800 ms` after the last spawn (about 1.5 s after the gate on desktop). The first jobs start from wherever each cursor is milling, so the first boxes appear within a few hundred ms of that moment.
-- Rebuild replays the beat: cursors fade out over 200 ms, the page resets, and the swarm spawns in again at fresh seeded points before building.
+- Rebuild replays the beat: the cursors are cleared instantly (the jump to the top hides it), the page resets, and the swarm spawns in again at fresh seeded points before building.
+- Until its own job starts, an assigned agent keeps drawing its mill pose (opening) or idle drift (later); travel begins from the position drawn at that moment, so no cursor freezes at dispatch.
 - A cursor that reappears later (after fading idle, respawning at an edge for a job) uses the same spawn-in animation at 200 ms so every appearance reads the same way.
 - No change to the pill, the log or the fallbacks (no JavaScript, reduced motion and the failed bundle never run the swarm).
 
@@ -351,7 +352,7 @@ Before any element is built, the swarm appears over the empty canvas and mills a
 
 At release (the moment `data-built` is set), three things happen together, all within the box's existing 120 ms release and 600 ms linger:
 
-- The box flashes: stroke, handles and label background jump to the accent `#facc00` (label text ink) and ease back to the agent colour over 260 ms; the four handles pop from scale 1 to 1.6 and back over 220 ms; the label text gets a leading `✓ ` for the rest of the linger.
+- The box flashes: stroke, handles and label background jump to the accent `#facc00` (label text ink), hold it for the first 60 % of 260 ms, then cut straight to the agent colour (an sRGB cross-fade passes through grey for the blue, purple and pink agents; the label text switches to white at 85 %, stepped); the four handles pop from scale 1 to 1.6 and back over 220 ms; the label text gets a leading `✓ ` for the rest of the linger.
 - The element stamps into place: a `built-in` class runs a one-shot 420 ms animation from `translate(-2px, 2px) scale(.985)` to identity with `cubic-bezier(.16,1,.3,1)`. On the cards this reads as the hard shadow settling; on text as a small drop into place. Nothing changes opacity, so the reveal never dims. The class is removed on `animationend`. `will-change` is not left on afterwards.
 - Instant builds (scrolled past, focus, overflow) get no flourish; only cursor-drawn releases do.
 - The spec's timing table in §7.5 is unchanged; the flourish rides inside release and linger.

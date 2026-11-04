@@ -225,6 +225,10 @@ export function Swarm({ children }: { children: ReactNode }) {
     let buildAt = 0;
     const spawnAt: number[] = agents.map(() => Infinity);
     const spawned: boolean[] = agents.map(() => false);
+    // per agent: still drawn at its mill pose (set when dispatch begins, cleared at its first job start or when it frees)
+    const milling: boolean[] = agents.map(() => false);
+    // per agent: the job's travel has begun (its timeline.from was pinned to the drawn position at that moment)
+    const begun: boolean[] = agents.map(() => true);
     const hiddenAt: number[] = agents.map(() => 0);
     const spawnPt: Point[] = agents.map(() => ({ x: 0, y: 0 }));
     const mill: Point = { x: 0, y: 0 };
@@ -401,6 +405,7 @@ export function Swarm({ children }: { children: ReactNode }) {
           box.el.style.opacity = '0';
           (box.el.lastElementChild as HTMLElement).textContent = promptOf(rt.byId.get(s.job.id)) ?? s.job.name;
           active[s.agent.id] = { entry: rt.byId.get(s.job.id), built: false };
+          begun[s.agent.id] = false;
         }
       }
 
@@ -479,7 +484,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       if (phase === 'milling' && now >= buildAt) {
         // the first jobs start from wherever each cursor is milling right now
         phase = 'building';
-        for (let i = 0; i < agents.length; i++) { agents[i].x = lastPos[i].x; agents[i].y = lastPos[i].y; idleSince[i] = now; holdMs[i] = IDLE_HOLD; }
+        for (let i = 0; i < agents.length; i++) { agents[i].x = lastPos[i].x; agents[i].y = lastPos[i].y; idleSince[i] = now; holdMs[i] = IDLE_HOLD; milling[i] = spawned[i]; }
       }
       if (phase === 'spawning' || phase === 'milling') {
         for (let i = 0; i < agents.length; i++) {
@@ -507,8 +512,20 @@ export function Swarm({ children }: { children: ReactNode }) {
           setFaded(i, false);
           holdMs[i] = IDLE_HOLD;
           if (t < 0) {
-            place(i, a.x, a.y, '', view);
+            // not started yet: keep moving (mill pose in the opening, idle drift later) instead of freezing
+            if (milling[i]) {
+              millOffset((now - spawnAt[i]) / 1000, a.phase, mill);
+              place(i, clamp(spawnPt[i].x + mill.x, view.x + IDLE_INSET, view.x + view.w - IDLE_INSET), clamp(spawnPt[i].y + mill.y, view.y + IDLE_INSET, view.y + view.h - IDLE_INSET), '', view);
+            } else if (idlePose(a, view, now / 1000, pt)) {
+              const k = Math.min(1, (now - idleSince[i]) / 400);
+              place(i, a.x + (pt.x - a.x) * k, a.y + (pt.y - a.y) * k, '', view);
+            } else place(i, a.x, a.y, '', view);
             continue;
+          }
+          if (!begun[i]) {
+            // travel starts from wherever the cursor is drawn right now
+            begun[i] = true; milling[i] = false;
+            tl.from.x = lastPos[i].x; tl.from.y = lastPos[i].y;
           }
           sampleJob(tl, t, sample);
           place(i, sample.cx, sample.cy, ` scale(${sample.scale})`, view, sample.phase === 'release' || sample.phase === 'linger' || sample.phase === 'done');
@@ -581,12 +598,12 @@ export function Swarm({ children }: { children: ReactNode }) {
       for (const b of pool) { clearBox(b); }
       const t0 = performance.now();
       for (let i = 0; i < agents.length; i++) { idleSince[i] = t0; holdMs[i] = IDLE_HOLD; }
-      // the beat replays: every cursor fades over 200 ms, then the swarm spawns in again at fresh seeded points
-      phase = 'waiting'; beatStart = t0 + 200;
+      // the beat replays: cursors are cleared at once (the jump to the top hides it), then the swarm spawns in again at fresh seeded points
+      phase = 'waiting'; beatStart = t0;
       for (let i = 0; i < agents.length; i++) {
         const st = cursors[i].style;
-        spawned[i] = false; spawnAt[i] = Infinity; faded[i] = true;
-        st.transition = 'opacity 200ms linear'; st.opacity = '0';
+        spawned[i] = false; spawnAt[i] = Infinity; faded[i] = true; milling[i] = false; begun[i] = true;
+        st.transition = 'none'; st.opacity = '0';
         cursors[i].classList.remove('cursor--spawn', 'cursor--spawn-fast');
         setWorking(i, false);
       }

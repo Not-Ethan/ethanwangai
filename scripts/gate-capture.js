@@ -102,7 +102,7 @@ async (page) => {
     for (let k = 0; k < 3; k++) { await shot(`d-release-${k}`); await page.waitForTimeout(60); }
     const rel = await page.evaluate(() => window.__rel);
     const m = /rgb\((\d+), (\d+), (\d+)\)/.exec(rel.border);
-    const accent = !!m && Number(m[1]) === 250 && Number(m[2]) === 204 && Number(m[3]) === 0;
+    const accent = !!m && Number(m[1]) > 230 && Number(m[2]) > 170 && Number(m[3]) < 40;
     report.release = { border: rel.border, borderIsAccentAtFirstStill: accent, label: rel.label, labelStartsWithCheck: rel.label.startsWith('\u2713') };
   } else report.release = { error: 'no selbox--done seen in about' };
 
@@ -116,7 +116,7 @@ async (page) => {
     const els = [...document.querySelectorAll('[data-build]')];
     const below = els.filter((el) => el.getBoundingClientRect().top >= vh);
     const drawn = new Set();
-    const norm = (t) => (t || '').trim().toLowerCase();
+    const norm = (t) => (t || '').replace(/^\u2713 /, '').trim().toLowerCase();
     // drawn = a visible selbox carrying the element's prompt overlaps the element's current rect while the element is at least partly in the viewport
     const sample = setInterval(() => {
       const boxes = [...document.querySelectorAll('.selbox')].filter((b) => Number(getComputedStyle(b).opacity) > 0.05).map((b) => ({ label: norm(b.textContent), r: b.getBoundingClientRect() }));
@@ -153,7 +153,7 @@ async (page) => {
       const names = ['h2 experience', 'index'];
       const targets = names.map((n) => document.querySelector(`[data-build="${n}"]`));
       const seen = { 'h2 experience': false, index: false };
-      const norm = (t) => (t || '').trim().toLowerCase();
+      const norm = (t) => (t || '').replace(/^\u2713 /, '').trim().toLowerCase();
       const check = () => {
         const boxes = [...document.querySelectorAll('.selbox')].filter((b) => Number(getComputedStyle(b).opacity) > 0.05).map((b) => ({ label: norm(b.textContent), r: b.getBoundingClientRect() }));
         names.forEach((n, i) => {

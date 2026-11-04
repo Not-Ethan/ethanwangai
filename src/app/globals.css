@@ -185,12 +185,12 @@ html[data-swarm="on"] [data-build]:not([data-built]) { opacity: 0; pointer-event
 .btn[aria-disabled="true"] { opacity: .6; cursor: default; }
 body { position: relative; }
 .swarm { position: absolute; inset: 0; width: auto; height: auto; overflow: clip; pointer-events: none; z-index: 60; }
-.cursor { position: absolute; top: -1.5px; left: -2px; width: 18px; height: 18px; transform-origin: 2px 1.5px; filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--ink) 20%, transparent)); }
+.cursor { z-index: 2; position: absolute; top: -1.5px; left: -2px; width: 18px; height: 18px; transform-origin: 2px 1.5px; filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--ink) 20%, transparent)); }
 .cursor svg { display: block; }
 .cursor--flip .cursor__tag { left: auto; right: 6px; transform: translateX(calc(var(--tag-shift, 0) * -1px)); }
 .cursor--up .cursor__tag { top: auto; bottom: 14px; }
 .cursor__tag { position: absolute; left: 14px; top: 16px; white-space: nowrap; font-size: 11px; line-height: 1; padding: 3px 6px; border-radius: 4px; background: var(--agent); color: var(--surface); }
-.selbox { position: absolute; top: 0; left: 0; opacity: 0; border: 1.5px solid var(--agent); background: color-mix(in srgb, var(--agent) calc(var(--fill, 1) * 8%), transparent); }
+.selbox { z-index: 1; position: absolute; top: 0; left: 0; opacity: 0; border: 1.5px solid var(--agent); background: color-mix(in srgb, var(--agent) calc(var(--fill, 1) * 8%), transparent); }
 .cursor.is-working, .selbox.is-working { will-change: transform; }
 .selbox__h { position: absolute; width: 7px; height: 7px; background: var(--surface); border: 1.5px solid var(--agent); }
 .selbox__h:nth-child(1) { left: -4.5px; top: -4.5px; } .selbox__h:nth-child(2) { right: -4.5px; top: -4.5px; }
@@ -218,12 +218,13 @@ body { position: relative; }
 .cursor--spawn .cursor__in { animation: cursor-spawn 260ms cubic-bezier(.34, 1.56, .64, 1) backwards; }
 .cursor--spawn-fast .cursor__in { animation: cursor-spawn 200ms cubic-bezier(.34, 1.56, .64, 1) backwards; }
 @keyframes cursor-spawn { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.selbox--done { animation: box-flash 260ms ease-out; }
-.selbox--done .selbox__h { animation: handle-flash 260ms ease-out, handle-pop 220ms ease-in-out; }
-.selbox--done .selbox__label { animation: label-flash 260ms ease-out; }
-@keyframes box-flash { from { border-color: var(--accent); } to { border-color: var(--agent); } }
-@keyframes handle-flash { from { border-color: var(--accent); } to { border-color: var(--agent); } }
+.selbox--done { animation: box-flash 260ms steps(1, end); }
+.selbox--done .selbox__h { animation: handle-flash 260ms steps(1, end), handle-pop 220ms ease-in-out; }
+.selbox--done .selbox__label { animation: label-flash 260ms steps(1, end), label-ink 260ms steps(1, end); }
+@keyframes box-flash { 0%, 59.9% { border-color: var(--accent); } 60%, 100% { border-color: var(--agent); } }
+@keyframes handle-flash { 0%, 59.9% { border-color: var(--accent); } 60%, 100% { border-color: var(--agent); } }
 @keyframes handle-pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.6); } }
-@keyframes label-flash { 0% { background: var(--accent); color: var(--ink); } 55% { background: var(--accent); color: var(--ink); } 100% { background: var(--agent); color: var(--surface); } }
+@keyframes label-flash { 0%, 59.9% { background: var(--accent); } 60%, 100% { background: var(--agent); } }
+@keyframes label-ink { 0% { color: var(--ink); } 85%, 100% { color: #fff; } }
 [data-build].built-in { animation: built-in 420ms cubic-bezier(.16, 1, .3, 1); }
 @keyframes built-in { from { transform: translate(-2px, 2px) scale(.985); } }
