@@ -352,7 +352,7 @@ Before any element is built, the swarm appears over the empty canvas and mills a
 
 At release (the moment `data-built` is set), three things happen together, all within the box's existing 120 ms release and 600 ms linger:
 
-- The box flashes: stroke, handles and label background jump to the accent `#facc00` (label text ink), hold it for the first 60 % of 260 ms, then cut straight to the agent colour (an sRGB cross-fade passes through grey for the blue, purple and pink agents; the label text switches to white at 85 %, stepped); the four handles pop from scale 1 to 1.6 and back over 220 ms; the label text gets a leading `✓ ` for the rest of the linger.
+- The box flashes: stroke, handles and label background jump to the accent `#facc00` (label text ink), hold it for the first 60 % of 260 ms, then cut straight to the agent colour (an sRGB cross-fade passes through grey for the blue, purple and pink agents; the label text switches to white at 60 %, stepped); the four handles pop from scale 1 to 1.6 and back over 220 ms; the label text gets a leading `✓ ` for the rest of the linger.
 - The element stamps into place: a `built-in` class runs a one-shot 420 ms animation from `translate(-2px, 2px) scale(.985)` to identity with `cubic-bezier(.16,1,.3,1)`. On the cards this reads as the hard shadow settling; on text as a small drop into place. Nothing changes opacity, so the reveal never dims. The class is removed on `animationend`. `will-change` is not left on afterwards.
 - Instant builds (scrolled past, focus, overflow) get no flourish; only cursor-drawn releases do.
 - The spec's timing table in §7.5 is unchanged; the flourish rides inside release and linger.
