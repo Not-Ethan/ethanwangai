@@ -28,7 +28,7 @@ export const copy = {
     },
     cta: 'see the work',
     ctaHref: '#work',
-    cta2: 'say hi ↗',
+    cta2: 'email me ↗',
     cta2Href: 'mailto:ethan.wanq@gmail.com',
   },
   about: {
@@ -192,7 +192,7 @@ export const copy = {
     'h2 contact': 'a big goodbye',
     'p contact': 'how to reach me',
     'mail': 'my email, big',
-    'links': 'github and linkedin',
+    'links': 'github, linkedin and a rebuild button',
     'footer': 'a footer',
   } as Record<string, string>,
   totop: { aria: 'back to top', glyph: '↑' },

@@ -132,7 +132,7 @@ async (page) => {
       const tick = () => { window.scrollBy(0, px); if (window.scrollY >= max - 1) resolve(); else requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     });
-    await new Promise((r) => setTimeout(r, 150));
+    await new Promise((r) => setTimeout(r, 600)); // the last element (the footer) is reached at the end of the scroll; give its cursor the jitter plus travel before counting
     clearInterval(sample);
     const prompts = below.map((el) => el.getAttribute('data-prompt'));
     const undrawn = prompts.filter((p) => !drawn.has(norm(p)));
