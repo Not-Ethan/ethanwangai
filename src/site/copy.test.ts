@@ -31,13 +31,13 @@ describe('facts in the copy', () => {
   });
   it('spells the word numbers to match facts', () => {
     expect(facts.darch.videosPerMonth).toBe(3_000); expect(copy.work.cases[2].tag).toContain('three thousand videos a month');
-    expect(facts.darch.viewsPerMonth).toBe(20_000_000); expect(copy.work.cases[2].lede).toContain('twenty million views a month');
+    expect(facts.darch.viewsPerMonth).toBe(20_000_000); expect(copy.work.cases[2].lede).toContain('twenty million times a month');
     expect(facts.heron.cities).toBe(4); expect(copy.experience.jobs.find((j) => j.id === 'heron')!.place).toBe('four cities');
     expect(facts.wvu.claimsPerYearUsd).toBe(100_000_000); expect(copy.experience.jobs.find((j) => j.id === 'wvu')!.body).toContain('a hundred million dollars');
     expect(copy.rest.cards[0].entries[0].line).toContain(`class of ${facts.school.classOf}`);
   });
   it('builds notes, awards and dates from facts', () => {
-    expect(copy.about.notes[0]).toContain(`top ${facts.kalshi.leaderboardTop}`);
+    expect(copy.about.notes[1]).toContain(`top ${facts.kalshi.leaderboardTop}`);
     expect(copy.about.notes[2]).toContain(`class of ${facts.school.classOf}`);
     expect(copy.rest.cards[1].entries[0].name).toContain(`top ${facts.kalshi.leaderboardTop}`);
     expect(copy.experience.jobs.find((j) => j.id === 'darch')!.when).toBe(`${facts.darch.from} to ${facts.darch.to}`);
@@ -47,7 +47,7 @@ describe('facts in the copy', () => {
     expect(copy.about.logLine('agent 02', 'h1 name', 0.614)).toBe('agent 02 · h1 name · 0.61s');
   });
   it('has the sections, jobs and cases the spec lists', () => {
-    expect(copy.bar.links.map((l) => l.label)).toEqual(['about', 'experience', 'work', 'contact']);
+    expect(copy.bar.links.map((l) => l.label)).toEqual(['about', 'work', 'experience', 'contact']);
     expect(copy.experience.jobs.map((j) => j.id)).toEqual(['kalshi', 'heron', 'wvu', 'darch', 'nist']);
     expect(copy.work.cases.map((c) => c.shot)).toEqual(['book', 'tab', 'grid', 'chat']);
     expect(copy.toolbox.rows.map((r) => r.label)).toEqual(['languages', 'backend', 'data', 'infra', 'markets']);
@@ -58,7 +58,8 @@ describe('facts in the copy', () => {
 
 describe('ghost when the swarm is off', () => {
   it('has a lowercase resting line', () => {
-    expect(copy.hero.ghostOff).toBe('the agents are resting today. the page is already built.');
+    expect(copy.hero.ghostOff).toBe('the agents are off. the page is already built.');
+    expect(copy.hero.ghostOffReduced).toContain('less motion');
     expect(copy.hero.ghostOff).toBe(copy.hero.ghostOff.toLowerCase());
   });
 });
@@ -78,8 +79,8 @@ describe('prompts', () => {
 });
 
 describe('job and case shape', () => {
-  it('has the index sub-line as role and year, and no ordinals', () => {
-    for (const j of copy.experience.jobs) expect(j.sub.startsWith(j.role)).toBe(true);
+  it('has the index sub-line as the subject, not the role again, and no ordinals', () => {
+    for (const j of copy.experience.jobs) { expect(j.sub.length).toBeGreaterThan(3); expect(j.sub).not.toContain(j.role); expect(j.sub).not.toMatch(/20\d\d/); }
     for (const c of copy.work.cases) expect('no' in c).toBe(false);
   });
 });
@@ -87,6 +88,13 @@ describe('job and case shape', () => {
 describe('rest cards', () => {
   it('never lets a separator start a line', () => {
     for (const c of copy.rest.cards) for (const e of c.entries) expect(e.line, e.line).not.toMatch(/[^\u00a0] · /);
+  });
+});
+
+describe('off state', () => {
+  it('never says today, and the footer has an off line', () => {
+    for (const s of [copy.hero.ghostOff, copy.hero.ghostOffReduced, copy.about.logOff, copy.about.logReduced, copy.closer.door.offParagraph]) expect(s, s).not.toMatch(/today|stayed home/);
+    expect(copy.footer.rightOff).not.toContain('agents');
   });
 });
 

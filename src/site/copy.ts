@@ -1,17 +1,18 @@
 import { facts } from './facts';
 
 // Every string on the site. Lowercase, no em or en dashes. The name is uppercase through CSS only.
+// Voice source: Ethan's thesis paragraph (spec §6, §15). Experience says the role, work says the thing.
 export const copy = {
   meta: {
     title: 'ethan wang',
-    description: 'i build things, then watch them run. a trading algorithm, a video factory, a hedge for bar promos.',
+    description: `i build things, then watch them run: a trading algorithm, a video factory, a hedge for bar promos. computer science and math at case western, class of ${facts.school.classOf}.`,
   },
   bar: {
     mark: 'ew',
     links: [
       { label: 'about', href: '#about' },
-      { label: 'experience', href: '#experience' },
       { label: 'work', href: '#work' },
+      { label: 'experience', href: '#experience' },
       { label: 'contact', href: '#contact' },
     ],
     cta: 'say hi ↗',
@@ -28,22 +29,23 @@ export const copy = {
     ctaHref: '#work',
     ghost: 'six agents are building this page while you read it',
     ghostPhone: 'three agents are building this page while you read it',
-    ghostBadge: 'watch them',
-    ghostOff: 'the agents are resting today. the page is already built.',
+    ghostBadge: 'see the log',
+    ghostOff: 'the agents are off. the page is already built.',
+    ghostOffReduced: 'the agents are off. you asked for less motion.',
     ghostHref: '#about',
   },
   about: {
     h2: "hi. i'm ethan.",
     logTitle: 'build log',
     logEmpty: 'waiting for the agents',
-    logOff: 'the agents stayed home today.',
-    logReduced: 'the agents are resting. you asked for less motion.',
+    logOff: 'the agents are off.',
+    logReduced: 'the agents are off. you asked for less motion.',
     logLine: (agent: string, element: string, seconds: number): string => `${agent} · ${element} · ${seconds.toFixed(2)}s`,
-    lede: "a few sentences of plain language turn into thousands of lines of code now. what used to take months takes an afternoon. i've always loved building things. i never really liked the coding.",
+    lede: 'now is the best time in history to build things. a few sentences of plain language turn into thousands of lines of code, and what used to take months takes an afternoon.',
     notes: [
-      `the best part is watching something i built come alive. my classmates in middle school using my discord bots. a trading algorithm i wrote climbing into the top ${facts.kalshi.leaderboardTop} on kalshi.`,
-      "most of what i've built started as a bet that i could. the ones that worked are below.",
-      `cwru, computer science and math, class of ${facts.school.classOf}. i speak mandarin.`,
+      "this is the era of speed, and with it the era of diversification. the world doesn't need some master programmer who dreams in code. it needs well rounded people who have been exposed to so many ideas that they see new opportunities everywhere.",
+      `i've always loved building things, but i never really liked coding. the best part was seeing something i built come alive, from my classmates in middle school using my discord bots to a trading algorithm i wrote climbing into the top ${facts.kalshi.leaderboardTop} on kalshi.`,
+      `i study computer science and math at case western, class of ${facts.school.classOf}.`,
     ],
   },
   toolbox: {
@@ -58,41 +60,42 @@ export const copy = {
   },
   experience: {
     h2: "where i've been",
+    // sub is the subject of the job, for the index; the card title carries name and role, the when line the dates.
     jobs: [
       {
-        id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: 'independent trader · 2026', when: `${facts.kalshi.since} to now`, place: 'cleveland',
+        id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: 'trading my own account', when: `${facts.kalshi.since} to now`, place: 'cleveland',
         lede: "i trade my own money on kalshi's crypto markets with a system i wrote.",
-        body: "it reads the order book and a few crypto venues, places the orders, checks the risk and checks the fills. every idea runs against a replay of old data before it touches real money.",
+        body: "it reads kalshi's order book and prices from a few crypto exchanges, places its own orders, and keeps track of risk and fills. i test every idea on a replay of old market data before it trades real money.",
       },
       {
-        id: 'heron', name: 'heron', role: 'co-founder', sub: 'co-founder · 2026', when: `${facts.heron.since} to now`, place: 'four cities',
-        lede: "heron sells bars a promo they couldn't afford on their own. i built the models behind it.",
-        body: "i priced the promos, sized the liability and placed the hedges on prediction markets. the first bars signed this summer.",
+        id: 'heron', name: 'heron', role: 'co-founder', sub: 'pricing and hedging bar promos', when: `${facts.heron.since} to now`, place: 'four cities',
+        lede: 'heron takes the risk off bars that run game-day promos. i built the models behind it.',
+        body: 'i price each promo, work out the most heron could owe on it, and place the hedges.',
       },
       {
-        id: 'wvu', name: 'wvu medicine', role: 'ml intern', sub: 'ml intern · summer 2026', when: 'summer 2026', place: 'morgantown',
-        lede: 'a model that watches pharmacy claims and notices when denials spike.',
-        body: "it watches about a hundred million dollars a year of pharmacy claims and flags the weeks that look wrong. i built the modeling core, the team wired it into production, and i added tooling so people could ask it questions in open webui.",
+        id: 'wvu', name: 'wvu medicine', role: 'ml intern', sub: 'a pharmacy claims model', when: 'summer 2026', place: 'morgantown',
+        lede: 'i built the core of a model that notices when pharmacy claim denials spike.',
+        body: 'it learned from about a hundred million dollars a year of claims. i handed the finished core to the team to put into production, and wrote the tooling that plugs their chat assistant into the rest of their systems.',
       },
       {
-        id: 'darch', name: 'darch', role: 'co-founder', sub: 'co-founder · 2025 to 2026', when: `${facts.darch.from} to ${facts.darch.to}`, place: 'remote',
-        lede: 'i ran engineering at a video factory for a year.',
-        body: `python, node and ffmpeg end to end: scripts in, rendered videos out, distributed. it ended in ${facts.darch.to}.`,
+        id: 'darch', name: 'darch', role: 'co-founder', sub: 'a video pipeline', when: `${facts.darch.from} to ${facts.darch.to}`, place: 'remote',
+        lede: 'i ran engineering. we made videos by the thousand.',
+        body: 'i built the pipeline end to end in python, node and ffmpeg, and kept it running.',
       },
       {
-        id: 'nist', name: 'nist', role: 'software intern', sub: 'software intern · summer 2025', when: 'summer 2025', place: 'gaithersburg',
-        lede: "a help-desk assistant that reads the internal docs so people don't have to.",
-        body: "it finds the right doc, sorts the candidates and digs deeper when the first pass is thin, inside a custom open webui fork. i added logging and failure analysis so we knew when it was wrong.",
+        id: 'nist', name: 'nist', role: 'software intern', sub: 'help-desk search', when: 'summer 2025', place: 'gaithersburg',
+        lede: "i built the search behind a help-desk assistant for nist's internal docs.",
+        body: 'it finds the right docs, ranks them, and searches again when the first pass comes up thin. i added the logging so we could see when it was wrong.',
       },
     ],
   },
   work: {
     h2: 'four things that ran',
-    intro: 'no write-ups. just what each one was and what it did.',
+    intro: 'trading, bars, video and government docs, newest first.',
     cases: [
       {
         id: 'kalshi', year: '2026', kind: 'trading', title: 'kalshi algo', tag: 'it trades while i sleep.',
-        lede: `it makes markets and trades price gaps between kalshi's crypto markets. about ${facts.kalshi.trades.toLocaleString('en-US')} trades so far.`,
+        lede: `it quotes both sides and trades the price gaps between related crypto markets on kalshi. about ${facts.kalshi.trades.toLocaleString('en-US')} trades so far.`,
         chips: ['python', 'websockets', 'postgresql'], shot: 'book',
       },
       {
@@ -102,12 +105,12 @@ export const copy = {
       },
       {
         id: 'darch', year: '2025', kind: 'system', title: 'darch', tag: 'three thousand videos a month.',
-        lede: 'a content pipeline that rendered and shipped the videos itself. about twenty million views a month, for a year.',
+        lede: 'scripts went in, finished videos came out and got posted. they were seen about twenty million times a month, for a year.',
         chips: ['python', 'node', 'ffmpeg'], shot: 'grid',
       },
       {
         id: 'nist', year: '2025', kind: 'tool', title: 'nist help desk', tag: "reads the docs so you don't.",
-        lede: 'a retrieval assistant for nist\'s internal docs. it answers and says which doc it used.',
+        lede: "an assistant that answers questions from nist's internal docs and says which doc it used.",
         chips: ['python', 'retrieval', 'docker'], shot: 'chat',
       },
     ],
@@ -118,29 +121,29 @@ export const copy = {
       {
         title: 'education',
         entries: [
-          { name: 'b.s. computer science', line: `case western reserve university\u00a0· secondary major in mathematics\u00a0· class of ${facts.school.classOf}` },
-          { name: 'mandarin', line: 'fluent' },
+          { name: 'b.s. computer science', line: `case western reserve university · secondary major in mathematics · class of ${facts.school.classOf}` },
+          { name: 'mandarin chinese', line: 'spoken' },
         ],
       },
       {
         title: 'awards',
         entries: [
-          { name: `top ${facts.kalshi.leaderboardTop} all-time`, line: 'kalshi crypto profit leaderboard\u00a0· 2026' },
+          { name: `top ${facts.kalshi.leaderboardTop} all-time`, line: 'kalshi crypto profit leaderboard · 2026' },
           { name: 'innovation award', line: 'tartanhacks 2025, for orbit' },
         ],
       },
       {
         title: 'the early stuff',
         entries: [
-          { name: 'discord bots', line: 'middle school. my classmates used them. the first thing i built that ran.' },
-          { name: 'orbit', line: 'a chrome extension, built in a weekend at tartanhacks, feb 2025' },
+          { name: 'discord bots', line: 'i built them in middle school. they were the first thing i made that other people used.' },
+          { name: 'orbit', line: 'a chrome extension i built in a weekend at tartanhacks, feb 2025.' },
         ],
       },
     ],
   },
   closer: {
     h2: ["i'm probably up", 'building something.'],
-    p: 'email is the fastest way to reach me. i answer all of them.',
+    p: 'email is the fastest way to reach me.',
     mail: 'ethan.wanq@gmail.com',
     links: [
       { label: 'github ↗', href: 'https://github.com/Not-Ethan' },
@@ -149,20 +152,21 @@ export const copy = {
     door: {
       title: 'oh, and about the agents.',
       paragraphs: [
-        'most of this page was drawn in by a cursor while you read. there are six of them. they don\'t exist.',
-        "nothing is sent anywhere. there's no server behind this page. it's files on a cdn and some javascript.",
+        "most of this page was drawn in by six cursors while you read. they don't exist. the page was here the whole time.",
+        "no ai runs here and nothing leaves your browser. it's static files on a cdn and some javascript.",
         "they'll do it again if you ask.",
       ],
-      paragraphPhone: "most of this page was drawn in by a cursor while you read. there are three of them. they don't exist.",
+      paragraphPhone: "most of this page was drawn in by three cursors while you read. they don't exist. the page was here the whole time.",
       button: 'rebuild the page ↻',
       note: 'it jumps to the top and takes about as long as reading it did.',
-      offParagraph: 'this page is usually drawn in by six cursors while you read it. today they stayed home.',
-      offParagraphPhone: 'this page is usually drawn in by three cursors while you read it. today they stayed home.',
+      offParagraph: "six cursors usually draw this page in while you read. they're off for you, so you got the finished page.",
+      offParagraphPhone: "three cursors usually draw this page in while you read. they're off for you, so you got the finished page.",
     },
   },
   footer: {
     left: 'ethan wang · cleveland',
     right: "that's everything. the agents are done.",
+    rightOff: "that's everything.",
     credit: 'layout after',
     creditLink: { label: 'aahil-khan.xyz', href: 'https://www.aahil-khan.xyz/' },
   },
@@ -186,20 +190,20 @@ export const copy = {
     'row markets': 'the markets',
     'h2 experience': 'a heading for the jobs',
     'index': 'a list of the jobs',
-    'card kalshi': 'the kalshi job',
+    'card kalshi': 'my kalshi trading',
     'card heron': 'the heron job',
     'card wvu': 'the wvu job',
     'card darch': 'the darch job',
     'card nist': 'the nist job',
     'h2 work': 'a heading for the work',
     'shot kalshi': 'draw an order book',
-    'body kalshi': 'the kalshi story',
+    'body kalshi': 'what the algo does',
     'shot heron': 'draw a bar tab',
-    'body heron': 'the heron story',
+    'body heron': 'what heron does',
     'shot darch': 'draw a grid of videos',
-    'body darch': 'the darch story',
+    'body darch': 'what darch did',
     'shot nist': 'draw a chat window',
-    'body nist': 'the nist story',
+    'body nist': 'what the help desk did',
     'h2 rest': 'a heading for the rest',
     'card education': 'where i went to school',
     'card awards': 'the awards',
