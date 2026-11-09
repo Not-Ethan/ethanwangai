@@ -5,7 +5,7 @@ colors:
   canvas: "#f7f5ee"
   canvas-toolbox: "#e3e1da"
   canvas-work: "#f3f3f3"
-  canvas-closer: "#d8d6d0"
+  canvas-closer: "#facc00"
   surface: "#ffffff"
   ink: "#161616"
   ink-muted: "rgba(22,22,22,0.74)"
@@ -45,10 +45,10 @@ typography:
     letterSpacing: "-0.03em"
   section-title:
     fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
-    fontSize: "36px"
+    fontSize: "clamp(44px, 5vw, 72px)"
     fontWeight: 700
-    lineHeight: 1.1
-    letterSpacing: "-0.01em"
+    lineHeight: 0.98
+    letterSpacing: "-0.035em"
   mail-link:
     fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
     fontSize: "32px"
@@ -230,7 +230,7 @@ The page is a warm paper sheet with a heavy black pencil outline around everythi
 
 Density is medium and editorial. Sections are separated by generous vertical padding (108px) and, three times, by tinted bands closed with 2px ink rules. Type is one family (Space Grotesk) used loud at the top (an uppercase name up to 168px) and plain everywhere else. Monospace appears only in the swarm HUD and in a few facts that read as machine output (status pill, build log, case numbers, the drawn schematics).
 
-The system rejects softness. There are no blurs on content, no gradients except two static glows behind the hero and closer, no dark mode (`color-scheme: light`), no photos, no logos, no icons beyond a few inline SVG arrows.
+The system rejects softness. There are no blurs on content, no gradients except one static glow behind the hero and the grid fade under it, one dark surface (the build log card) and one full yellow band (the closer), no dark mode (`color-scheme: light`), no photos, no logos, no icons beyond a few inline SVG arrows.
 
 **Key Characteristics:**
 - Warm off-white paper (#f7f5ee) with true-black ink (#161616); everything outlined at 2px.
@@ -246,16 +246,16 @@ The system rejects softness. There are no blurs on content, no gradients except 
 A warm paper neutral base, near-black ink, one saturated yellow, and a separate six-color agent set that only appears as cursor, box and log color.
 
 ### Primary
-- **Marker Yellow** (`{colors.accent}`, #facc00): the single accent. Fills the circular arrow icon inside `btn`, the whole `btn-accent`, the `badge`, the `mark` square, the active dot and square bullets (outlined in ink), and the 3px underline under the contact email. Also appears as two soft static glows (rgba(250,204,0,.28) in the hero, .35 in the closer) and as the yellow bars in the drawn schematics. It is never used for text or large panels.
+- **Marker Yellow** (`{colors.accent}`, #facc00): the single accent. Fills the circular arrow icon inside `btn`, the whole `btn-accent`, the `badge`, the `mark` square, the active dot and square bullets (outlined in ink), and the email pill's white-on-yellow companion in the closer. Also appears as one soft static glow in the hero (rgba(250,204,0,.28)), the yellow bars in the drawn schematics, the block caret in the build log, the one highlighter stroke (`<mark class="hi">` on the lede's first sentence, ink text, .12em side padding), and, once, the whole closer and footer band. It is never used for text.
 
 ### Secondary (the agent set; swarm only)
-- **Agent Blue** (#2563eb), **Agent Red** (#dc2626), **Agent Green** (#15803d), **Agent Violet** (#7c3aed), **Agent Orange** (#c2410c), **Agent Pink** (#db2777): agent 01 to 06, in that order. Each agent's color is its cursor fill, name tag background, selection box border and 8% box fill, handle border, box label background, and the agent name in the build log. Phones use the first three. Colors are set per element through the `--agent` custom property. Tag and label text is white on these fills.
+- **Agent Blue** (#2563eb), **Agent Red** (#dc2626), **Agent Green** (#15803d), **Agent Violet** (#7c3aed), **Agent Orange** (#c2410c), **Agent Pink** (#db2777): agent 01 to 06, in that order. Each agent's color is also drawn on the page as two 10px corner brackets (top-left and bottom-right, 1.5px, 6px outside the box, opacity `--trace` .6, `pointer-events: none`) on every element that agent drew; instant builds (scrolled past, focus) carry none, the log card is exempt, rebuild clears them. Each agent's color is its cursor fill, name tag background, selection box border and 8% box fill, handle border, box label background, and the agent name in the build log. Phones use the first three. Colors are set per element through the `--agent` custom property. Tag and label text is white on these fills.
 
 ### Neutral
 - **Paper** (`{colors.canvas}`, #f7f5ee): page background, hero, experience, rest; also the bar at 88% alpha.
 - **Toolbox Stone** (`{colors.canvas-toolbox}`, #e3e1da): the toolbox band.
 - **Work Mist** (`{colors.canvas-work}`, #f3f3f3): the work band (cooler, near neutral grey).
-- **Closer Clay** (`{colors.canvas-closer}`, #d8d6d0): the closer and footer band.
+- **Closer Yellow** (`{colors.canvas-closer}`, #facc00, the accent): the closer and footer band, the one big yellow. Text on it is ink (paragraph and door copy 80%, door dashed border 50%, footer 75%, credit link ink); focus rings flip to an ink outline with a white halo.
 - **Card White** (`{colors.surface}`, #ffffff): the about band, cards, buttons, chips, status pill, to-top, selection handles.
 - **Ink** (`{colors.ink}`, #161616): text, every 2px border, every offset shadow, band rules.
 - **Ink Muted** (`{colors.ink-muted}`, 74% ink): secondary body copy, nav links, job leads, ghost text.
@@ -263,9 +263,9 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 - **Grid Line** (`{colors.grid-line}`, 11% ink): the 88px hero grid, 2px lines. Other hairlines use ink at 10 to 38% alpha (1px section rules at 10 to 12%, chip border at 24%, ghost dash at 32%, door dash at 38%); these are alpha variants of ink, not separate tokens.
 
 ### Named Rules
-**The One Yellow Rule.** Yellow is the only accent and fills only small things. If a new element wants a second hue, it must be an agent color and live in the swarm overlay.
+**The One Yellow Rule.** Yellow is the only accent. It fills small things everywhere (icons, badges, dots, the caret, the highlighter stroke) and, once, the closer band. Nothing else gets a large yellow panel. If a new element wants a second hue, it must be an agent color and live in the swarm overlay.
 
-**The Agent Color Rule.** Red, green, violet, orange, pink and blue exist only as agent identity. Never use them for page content, links, states or decoration.
+**The Agent Color Rule.** Red, green, violet, orange, pink and blue exist only as agent identity: the cursors, boxes, log and the corner-bracket traces on elements an agent drew. Never use them for page content, links, states or decoration. Traces: two 10px corner brackets (1.5px, the agent colour at `--trace: .8`, 6px outside the box; 12px below and right of cards and pills so they clear the offset shadow) on every element inside `main` that a cursor drew; the toolbox rows, the log card, the bar and the footer carry none, and nothing does when the swarm is off.
 
 **The Ink Outline Rule.** Borders are ink (#161616) at 2px for structure; translucent ink is for hairlines and dashes only. Never a grey solid border.
 
@@ -282,7 +282,7 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 - **Closer headline** (700, `clamp(48px, 6.7vw, 96px)`, 0.95, -0.04em; `clamp(36px, 9.7vw, 48px)` on phone): the two-line contact h2.
 - **Hero headline** (500 with one bold run at 700, `clamp(28px, 3.6vw, 52px)`, 1.12, -0.02em, max 17em so the cap scales with the type): the thesis line under the name. From 768px up the bold run is its own block, so the plain sentence sits whole on line one and the bold list takes two lines; on phone the run is inline (four lines).
 - **Case title** (700, `clamp(32px, 3.3vw, 48px)`, 1.05, -0.03em): h3 of the four work cases.
-- **Section title** (700, 36px, 1.1, -0.01em): `.h2`, the whole section head (no eyebrow above it).
+- **Section title** (700, `clamp(44px, 5vw, 72px)`, 0.98, -0.035em; 36px, 1.1, -0.01em on phone): `.h2`, the whole section head (no eyebrow above it). The ladder is name 168 · closer 96 · section 72 · case 48 · lede 30 · body 17. The section intro is 18px, 18px below.
 - **Mail link** (500, 22px, 1.3, -0.02em; 18px on phone): the email, set inside a `btn-accent` pill.
 - **Lede** (500, 30px, 1.35, -0.02em; 24px on phone): the about paragraph.
 - **Title** (700, 20px): job titles (`.job__title`) and case tags (400, 20px).
@@ -303,7 +303,7 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 
 A single-column editorial page on a 1180px max container (`.wrap`) with 72px side padding, which leaves a 1036px content column; on phones the padding is 20px. The fixed bar is 64px tall with the same side padding. Sections stack in this order, ids in parens: bar, hero (`top`), about, work, experience, toolbox, rest, closer (`contact`), footer.
 
-Vertical rhythm is one big number: 108px section padding (about, experience, work, rest), 81px for the toolbox, 144px for the closer, 32px for the footer; 72 / 60 / 96 on phones. Section heads sit 48px above their content.
+Vertical rhythm is one big number: 108px section padding (about, experience, work, rest), 81px for the toolbox, 144px for the closer, 32px for the footer; 72 / 60 / 96 on phones. Section heads sit 56px above their content (32px for the experience index).
 
 Grids, all `minmax(0, …fr)` ratios taken from the reference:
 - About: 386fr / 578fr, 72px gap (build log card left, lede and notes right); the log card is a fixed 482px tall (320px on phone and tablet) and keeps 13 lines with a 28px fade at the top so a clipped line fades instead of being cut. With the swarm off the log card is hidden and about is one column (text capped at 760px). On phone the lede and notes come before the log card.
@@ -349,7 +349,7 @@ Rounded rectangles with heavy outlines. Pills (999px) for every action, the stat
 - **Shape:** full pill (999px), 2px ink border, white fill, shadow 4.
 - **Primary (`btn`):** 52px tall, 500 / 16px, padding 0 8px 0 24px, a 38px yellow circle at the right holding a 16px ink arrow.
 - **Small (`btn-sm`):** 44px, 15px, padding 0 16px, shadow 2, no icon. Used for "say hi" in the bar (hidden on phone).
-- **Accent (`btn-accent`):** same pill with yellow fill. Used for the email address in the closer (22px text, 18px on phone). The door's "rebuild the page" is the plain outlined `btn`.
+- **Accent (`btn-accent`):** yellow pill (white on the yellow closer band). Used for the email address in the closer (22px text, 18px on phone). The door's "rebuild the page" is the plain outlined `btn`.
 - **Hover:** translate(2px, 2px) and shadow 2, over .2s with `cubic-bezier(.16, 1, .3, 1)`.
 - **Disabled:** `.btn[disabled]` at 60% opacity, default cursor.
 - **Ghost (`ghost`):** 52px pill, dashed 2px border at 32% ink, muted text, an 8px hollow yellow ring dot before the text, a yellow `badge` after it (11px, 700, 1.5px ink border). In the swarm-off state it is a plain caption (no border, no padding), and on phone in both states it is a 14px caption line with no border and no badge. The on-state ghost stays a link to `#about`.
@@ -367,7 +367,7 @@ Rounded rectangles with heavy outlines. Pills (999px) for every action, the stat
 
 ### Navigation
 - **Bar:** fixed, 64px, paper at 88% with blur. Left: the yellow `mark` ("ew", 46px square, 8px radius, 2px ink border, 700). Right: links (15px / 500, 10px 14px padding, muted, ink on hover), the status pill, then the small "say hi" pill. Phone shows the mark and the four nav links and hides "say hi".
-- **Experience index:** sticky list; each row is a 10px dot plus name (17px / 500) and sub-line (13px subtle). The active row (nearest the viewport center) has a 5% ink background, 8px radius and a filled yellow dot; others are muted with hollow dots.
+- **Experience index:** sticky list; each row is a 10px dot plus name (17px / 500) and sub-line (13px subtle). The active row (nearest the viewport center) is an ink chip: ink background, cream name, sub-line at 70% cream, 8px radius and a filled yellow dot; others are muted with hollow dots.
 
 ### Status pill
 - 32px tall pill, 2px ink border, white, no shadow, 12px mono, text like "6 agents · 12/43 built". Hidden under 1024px, on phone, and when the swarm is off.
@@ -376,14 +376,14 @@ Rounded rectangles with heavy outlines. Pills (999px) for every action, the stat
 - 48px (44px phone) white circle, 2px ink border, shadow 4, "↑" glyph, fixed 32px (20px phone) from the bottom-right, hidden (opacity 0) until scrollY passes 600, then fades in over .25s.
 
 ### Band borders
-- Work (`band-3`) and toolbox (`band-2`) have 2px ink rules above and below; the hero has one below; the closer (`band-4`) has a 2px ink rule above only; the footer shares the closer band color. About is white, experience and rest are paper, with no rules. No two rules touch.
+- Work (`band-3`) and toolbox (`band-2`) have 2px ink rules above and below; the hero has one below; the closer (`band-4`) has a 2px ink rule above only; the footer shares the closer band (yellow). About is white, experience and rest are paper, with no rules. No two rules touch.
 
 ### Swarm HUD (signature component)
 - **Cursor:** an 18px arrow (path "M2 1.5 L2 14.5 L5.6 11.2 L8 16.5 L10.6 15.4 L8.2 10.2 L13 10.2 Z") filled with the agent color, 1.5px white stroke, round joins, a faint drop-shadow, transform origin at its tip.
 - **Name tag:** mono 11px, white text on the agent color, 4px radius, padding 3px 6px, set 14px right and 16px below the tip; flips to the left of the tip near the right edge. Text is "agent 01" through "agent 06".
 - **Selection box:** 1.5px border in the agent color, fill of the agent color at 8% (scaled by a `--fill` value), four 7px white square handles with 1.5px agent-colored borders at the corners (offset -4.5px).
 - **Box label:** the element's name, mono 11px, white on the agent color, 4px radius, sitting 24px above the box's top-left (flips below the box near the viewport top).
-- **Build log:** the about card holds a "build log" card title and a bottom-anchored list of 13px mono lines at 6px gaps in ink subtle; each line starts with an 8px square swatch in the agent's color (top-aligned, so a wrapped line keeps it on the first line), then the agent name in ink, the prompt, and the seconds right-aligned. Before any line: "waiting for the agents".
+- **Build log:** the one dark surface on the page: an ink card with cream text (title 70%, lines 62%, times 52%, agent names cream, swatches in agent colors), a 2px white gap under its ink shadow (`0 0 0 2px #fff, 6px 6px 0 0 #161616`) so the offset still reads, and a static shell prompt `$ █` (yellow block) after the last line. The about card holds a "build log" card title and a bottom-anchored list of 13px mono lines at 6px gaps in cream at 62%; each line starts with an 8px square swatch in the agent's color (top-aligned, so a wrapped line keeps it on the first line), then the agent name in cream, the prompt, and the seconds right-aligned. Before any line: "waiting for the agents".
 - **Motion:** the swarm is the only motion system. Per job: travel to the element's corner (180 to 700ms at 1.8px/ms), press 70ms, drag the box open (280 to 950ms), release 120ms, linger 600ms with the last 250ms fading the box out. The element's clip grows with the drag from the top-left to the bottom-right. Idle agents drift a few pixels (5px / 4px, 2.4s / 3.1s periods) and sit inside the viewport. Outside the swarm, only the button press (.2s) and the to-top fade (.25s) animate. With reduced motion, without JavaScript, or if the bundle fails to load within 6s, `data-swarm` is never set (or removed), nothing is hidden and no cursors render; the ghost pill shows its resting line (a caption), the log card is hidden, the footer says "that's everything." only, and the status pill is hidden.
 - **Overlay:** absolutely positioned over the body, clipped, `pointer-events: none`, z-index 60 (bar and to-top are 40). Unbuilt elements are opacity 0 until their box is dragged open.
 

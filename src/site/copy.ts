@@ -41,7 +41,8 @@ export const copy = {
     logOff: 'the agents are off.',
     logReduced: 'the agents are off. you asked for less motion.',
     logLine: (agent: string, element: string, seconds: number): string => `${agent} · ${element} · ${seconds.toFixed(2)}s`,
-    lede: 'now is the best time in history to build things. a few sentences of plain language turn into thousands of lines of code, and what used to take months takes an afternoon.',
+    ledeMark: 'now is the best time in history to build\u00a0things.',
+    lede: 'a few sentences of plain language turn into thousands of lines of code, and what used to take months takes an afternoon.',
     notes: [
       "this is the era of speed, and with it the era of diversification. the world doesn't need some master programmer who dreams in code. it needs well rounded people who have been exposed to so many ideas that they see new opportunities everywhere.",
       `i've always loved building things, but i never really liked coding. the best part was seeing something i built come alive, from my classmates in middle school using my discord bots to a trading algorithm i wrote climbing into the top ${facts.kalshi.leaderboardTop} on kalshi.`,

@@ -534,6 +534,8 @@ export function Swarm({ children }: { children: ReactNode }) {
               act.built = true;
               if (act.entry) {
                 markBuilt(act.entry);
+                act.entry.el.dataset.agent = String(a.id);
+                act.entry.el.style.setProperty('--agent', AGENT_COLOURS[a.id % AGENT_COLOURS.length]);
                 flourish(tl, act.entry);
                 log = [...log, { id: ++logId, agent: a.id, name: act.entry.name, prompt: promptOf(act.entry) ?? act.entry.name, seconds: (tl.travel + tl.drag) / 1000 }].slice(-LOG_KEEP);
                 dirty = true;
@@ -586,6 +588,8 @@ export function Swarm({ children }: { children: ReactNode }) {
       for (const e of rt.registry.values()) {
         e.el.classList.remove('built-in');
         delete e.el.dataset.built;
+        delete e.el.dataset.agent;
+        e.el.style.removeProperty('--agent');
         e.el.style.clipPath = '';
         e.el.style.opacity = '';
         e.built = false;

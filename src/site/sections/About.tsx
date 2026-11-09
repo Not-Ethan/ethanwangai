@@ -30,10 +30,11 @@ export function About() {
                   </li>
                 );
               })}
+              <li className="log__caret" aria-hidden="true">▌</li>
             </ol>
           </Built>
           <div className="about__right">
-            <Built name="lede" as="p" className="lede" prompt={copy.prompts.lede}>{a.lede}</Built>
+            <Built name="lede" as="p" className="lede" prompt={copy.prompts.lede}><mark className="hi">{a.ledeMark}</mark> {a.lede}</Built>
             <Built name="notes" className="notes" prompt={copy.prompts.notes}>
               {a.notes.map((n) => <p key={n} className="muted">{n}</p>)}
             </Built>
