@@ -20,9 +20,9 @@ export function Site() {
       <main>
         <Hero />
         <About />
-        <Toolbox />
-        <Experience />
         <Work />
+        <Experience />
+        <Toolbox />
         <Rest />
         <Closer />
       </main>

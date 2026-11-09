@@ -23,7 +23,7 @@ export const copy = {
     name: ['ethan', 'wang'],
     headline: {
       plain: 'i build things, then watch them run.',
-      bold: 'a trading algorithm, a video factory, a hedge for bar promos.',
+      bold: 'a\u00a0trading algorithm, a\u00a0video factory, a\u00a0hedge for bar promos.',
     },
     cta: 'see the work',
     ctaHref: '#work',
@@ -52,7 +52,7 @@ export const copy = {
     h2: 'what i build with',
     rows: [
       { label: 'languages', chips: ['python', 'typescript', 'java', 'c', 'sql'] },
-      { label: 'backend', chips: ['fastapi', 'node', 'websockets', 'rest', 'ffmpeg'] },
+      { label: 'backend', chips: ['fastapi', 'node', 'websockets', 'rest apis', 'ffmpeg'] },
       { label: 'data', chips: ['postgresql', 'mongodb', 'pandas', 'numpy', 'pytorch'] },
       { label: 'infra', chips: ['linux', 'docker', 'git'] },
       { label: 'markets', chips: ['kalshi', 'order books', 'hedging', 'prediction markets'] },
@@ -63,19 +63,19 @@ export const copy = {
     // sub is the subject of the job, for the index; the card title carries name and role, the when line the dates.
     jobs: [
       {
-        id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: 'trading my own account', when: `${facts.kalshi.since} to now`, place: 'cleveland',
+        id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: 'my own trading system', when: `${facts.kalshi.since} to now`, place: 'cleveland',
         lede: "i trade my own money on kalshi's crypto markets with a system i wrote.",
         body: "it reads kalshi's order book and prices from a few crypto exchanges, places its own orders, and keeps track of risk and fills. i test every idea on a replay of old market data before it trades real money.",
       },
       {
-        id: 'heron', name: 'heron', role: 'co-founder', sub: 'pricing and hedging bar promos', when: `${facts.heron.since} to now`, place: 'four cities',
+        id: 'heron', name: 'heron', role: 'co-founder', sub: 'pricing and hedges for bar promos', when: `${facts.heron.since} to now`, place: 'four cities',
         lede: 'heron takes the risk off bars that run game-day promos. i built the models behind it.',
-        body: 'i price each promo, work out the most heron could owe on it, and place the hedges.',
+        body: 'i wrote the pricing, the cap on what heron can owe, and the code that places the hedges.',
       },
       {
         id: 'wvu', name: 'wvu medicine', role: 'ml intern', sub: 'a pharmacy claims model', when: 'summer 2026', place: 'morgantown',
         lede: 'i built the core of a model that notices when pharmacy claim denials spike.',
-        body: 'it learned from about a hundred million dollars a year of claims. i handed the finished core to the team to put into production, and wrote the tooling that plugs their chat assistant into the rest of their systems.',
+        body: 'it learned from about a hundred million dollars a year of claims. i handed it to the team for production, and wrote the tooling that plugs their chat assistant into the rest of their systems.',
       },
       {
         id: 'darch', name: 'darch', role: 'co-founder', sub: 'a video pipeline', when: `${facts.darch.from} to ${facts.darch.to}`, place: 'remote',
@@ -83,7 +83,7 @@ export const copy = {
         body: 'i built the pipeline end to end in python, node and ffmpeg, and kept it running.',
       },
       {
-        id: 'nist', name: 'nist', role: 'software intern', sub: 'help-desk search', when: 'summer 2025', place: 'gaithersburg',
+        id: 'nist', name: 'nist', role: 'software intern', sub: 'a help-desk search tool', when: 'summer 2025', place: 'gaithersburg',
         lede: "i built the search behind a help-desk assistant for nist's internal docs.",
         body: 'it finds the right docs, ranks them, and searches again when the first pass comes up thin. i added the logging so we could see when it was wrong.',
       },
@@ -105,7 +105,7 @@ export const copy = {
       },
       {
         id: 'darch', year: '2025', kind: 'system', title: 'darch', tag: 'three thousand videos a month.',
-        lede: 'scripts went in, finished videos came out and got posted. they were seen about twenty million times a month, for a year.',
+        lede: 'scripts went in, finished videos came out and got posted. they were seen about twenty million times a month.',
         chips: ['python', 'node', 'ffmpeg'], shot: 'grid',
       },
       {
@@ -136,7 +136,7 @@ export const copy = {
         title: 'the early stuff',
         entries: [
           { name: 'discord bots', line: 'i built them in middle school. they were the first thing i made that other people used.' },
-          { name: 'orbit', line: 'a chrome extension i built in a weekend at tartanhacks, feb 2025.' },
+          { name: 'orbit', line: 'a chrome extension i built in a\u00a0weekend, feb 2025.' },
         ],
       },
     ],

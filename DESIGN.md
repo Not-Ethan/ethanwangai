@@ -33,7 +33,7 @@ typography:
     letterSpacing: "-0.04em"
   hero-headline:
     fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
-    fontSize: "clamp(28px, 4.2vw, 60px)"
+    fontSize: "clamp(28px, 3.6vw, 52px)"
     fontWeight: 500
     lineHeight: 1.12
     letterSpacing: "-0.02em"
@@ -47,7 +47,7 @@ typography:
     fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
     fontSize: "36px"
     fontWeight: 700
-    lineHeight: 1.05
+    lineHeight: 1.1
     letterSpacing: "-0.01em"
   mail-link:
     fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
@@ -61,6 +61,11 @@ typography:
     fontWeight: 500
     lineHeight: 1.35
     letterSpacing: "-0.02em"
+  job-lede:
+    fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 500
+    lineHeight: 1.5
   job-title:
     fontFamily: "Space Grotesk Variable, system-ui, sans-serif"
     fontSize: "20px"
@@ -131,7 +136,6 @@ typography:
 rounded:
   mark: "8px"
   tag: "4px"
-  ghost-phone: "26px"
   chip: "8px"
   shot: "10px"
   card: "14px"
@@ -158,7 +162,7 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.pill}"
     padding: "0 16px"
-    height: "42px"
+    height: "44px"
   btn-accent:
     backgroundColor: "{colors.accent}"
     textColor: "{colors.ink}"
@@ -187,7 +191,8 @@ components:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.chip}"
-    padding: "6px 14px"
+    padding: "9px 16px"
+    typography: "16px / 1.4"
   status-pill:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
@@ -247,11 +252,11 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 - **Agent Blue** (#2563eb), **Agent Red** (#dc2626), **Agent Green** (#15803d), **Agent Violet** (#7c3aed), **Agent Orange** (#c2410c), **Agent Pink** (#db2777): agent 01 to 06, in that order. Each agent's color is its cursor fill, name tag background, selection box border and 8% box fill, handle border, box label background, and the agent name in the build log. Phones use the first three. Colors are set per element through the `--agent` custom property. Tag and label text is white on these fills.
 
 ### Neutral
-- **Paper** (`{colors.canvas}`, #f7f5ee): page background, hero, about, experience, rest; also the bar at 88% alpha.
+- **Paper** (`{colors.canvas}`, #f7f5ee): page background, hero, experience, rest; also the bar at 88% alpha.
 - **Toolbox Stone** (`{colors.canvas-toolbox}`, #e3e1da): the toolbox band.
 - **Work Mist** (`{colors.canvas-work}`, #f3f3f3): the work band (cooler, near neutral grey).
 - **Closer Clay** (`{colors.canvas-closer}`, #d8d6d0): the closer and footer band.
-- **Card White** (`{colors.surface}`, #ffffff): cards, buttons, chips, status pill, to-top, selection handles.
+- **Card White** (`{colors.surface}`, #ffffff): the about band, cards, buttons, chips, status pill, to-top, selection handles.
 - **Ink** (`{colors.ink}`, #161616): text, every 2px border, every offset shadow, band rules.
 - **Ink Muted** (`{colors.ink-muted}`, 74% ink): secondary body copy, nav links, job leads, ghost text.
 - **Ink Subtle** (`{colors.ink-subtle}`, 60% ink): sub-lines, build log lines, case numbers. Row labels and the footer use Ink Muted (the 60% ink fails 4.5:1 on the darker bands).
@@ -274,16 +279,17 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 
 ### Hierarchy
 - **Name** (700, `clamp(64px, 11.7vw, 168px)`, line-height 0.82, tracking -0.045em, uppercase): the two-line "ethan / wang" h1. Phone floor is 64px. The only uppercase display text.
-- **Closer headline** (700, `clamp(48px, 6.7vw, 96px)`, 0.95, -0.04em; fixed 48px on phone): the two-line contact h2.
-- **Hero headline** (500 with one bold run at 700, `clamp(28px, 4.2vw, 60px)`, 1.12, -0.02em, max 851px): the thesis line under the name.
+- **Closer headline** (700, `clamp(48px, 6.7vw, 96px)`, 0.95, -0.04em; `clamp(36px, 9.7vw, 48px)` on phone): the two-line contact h2.
+- **Hero headline** (500 with one bold run at 700, `clamp(28px, 3.6vw, 52px)`, 1.12, -0.02em, max 17em so the cap scales with the type): the thesis line under the name. From 768px up the bold run is its own block, so the plain sentence sits whole on line one and the bold list takes two lines; on phone the run is inline (four lines).
 - **Case title** (700, `clamp(32px, 3.3vw, 48px)`, 1.05, -0.03em): h3 of the four work cases.
-- **Section title** (700, 36px, 1.05, -0.01em): `.h2`, the whole section head (no eyebrow above it).
+- **Section title** (700, 36px, 1.1, -0.01em): `.h2`, the whole section head (no eyebrow above it).
 - **Mail link** (500, 22px, 1.3, -0.02em; 18px on phone): the email, set inside a `btn-accent` pill.
 - **Lede** (500, 30px, 1.35, -0.02em; 24px on phone): the about paragraph.
 - **Title** (700, 20px): job titles (`.job__title`) and case tags (400, 20px).
-- **Body** (400, 17px, 1.65): default. Closer paragraph 18px, door paragraphs 16px at 1.6, footer 15px, footer credit 13px, chips 15px at 1.4, nav links 15px.
+- **Job lede** (500, 18px, 1.5, ink): the lead line of each job; the body under it stays muted at 17px.
+- **Body** (400, 17px, 1.65): default. Closer paragraph 18px, door paragraphs 16px at 1.6, footer 15px, footer credit 13px, chips 16px at 1.4, nav links 15px.
 - **Button** (500, 16px; 15px at `btn-sm`).
-- **Label** (500, 12px, tracking 0.14em, uppercase, ink subtle): `.eyebrow-sm` (card titles) and the toolbox row labels. There are no eyebrows above headings.
+- **Label** (600, 13px, lowercase, ink muted): `.eyebrow-sm` (card titles, the build log title) and the toolbox row labels. There are no eyebrows above headings.
 - **HUD mono** (11px, line-height 1; 10px on phone): cursor tags and box labels. Also 13px build log lines (1.5), 12px status pill, 13px case numbers (0.1em tracking).
 
 ### Named Rules
@@ -295,26 +301,28 @@ A warm paper neutral base, near-black ink, one saturated yellow, and a separate 
 
 ## Layout
 
-A single-column editorial page on a 1180px max container (`.wrap`) with 72px side padding, which leaves a 1036px content column; on phones the padding is 20px. The fixed bar is 64px tall with the same side padding. Sections stack in this order, ids in parens: bar, hero (`top`), about, toolbox, experience, work, rest, closer (`contact`), footer.
+A single-column editorial page on a 1180px max container (`.wrap`) with 72px side padding, which leaves a 1036px content column; on phones the padding is 20px. The fixed bar is 64px tall with the same side padding. Sections stack in this order, ids in parens: bar, hero (`top`), about, work, experience, toolbox, rest, closer (`contact`), footer.
 
 Vertical rhythm is one big number: 108px section padding (about, experience, work, rest), 81px for the toolbox, 144px for the closer, 32px for the footer; 72 / 60 / 96 on phones. Section heads sit 48px above their content.
 
 Grids, all `minmax(0, …fr)` ratios taken from the reference:
-- About: 386fr / 578fr, 72px gap (build log card left, lede and notes right); the log card is a fixed 482px tall (320px on phone).
-- Toolbox: rows of a 152px label and a flowing chip wrap, separated by 1px rules at 10% ink.
-- Experience: 319fr / 637fr, 80px gap; the left index is sticky at `top: 96px`; job cards stack with 36px gaps; job anchors scroll-margin 96px.
+- About: 386fr / 578fr, 72px gap (build log card left, lede and notes right); the log card is a fixed 482px tall (320px on phone and tablet) and keeps 13 lines with a 28px fade at the top so a clipped line fades instead of being cut. With the swarm off the log card is hidden and about is one column (text capped at 760px). On phone the lede and notes come before the log card.
+- Toolbox: rows of a 152px label and a flowing chip wrap, 18px row padding, separated by 1px rules at 10% ink; the label has 11px top padding to sit level with the first chip row.
+- Experience: 319fr / 637fr, 80px gap; job ledes are ink 18px / 500, bodies muted; the left index is sticky at `top: 96px`; job cards stack with 36px gaps; job anchors scroll-margin 96px.
 - Work: cases at 510fr / 462fr, 64px gap, 90px between cases, alternating sides via `direction: rtl` on every second case.
 - Rest: three equal columns, 20px gap, 28px card padding.
 - Closer: left aligned stack; the "door" is a two-column box (1fr / 240px, 48px gap, 32px padding, 72px above).
 
-Hero is `min-height: 100svh`, content starts 145px from the top, name first, headline 28px below the name, actions 36px below with a 14px gap. Hero text blocks use `width: fit-content` so the swarm's boxes hug the text.
+Hero is `min-height: 100svh` with a 2px ink rule at its bottom, and the 88px grid (which ends at the hero's bottom edge, not below it) fades out (mask, solid to 55% then transparent) before the rule. Nav landings on work and contact use `scroll-margin-top: -18px` and experience `-16px`, so a band's top rule lands under the bar's own 2px border instead of 16px below it. Content starts 145px from the top, name first, headline 28px below the name, actions 36px below with a 14px gap. Hero text blocks use `width: fit-content` so the swarm's boxes hug the text.
 
-**Phone breakpoint: 767px.** Below it everything is one column, the bar hides nav and status (the status also hides under 1024px), the experience index disappears and each job gains a visible title line, rows stack label over chips, cases are never mirrored, the hero content is vertically centered, and the swarm uses three agents instead of six. Chips, rows and chip lists wrap; nothing scrolls horizontally (`overflow-x: hidden` on body).
+**Tablet range: 768 to 1023px.** Side padding drops to 40px; about, experience, cases and creds go single column; the experience index list is hidden; cases are never mirrored; the log is 320px; the hero is vertically centered with 96px padding; the status pill is hidden.
+
+**Phone breakpoint: 767px.** Below it everything is one column, the bar shows the mark and the four nav links and hides "say hi" and the status (the status also hides under 1024px), card and cred padding is 24px / 20px, the experience index disappears and each job gains a visible title line, rows stack label over chips, cases are never mirrored, the hero content is vertically centered, the ghost is a plain caption line (14px, no border, no badge), and the swarm uses three agents instead of six. Chips, rows and chip lists wrap; nothing scrolls horizontally (`overflow-x: hidden` on body).
 
 Drift from the spec: the spec says the 72px gutter applies at 1280 and above; the code applies it at every width above 767px.
 
 ### Named Rules
-**The Reference Grid Rule.** Layout numbers (column ratios, paddings, type sizes) were measured from aahil-khan.xyz at Ethan's request. Do not "improve" them.
+**The Reference Grid Rule.** Layout numbers (column ratios, paddings, type sizes) were measured from aahil-khan.xyz at Ethan's request. Do not "improve" them. Departures made on Ethan's 2026-11-08 request: section order (work before experience, toolbox after experience), headline 52 px, hero rule and grid fade, white about band, chip size.
 
 ## Elevation & Depth
 
@@ -340,25 +348,25 @@ Rounded rectangles with heavy outlines. Pills (999px) for every action, the stat
 ### Buttons
 - **Shape:** full pill (999px), 2px ink border, white fill, shadow 4.
 - **Primary (`btn`):** 52px tall, 500 / 16px, padding 0 8px 0 24px, a 38px yellow circle at the right holding a 16px ink arrow.
-- **Small (`btn-sm`):** 42px, 15px, padding 0 16px, shadow 2, no icon. Used for "say hi" in the bar.
+- **Small (`btn-sm`):** 44px, 15px, padding 0 16px, shadow 2, no icon. Used for "say hi" in the bar (hidden on phone).
 - **Accent (`btn-accent`):** same pill with yellow fill. Used for the email address in the closer (22px text, 18px on phone). The door's "rebuild the page" is the plain outlined `btn`.
 - **Hover:** translate(2px, 2px) and shadow 2, over .2s with `cubic-bezier(.16, 1, .3, 1)`.
 - **Disabled:** `.btn[disabled]` at 60% opacity, default cursor.
-- **Ghost (`ghost`):** 52px pill, dashed 2px border at 32% ink, muted text, an 8px hollow yellow ring dot before the text, a yellow `badge` after it (11px, 700, 1.5px ink border). On phone it becomes a 26px-radius wrapped box with 15px text.
+- **Ghost (`ghost`):** 52px pill, dashed 2px border at 32% ink, muted text, an 8px hollow yellow ring dot before the text, a yellow `badge` after it (11px, 700, 1.5px ink border). In the swarm-off state it is a plain caption (no border, no padding), and on phone in both states it is a 14px caption line with no border and no badge. The on-state ghost stays a link to `#about`.
 
 ### Chips
-- **Style:** white fill, 1.5px border at 24% ink, 8px radius, 15px text, padding 6px 14px. Flex wrap with 8px gaps. No hover, no selected state; they are labels, not controls.
+- **Style:** white fill, 1.5px border at 24% ink, 8px radius, 16px text, padding 9px 16px (about 44px tall). Flex wrap with 8px gaps. No hover, no selected state; they are labels, not controls.
 
 ### Cards / Containers
 - **Corner Style:** 14px.
 - **Background:** white on every band.
 - **Shadow Strategy:** shadow 4 on `card`, shadow 6 and 14px padding on `card-6` (work shots).
 - **Border:** 2px solid ink.
-- **Internal Padding:** 32px (28px for the rest cards, 14px for shots).
+- **Internal Padding:** 32px (28px for the rest cards, 14px for shots); on phone 24px / 20px for cards and rest cards.
 - **Door:** transparent, dashed 2px at 38% ink, 14px radius, 32px padding; no shadow.
 
 ### Navigation
-- **Bar:** fixed, 64px, paper at 88% with blur. Left: the yellow `mark` ("ew", 46px square, 8px radius, 2px ink border, 700). Right: links (15px / 500, 10px 14px padding, muted, ink on hover), the status pill, then the small "say hi" pill. Phone shows only the mark and "say hi".
+- **Bar:** fixed, 64px, paper at 88% with blur. Left: the yellow `mark` ("ew", 46px square, 8px radius, 2px ink border, 700). Right: links (15px / 500, 10px 14px padding, muted, ink on hover), the status pill, then the small "say hi" pill. Phone shows the mark and the four nav links and hides "say hi".
 - **Experience index:** sticky list; each row is a 10px dot plus name (17px / 500) and sub-line (13px subtle). The active row (nearest the viewport center) has a 5% ink background, 8px radius and a filled yellow dot; others are muted with hollow dots.
 
 ### Status pill
@@ -368,15 +376,15 @@ Rounded rectangles with heavy outlines. Pills (999px) for every action, the stat
 - 48px (44px phone) white circle, 2px ink border, shadow 4, "↑" glyph, fixed 32px (20px phone) from the bottom-right, hidden (opacity 0) until scrollY passes 600, then fades in over .25s.
 
 ### Band borders
-- Toolbox (`band-2`) and work (`band-3`) have 2px ink rules above and below; the closer (`band-4`) has a 2px ink rule above only; the footer shares the closer band color. Paper sections have no rules.
+- Work (`band-3`) and toolbox (`band-2`) have 2px ink rules above and below; the hero has one below; the closer (`band-4`) has a 2px ink rule above only; the footer shares the closer band color. About is white, experience and rest are paper, with no rules. No two rules touch.
 
 ### Swarm HUD (signature component)
 - **Cursor:** an 18px arrow (path "M2 1.5 L2 14.5 L5.6 11.2 L8 16.5 L10.6 15.4 L8.2 10.2 L13 10.2 Z") filled with the agent color, 1.5px white stroke, round joins, a faint drop-shadow, transform origin at its tip.
 - **Name tag:** mono 11px, white text on the agent color, 4px radius, padding 3px 6px, set 14px right and 16px below the tip; flips to the left of the tip near the right edge. Text is "agent 01" through "agent 06".
 - **Selection box:** 1.5px border in the agent color, fill of the agent color at 8% (scaled by a `--fill` value), four 7px white square handles with 1.5px agent-colored borders at the corners (offset -4.5px).
 - **Box label:** the element's name, mono 11px, white on the agent color, 4px radius, sitting 24px above the box's top-left (flips below the box near the viewport top).
-- **Build log:** the about card holds a "build log" card title and a bottom-anchored list of 13px mono lines at 6px gaps in ink subtle; each line starts with an 8px square swatch in the agent's color, then the agent name in ink. Before any line: "waiting for the agents".
-- **Motion:** the swarm is the only motion system. Per job: travel to the element's corner (180 to 700ms at 1.8px/ms), press 70ms, drag the box open (280 to 950ms), release 120ms, linger 600ms with the last 250ms fading the box out. The element's clip grows with the drag from the top-left to the bottom-right. Idle agents drift a few pixels (5px / 4px, 2.4s / 3.1s periods) and sit inside the viewport. Outside the swarm, only the button press (.2s) and the to-top fade (.25s) animate. With reduced motion, without JavaScript, or if the bundle fails to load within 6s, `data-swarm` is never set (or removed), nothing is hidden and no cursors render; the ghost pill shows its resting line and the status pill is hidden.
+- **Build log:** the about card holds a "build log" card title and a bottom-anchored list of 13px mono lines at 6px gaps in ink subtle; each line starts with an 8px square swatch in the agent's color (top-aligned, so a wrapped line keeps it on the first line), then the agent name in ink, the prompt, and the seconds right-aligned. Before any line: "waiting for the agents".
+- **Motion:** the swarm is the only motion system. Per job: travel to the element's corner (180 to 700ms at 1.8px/ms), press 70ms, drag the box open (280 to 950ms), release 120ms, linger 600ms with the last 250ms fading the box out. The element's clip grows with the drag from the top-left to the bottom-right. Idle agents drift a few pixels (5px / 4px, 2.4s / 3.1s periods) and sit inside the viewport. Outside the swarm, only the button press (.2s) and the to-top fade (.25s) animate. With reduced motion, without JavaScript, or if the bundle fails to load within 6s, `data-swarm` is never set (or removed), nothing is hidden and no cursors render; the ghost pill shows its resting line (a caption), the log card is hidden, the footer says "that's everything." only, and the status pill is hidden.
 - **Overlay:** absolutely positioned over the body, clipped, `pointer-events: none`, z-index 60 (bar and to-top are 40). Unbuilt elements are opacity 0 until their box is dragged open.
 
 ## Do's and Don'ts

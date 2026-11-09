@@ -26,7 +26,7 @@ export function About() {
                     <span className="log__swatch" aria-hidden="true" style={{ '--agent': AGENT_COLOURS[l.agent % AGENT_COLOURS.length] } as CSSProperties} />
                     <span className="log__agent">{who}</span>
                     <span className="log__prompt">{l.prompt || l.name}</span>
-                    <span className="log__time">{`\u00a0· ${l.seconds.toFixed(2)}s`}</span>
+                    <span className="log__time">{`${l.seconds.toFixed(2)}s`}</span>
                   </li>
                 );
               })}

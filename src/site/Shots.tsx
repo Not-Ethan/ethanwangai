@@ -37,18 +37,22 @@ function Book() {
 function Tab() {
   return (
     <>
-      <rect x="90" y="20" width="300" height="230" rx="12" fill="var(--surface)" stroke="var(--ink)" strokeWidth="2" />
-      <rect x="114" y="46" width="104" height="10" rx="3" fill={INK} />
-      <rect x="114" y="80" width="150" height="8" rx="3" fill={HAIR2} />
-      <rect x="114" y="108" width="120" height="8" rx="3" fill={HAIR2} />
-      <rect x="114" y="136" width="136" height="8" rx="3" fill={HAIR2} />
+      <rect x="60" y="16" width="360" height="238" rx="12" fill="var(--surface)" stroke="var(--ink)" strokeWidth="2" />
+      <path d="M61 52 L61 28 Q61 17 72 17 L408 17 Q419 17 419 28 L419 52 Z" fill={INK} />
+      <rect x="80" y="30" width="96" height="8" rx="3" fill={YEL} />
+      {[0, 1, 2, 3].map((i) => (
+        <g key={i}>
+          <rect x="80" y={70 + i * 24} width={[160, 130, 148, 118][i]} height="8" rx="3" fill={HAIR2} />
+          <rect x="350" y={70 + i * 24} width="36" height="8" rx="3" fill={HAIR2} />
+        </g>
+      ))}
       <g className="pulse">
-        <rect x="108" y="160" width="140" height="28" rx="14" fill="var(--ink)" />
-        <text x="124" y="179" fontFamily={FONT} fontSize="13" fill={YEL}>drinks · free</text>
+        <rect x="80" y="166" width="140" height="28" rx="14" fill="var(--ink)" />
+        <text x="96" y="185" fontFamily={FONT} fontSize="13" fill={YEL}>drinks · free</text>
       </g>
-      <line x1="108" y1="208" x2="372" y2="208" stroke={HAIR2} strokeWidth="1" strokeDasharray="4 4" />
-      <rect x="108" y="216" width="64" height="22" rx="11" fill={HAIR} stroke={HAIR2} />
-      <text x="140" y="231" textAnchor="middle" fontFamily={FONT} fontSize="11" fill="var(--ink)">hedged</text>
+      <line x1="80" y1="204" x2="400" y2="204" stroke={HAIR2} strokeWidth="1" strokeDasharray="4 4" />
+      <rect x="80" y="214" width="64" height="20" rx="10" fill={HAIR} stroke={HAIR2} />
+      <text x="112" y="228" textAnchor="middle" fontFamily={FONT} fontSize="11" fill="var(--ink)">hedged</text>
     </>
   );
 }
@@ -75,16 +79,19 @@ function Grid() {
 function Chat() {
   return (
     <>
-      <rect x="40" y="30" width="400" height="210" rx="10" fill="var(--surface)" stroke="var(--ink)" strokeWidth="2" />
-      <line x1="40" y1="58" x2="440" y2="58" stroke="var(--ink)" strokeWidth="2" />
-      {[0, 1, 2].map((i) => <circle key={i} cx={58 + i * 16} cy="44" r="4" fill={i === 0 ? YEL : HAIR2} />)}
-      <rect x="230" y="74" width="190" height="34" rx="12" fill={HAIR} />
-      <rect x="244" y="87" width="120" height="8" rx="3" fill={HAIR2} />
-      <rect x="60" y="124" width="316" height="38" rx="12" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.5" />
-      <rect x="74" y="139" width="210" height="8" rx="3" fill={HAIR2} />
-      <rect x="364" y="135" width="6" height="15" fill="var(--ink)" className="caret" />
-      <rect x="60" y="176" width="64" height="24" rx="12" fill={YEL} />
-      <text x="74" y="192" fontFamily={FONT} fontSize="11" fill="var(--ink)">cited</text>
+      <rect x="24" y="16" width="432" height="238" rx="10" fill="var(--surface)" stroke="var(--ink)" strokeWidth="2" />
+      <line x1="24" y1="44" x2="456" y2="44" stroke="var(--ink)" strokeWidth="2" />
+      {[0, 1, 2].map((i) => <circle key={i} cx={42 + i * 16} cy="30" r="4" fill={i === 0 ? YEL : HAIR2} />)}
+      <rect x="250" y="58" width="190" height="30" rx="12" fill={HAIR} />
+      <rect x="264" y="69" width="120" height="8" rx="3" fill={HAIR2} />
+      <rect x="40" y="100" width="340" height="52" rx="12" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.5" />
+      <rect x="56" y="114" width="250" height="8" rx="3" fill={HAIR2} />
+      <rect x="56" y="130" width="180" height="8" rx="3" fill={HAIR2} />
+      <rect x="242" y="128" width="6" height="12" fill="var(--ink)" className="caret" />
+      <rect x="40" y="162" width="64" height="24" rx="12" fill={YEL} />
+      <text x="54" y="178" fontFamily={FONT} fontSize="11" fill="var(--ink)">cited</text>
+      <rect x="290" y="204" width="150" height="30" rx="12" fill={HAIR} />
+      <rect x="304" y="215" width="90" height="8" rx="3" fill={HAIR2} />
     </>
   );
 }

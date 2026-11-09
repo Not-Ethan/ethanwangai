@@ -25,7 +25,7 @@ interface Runtime extends SwarmRuntime {
   rebuildImpl: (() => void) | null;
 }
 
-const LOG_KEEP = 9;
+const LOG_KEEP = 13;
 
 function hasStickyAncestor(el: HTMLElement): boolean {
   for (let n: HTMLElement | null = el; n && n !== document.body; n = n.parentElement) {

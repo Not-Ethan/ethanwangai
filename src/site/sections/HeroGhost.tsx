@@ -13,7 +13,8 @@ export function HeroGhost() {
       </a>
       <span className="ghost when-off">
         <span className="ghost__dot" aria-hidden="true" />
-        <span>{h.ghostOff}</span>
+        <span className="rm-no">{h.ghostOff}</span>
+        <span className="rm-yes">{h.ghostOffReduced}</span>
       </span>
     </>
   );
