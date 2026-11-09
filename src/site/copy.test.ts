@@ -19,6 +19,9 @@ describe('voice', () => {
   it('never prints the private or forbidden things', () => {
     for (const s of ALL) expect(s, s).not.toMatch(/\$20|#75|notional|contracts|240-810|r[eé]sum[eé]/i);
   });
+  it('never narrates the effect: no string says agents or cursors (the hud formats are functions and are skipped)', () => {
+    for (const s of ALL) expect(s, s).not.toMatch(/\bagents?\b|\bcursors?\b|aahil/i);
+  });
   it('is not empty and has no leading or trailing space', () => { for (const s of ALL) { expect(s.length).toBeGreaterThan(0); expect(s).toBe(s.trim()); } expect(ALL.length).toBeGreaterThan(80); });
 });
 
@@ -56,14 +59,6 @@ describe('facts in the copy', () => {
   });
 });
 
-describe('ghost when the swarm is off', () => {
-  it('has a lowercase resting line', () => {
-    expect(copy.hero.ghostOff).toBe('the agents are off. the page is already built.');
-    expect(copy.hero.ghostOffReduced).toContain('less motion');
-    expect(copy.hero.ghostOff).toBe(copy.hero.ghostOff.toLowerCase());
-  });
-});
-
 describe('prompts', () => {
   it('has a lowercase prompt for every built name', () => {
     const names = [
@@ -71,7 +66,7 @@ describe('prompts', () => {
       ...copy.toolbox.rows.map((r) => `row ${r.label}`), 'h2 experience', 'index',
       ...copy.experience.jobs.map((j) => `card ${j.id}`), 'h2 work',
       ...copy.work.cases.flatMap((c) => [`shot ${c.id}`, `body ${c.id}`]), 'h2 rest',
-      ...copy.rest.cards.map((c) => `card ${c.title}`), 'h2 contact', 'p contact', 'mail', 'links', 'door', 'footer',
+      ...copy.rest.cards.map((c) => `card ${c.title}`), 'h2 contact', 'p contact', 'mail', 'links', 'footer',
     ];
     expect(Object.keys(copy.prompts).sort()).toEqual([...names].sort());
     for (const [k, v] of Object.entries(copy.prompts)) { expect(v, k).toBe(v.toLowerCase()); expect(v.length, k).toBeGreaterThan(0); }
@@ -91,18 +86,3 @@ describe('rest cards', () => {
   });
 });
 
-describe('off state', () => {
-  it('never says today, and the footer has an off line', () => {
-    for (const s of [copy.hero.ghostOff, copy.hero.ghostOffReduced, copy.about.logOff, copy.about.logReduced, copy.closer.door.offParagraph]) expect(s, s).not.toMatch(/today|stayed home/);
-    expect(copy.footer.rightOff).not.toContain('agents');
-  });
-});
-
-describe('door', () => {
-  it('has an off paragraph and a phone variant', () => {
-    expect(copy.closer.door.offParagraphPhone).toBe(copy.closer.door.offParagraph.replace('six', 'three'));
-  });
-  it('phone paragraph is the first paragraph with six replaced by three', () => {
-    expect(copy.closer.door.paragraphPhone).toBe(copy.closer.door.paragraphs[0].replace('six', 'three'));
-  });
-});

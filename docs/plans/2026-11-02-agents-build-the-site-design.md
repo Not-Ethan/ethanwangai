@@ -426,3 +426,19 @@ The lede's first sentence, "now is the best time in history to build things.", i
 ### 16.6 Gate
 
 Same gate. The judge compares before (`.playwright-mcp/look/d-full.jpeg`, 2026-11-08) and after at 1440 and 390, decides whether the traces read as character or noise at .4 / .6 / .8 opacity, compares the yellow closer with an ink alternative, and checks the swarm still builds 42/42 with traces appearing only on cursor-drawn elements.
+
+## 17. No narration, no credit, a drifting grid (2026-11-09)
+
+Ethan: "can you drop this footer: layout after aahil-khan.xyz. Add like an infinite grid animation to the hero background. also get rid of the explicit mentions of agents building the page."
+
+### 17.1 The copy stops narrating the effect
+
+Every sentence that explained the swarm is gone; the effect speaks for itself and the HUD (cursor tags `agent 01` to `agent 06`, the status pill `6 agents · 12/41 built`, the build-log lines) is the only place the word agent appears. Removed: the hero ghost pill and its badge (on, off and reduced-motion lines), the closer's door ("oh, and about the agents." and its three paragraphs, the off paragraph, the note), the footer's "the agents are done", the log's "waiting for the agents" and its off-state lines (the card is hidden when the swarm is off anyway; before any build it shows only the `$ █` prompt). The hero's second slot becomes a plain pill `say hi ↗` (mailto), so the actions are still "two buttons". The rebuild control survives as a third pill in the closer's links row, `rebuild ↻` (aria-label "rebuild the page"), shown only with the swarm on. `BUILT_TOTAL` is 41. A copy test pins it: no string contains "agent", "cursor" or "aahil".
+
+### 17.2 The footer credit goes
+
+"layout after aahil-khan.xyz" is removed from the footer (copy, markup and CSS). The footer is the left line and "that's everything."
+
+### 17.3 The hero grid drifts forever
+
+The 88 px grid moves diagonally down-right at one cell per 4.5 s (about 20 px/s), seamless because the pattern repeats every cell, infinite, linear. Implementation: a masked wrapper `.hero__gridmask` (absolute, inset 0, the existing bottom fade mask) containing `.hero__grid` (inset -100px on all sides, `transform` animation `grid-drift` from 0 to `translate3d(88px, 88px, 0)`, `will-change: transform`). Reduced motion: no animation. DESIGN.md's motion rule becomes: the swarm, the hero grid's drift, the button press and the to-top fade.

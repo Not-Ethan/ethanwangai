@@ -2,6 +2,7 @@ import { facts } from './facts';
 
 // Every string on the site. Lowercase, no em or en dashes. The name is uppercase through CSS only.
 // Voice source: Ethan's thesis paragraph (spec §6, §15). Experience says the role, work says the thing.
+// The copy never narrates the effect (spec §17): no sentence says agents or cursors build the page. The HUD (cursor tags, status pill, build log lines) is the only place the word agent appears.
 export const copy = {
   meta: {
     title: 'ethan wang',
@@ -27,19 +28,12 @@ export const copy = {
     },
     cta: 'see the work',
     ctaHref: '#work',
-    ghost: 'six agents are building this page while you read it',
-    ghostPhone: 'three agents are building this page while you read it',
-    ghostBadge: 'see the log',
-    ghostOff: 'the agents are off. the page is already built.',
-    ghostOffReduced: 'the agents are off. you asked for less motion.',
-    ghostHref: '#about',
+    cta2: 'say hi ↗',
+    cta2Href: 'mailto:ethan.wanq@gmail.com',
   },
   about: {
     h2: "hi. i'm ethan.",
     logTitle: 'build log',
-    logEmpty: 'waiting for the agents',
-    logOff: 'the agents are off.',
-    logReduced: 'the agents are off. you asked for less motion.',
     logLine: (agent: string, element: string, seconds: number): string => `${agent} · ${element} · ${seconds.toFixed(2)}s`,
     ledeMark: 'now is the best time in history to build\u00a0things.',
     lede: 'a few sentences of plain language turn into thousands of lines of code, and what used to take months takes an afternoon.',
@@ -150,26 +144,12 @@ export const copy = {
       { label: 'github ↗', href: 'https://github.com/Not-Ethan' },
       { label: 'linkedin ↗', href: 'https://linkedin.com/in/edw173' },
     ],
-    door: {
-      title: 'oh, and about the agents.',
-      paragraphs: [
-        "most of this page was drawn in by six cursors while you read. they don't exist. the page was here the whole time.",
-        "no ai runs here and nothing leaves your browser. it's static files on a cdn and some javascript.",
-        "they'll do it again if you ask.",
-      ],
-      paragraphPhone: "most of this page was drawn in by three cursors while you read. they don't exist. the page was here the whole time.",
-      button: 'rebuild the page ↻',
-      note: 'it jumps to the top and takes about as long as reading it did.',
-      offParagraph: "six cursors usually draw this page in while you read. they're off for you, so you got the finished page.",
-      offParagraphPhone: "three cursors usually draw this page in while you read. they're off for you, so you got the finished page.",
-    },
+    rebuild: 'rebuild ↻',
+    rebuildLabel: 'rebuild the page',
   },
   footer: {
     left: 'ethan wang · cleveland',
-    right: "that's everything. the agents are done.",
-    rightOff: "that's everything.",
-    credit: 'layout after',
-    creditLink: { label: 'aahil-khan.xyz', href: 'https://www.aahil-khan.xyz/' },
+    right: "that's everything.",
   },
   // What each agent was told to build (spec §13.4), keyed by the data-build name.
   prompts: {
@@ -213,7 +193,6 @@ export const copy = {
     'p contact': 'how to reach me',
     'mail': 'my email, big',
     'links': 'github and linkedin',
-    'door': 'the bit about you',
     'footer': 'a footer',
   } as Record<string, string>,
   totop: { aria: 'back to top', glyph: '↑' },

@@ -7,7 +7,7 @@ a one-page portfolio that a swarm of cursors builds in front of you. every main 
 - `npm run lint`, `npm run typecheck`, `npm test`: eslint, tsc, vitest (run `build` before `test`; the exported-html test reads `out/index.html`)
 - every string lives in `src/site/copy.ts`; every number in `src/site/facts.ts` (hand-edited)
 - the swarm: pure, tested modules in `src/swarm/` (prng, easing, timeline, scheduler, agents) and one dom file, `src/swarm/Swarm.tsx`; `<Built name>` in `src/site/Built.tsx` marks an element the agents build
-- reduced motion shows the page at once with no cursors; if the bundle never loads, the inline script in `src/app/layout.tsx` reveals the page 1.5 s after `load` (6 s at most) with the "stayed home" copy
+- reduced motion shows the page at once with no cursors; if the bundle never loads, the inline script in `src/app/layout.tsx` reveals the page 1.5 s after `load` (6 s at most)
 - `public/og.png` is a committed screenshot of the exported hero at 1200×630; regenerate it when the hero changes
 - no api routes, no fetches, no storage, no env vars, no analytics
 - visual gate: serve `out` on 3011 and run `scripts/gate-capture.js` through the Playwright MCP (stills in `.playwright-mcp/gate/`); impeccable critique snapshots live in `.impeccable/critique/`

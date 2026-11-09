@@ -17,9 +17,8 @@ export function About() {
         <div className="about__grid">
           <Built name="log" className="card log" prompt={copy.prompts.log}>
             <p className="eyebrow-sm">{a.logTitle}</p>
-            <ol className="log__lines mono when-off"><li className="rm-no">{a.logOff}</li><li className="rm-yes">{a.logReduced}</li></ol>
             <ol className="log__lines mono when-on" data-log>
-              {s.log.length === 0 ? <li className="log__empty">{a.logEmpty}</li> : s.log.map((l) => {
+              {s.log.map((l) => {
                 const who = agentName(l.agent);
                 return (
                   <li key={l.id}>

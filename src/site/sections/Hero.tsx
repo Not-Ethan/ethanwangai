@@ -1,6 +1,5 @@
 import { copy } from '../copy';
 import { Built } from '../Built';
-import { HeroGhost } from './HeroGhost';
 
 function Arrow() {
   return (
@@ -14,7 +13,7 @@ export function Hero() {
   const h = copy.hero;
   return (
     <section id="top" className="hero">
-      <div className="hero__grid" aria-hidden="true" />
+      <div className="hero__gridmask" aria-hidden="true"><div className="hero__grid" /></div>
       <div className="hero__glow" aria-hidden="true" />
       <div className="wrap hero__inner">
         <Built name="h1 name" as="h1" className="name" tabIndex={-1} prompt={copy.prompts['h1 name']}>
@@ -29,7 +28,7 @@ export function Hero() {
             <span>{h.cta}</span>
             <span className="btn__icon"><Arrow /></span>
           </a>
-          <HeroGhost />
+          <a className="btn btn-plain" href={h.cta2Href}>{h.cta2}</a>
         </Built>
       </div>
     </section>

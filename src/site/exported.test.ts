@@ -35,10 +35,9 @@ describe.skipIf(!HAVE)('exported html', () => {
       expect(markup, s).toContain(s);
     }
   });
-  it('renders the off copy statically, switched by CSS', () => {
-    for (const s of [copy.about.logOff, copy.about.logReduced, copy.hero.ghostOff, copy.closer.door.offParagraph, copy.closer.door.offParagraphPhone]) expect(html, s).toContain(s);
-    expect(raw).toContain('when-off');
+  it('keeps the swarm-only bits switchable by CSS and never credits or narrates', () => {
     expect(raw).toContain('when-on');
+    expect(raw).not.toMatch(/aahil|agents are|cursors usually|drawn in by/);
   });
   it('gives every built name a lowercase prompt, and the prompts map has no extras', () => {
     const names = [...raw.matchAll(/data-build="([^"]+)"/g)].map((m) => decode(m[1]));
@@ -58,8 +57,9 @@ describe.skipIf(!HAVE)('exported html', () => {
   it('has no eyebrows', () => {
     expect(raw).not.toMatch(/class="(?:[^"]* )?eyebrow(?: [^"]*)?"/);
   });
-  it('contains nothing forbidden', () => {
-    expect(raw).not.toMatch(/\$20|#75|notional|contracts|240-810|r[eé]sum[eé]/i);
+  it('contains nothing forbidden in the markup (script payloads carry Next\'s own $-references)', () => {
+    const markup = html.replace(/<script[\s\S]*?<\/script>/g, '');
+    expect(markup).not.toMatch(/\$20|#75|notional|contracts|240-810|r[eé]sum[eé]/i);
   });
   it('sets the swarm attribute from the inline script', () => {
     expect(raw).toContain("dataset.swarm='on'");
