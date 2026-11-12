@@ -164,7 +164,7 @@ export function Swarm({ children }: { children: ReactNode }) {
       st.opacity = f ? '0' : '1';
       if (!f) popIn(i, true);
     };
-    // the spawn-in animation: 260 ms for the opening beat, 200 ms whenever a faded or hidden cursor reappears
+    // the spawn-in animation: 180 ms for the opening beat, 200 ms whenever a faded or hidden cursor reappears
     const popIn = (i: number, fast: boolean): void => {
       const cl = cursors[i].classList;
       cl.remove('cursor--spawn', 'cursor--spawn-fast');
@@ -219,7 +219,7 @@ export function Swarm({ children }: { children: ReactNode }) {
     let dirty = false;
     let lastBusy = false;
     let started = false;
-    // the spawn beat: waiting (until beatStart) -> spawning (agents appear 90 ms apart) -> milling -> building (dispatch runs)
+    // the spawn beat: waiting (until beatStart) -> spawning (agents appear 40 ms apart) -> milling (none since spec 18) -> building (dispatch runs)
     let phase: Phase = 'waiting';
     let beatStart = Infinity;
     let buildAt = 0;
@@ -481,7 +481,7 @@ export function Swarm({ children }: { children: ReactNode }) {
         buildAt = now + (agents.length - 1) * SPAWN_STAGGER + MILL;
       }
       if (phase === 'spawning' && now >= buildAt - MILL) phase = 'milling';
-      if (phase === 'milling' && now >= buildAt) {
+      if (phase === 'milling' && now >= buildAt && spawned.every(Boolean)) { // the last spawn and buildAt share a frame when MILL is 0: let the spawn loop below run first
         // the first jobs start from wherever each cursor is milling right now
         phase = 'building';
         for (let i = 0; i < agents.length; i++) { agents[i].x = lastPos[i].x; agents[i].y = lastPos[i].y; idleSince[i] = now; holdMs[i] = IDLE_HOLD; milling[i] = spawned[i]; }

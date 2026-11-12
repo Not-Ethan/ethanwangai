@@ -52,7 +52,7 @@ export function idlePose(a: { x: number; y: number; phase: number }, vp: Rect, t
   return true;
 }
 
-/** The spawn beat (spec 14.1): agents appear 90 ms apart over the empty canvas and mill for 800 ms after the last one. */
+/** The spawn beat (spec 14.1, compressed in spec 18): agents appear 40 ms apart over the canvas and dispatch starts as soon as the last one is in (no milling). */
 export const SPAWN_STAGGER = 40;
 export const SPAWN_IN = 180;
 export const RESPAWN_IN = 200;
@@ -60,13 +60,13 @@ export const MILL = 0;
 const SPAWN_GAP = 110;
 const SPAWN_TRIES = 30;
 
-/** n spawn points (document px) inside the central 70 % of the viewport width and the 18 % to 78 % height band, at least 110 px apart (30 tries per point, then the last try is accepted). */
+/** n spawn points (document px) in the upper-left 12 % to 64 % of the viewport width and 12 % to 64 % of its height (near the hero text, so the first jobs travel little), at least 110 px apart (30 tries per point, then the last try is accepted). */
 export function spawnPoints(n: number, vp: Rect, rand: () => number): Point[] {
   const pts: Point[] = [];
   for (let i = 0; i < n; i++) {
     let p: Point = { x: 0, y: 0 };
     for (let k = 0; k < SPAWN_TRIES; k++) {
-      p = { x: vp.x + vp.w * (0.15 + 0.7 * rand()), y: vp.y + vp.h * (0.18 + 0.6 * rand()) };
+      p = { x: vp.x + vp.w * (0.12 + 0.52 * rand()), y: vp.y + vp.h * (0.12 + 0.52 * rand()) };
       if (pts.every((q) => Math.hypot(q.x - p.x, q.y - p.y) >= SPAWN_GAP)) break;
     }
     pts.push(p);

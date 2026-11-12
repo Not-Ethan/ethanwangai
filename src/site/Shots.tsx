@@ -49,9 +49,9 @@ function Board() {
       <circle cx={cx(2) + C / 2} cy={cy(4) + C / 2} r="12" fill={YEL} stroke="var(--ink)" strokeWidth="1.5" className="step" />
       {hw.map((w, i) => <rect key={`h${i}`} x={cx(w.c)} y={cy(w.r) + C + G / 2 - 3} width={2 * C + G} height="6" rx="3" fill={INK} />)}
       {vw.map((w, i) => <rect key={`v${i}`} x={cx(w.c) - G / 2 - 3} y={cy(w.r)} width="6" height={2 * C + G} rx="3" fill={INK} />)}
-      <text x="312" y="76" fontFamily={FONT} fontSize="11" fill={INK}>walls</text>
-      {Array.from({ length: 11 }, (_, i) => <rect key={i} x={312 + i * 13} y={86} width="10" height="10" rx="2" fill={i < 4 ? HAIR2 : YEL} />)}
-      <text x="312" y="116" fontFamily={FONT} fontSize="11" fill={INK}>6×5 · solved</text>
+      <text x="312" y="108" fontFamily={FONT} fontSize="12" fill={INK}>who wins · walls 0 to 10</text>
+      {Array.from({ length: 11 }, (_, i) => <rect key={i} x={312 + i * 13} y={118} width="11" height="11" rx="2" fill={i < 4 ? INK : YEL} />)}
+      <text x="312" y="152" fontFamily={FONT} fontSize="12" fill={INK}>6×5 · solved</text>
     </>
   );
 }

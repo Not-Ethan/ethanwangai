@@ -90,7 +90,7 @@ export const copy = {
       },
       {
         id: 'barricades', year: facts.barricades.year, kind: 'research', title: 'barricades', tag: 'a board nobody had solved.',
-        lede: `a rust solver that works out who wins ${facts.barricades.cols}×${facts.barricades.rows} quoridor with perfect play, for every wall count. ai wrote much of the code under my direction. i didn't trust it until it matched two separate rules engines and a brute-force search.`,
+        lede: `a rust solver that works out who wins ${facts.barricades.cols}×${facts.barricades.rows} quoridor with perfect play, for every wall count. ai wrote much of the code under my direction. i didn't trust it until it matched two separate rules engines and an exhaustive search.`,
         chips: ['rust', 'python', 'search'], shot: 'board', link: { label: 'the code ↗', href: facts.barricades.repo },
       },
       {

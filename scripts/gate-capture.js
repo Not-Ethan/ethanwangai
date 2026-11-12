@@ -83,7 +83,8 @@ async (page) => {
   }
   const op = await sampler;
   const at = (ms) => { const near = op.samples.reduce((a, b) => (Math.abs(b.t - ms) < Math.abs(a.t - ms) ? b : a)); return near.cursors; };
-  report.opening = { cursorsVisibleAt: { 300: at(300), 700: at(700), 1100: at(1100), 1500: at(1500) }, firstBoxAt: op.firstBoxAt };
+  const agentCount = await page.evaluate(() => document.querySelectorAll('.cursor').length);
+  report.opening = { cursorsVisibleAt: { 300: at(300), 700: at(700), 1100: at(1100), 1500: at(1500) }, firstBoxAt: op.firstBoxAt, allCursorsBy400: at(400) === agentCount };
 
   // Release burst: in the about section, poll every 20 ms for a box carrying selbox--done, then three stills 60 ms apart.
   await page.evaluate(() => { window.__rel = null; });

@@ -139,10 +139,10 @@ describe('spawn beat', () => {
       const pts = spawnPoints(6, vp, mulberry32(seed));
       expect(pts).toHaveLength(6);
       for (const p of pts) {
-        expect(p.x).toBeGreaterThanOrEqual(1440 * 0.15);
-        expect(p.x).toBeLessThanOrEqual(1440 * 0.85);
-        expect(p.y).toBeGreaterThanOrEqual(900 * 0.18);
-        expect(p.y).toBeLessThanOrEqual(900 * 0.78);
+        expect(p.x).toBeGreaterThanOrEqual(1440 * 0.12);
+        expect(p.x).toBeLessThanOrEqual(1440 * 0.64);
+        expect(p.y).toBeGreaterThanOrEqual(900 * 0.12);
+        expect(p.y).toBeLessThanOrEqual(900 * 0.64);
       }
       for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) expect(Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y)).toBeGreaterThanOrEqual(110);
       expect(spawnPoints(6, vp, mulberry32(seed))).toEqual(pts);
