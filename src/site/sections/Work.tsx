@@ -25,6 +25,9 @@ export function Work() {
                 <div className="chips">
                   {c.chips.map((x) => <span key={x} className="chip">{x}</span>)}
                 </div>
+                {'link' in c && (
+                  <a className="btn btn-sm case__link" href={c.link.href} target="_blank" rel="noopener noreferrer">{c.link.label}</a>
+                )}
               </Built>
             </article>
           ))}

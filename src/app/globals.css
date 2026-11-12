@@ -136,6 +136,7 @@ html[data-swarm="on"] .when-off { display: none !important; }
 .case h3 { font-size: clamp(32px, 3.3vw, 48px); font-weight: 700; letter-spacing: -.03em; line-height: 1.05; margin-top: 8px; }
 .case__tag { font-size: 20px; margin-top: 8px; }
 .case__lede { margin: 14px 0 18px; }
+.case__link { margin-top: 18px; }
 .shot { display: block; width: 100%; height: auto; border-radius: 10px; }
 
 .creds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -209,19 +210,19 @@ body { position: relative; }
 .shot--book .breath--bid { transform-origin: right center; } .shot--book .breath--ask { transform-origin: left center; }
 .shot--grid .crawl { transform-box: fill-box; transform-origin: left center; animation: shot-crawl 4.5s ease-in-out 1 paused; }
 .shot--chat .caret { animation: shot-caret .8s steps(1, end) 6 paused; }
-.shot--tab .pulse { transform-box: fill-box; transform-origin: center; animation: shot-pulse 4s ease-in-out 1 paused; }
-[data-build][data-built] .breath, [data-build][data-built] .crawl, [data-build][data-built] .caret, [data-build][data-built] .pulse { animation-play-state: running; }
+.shot--board .step { transform-box: fill-box; animation: shot-step 3.6s ease-in-out 1 paused; }
+[data-build][data-built] .breath, [data-build][data-built] .crawl, [data-build][data-built] .caret, [data-build][data-built] .step { animation-play-state: running; }
 @keyframes shot-breath { 0%, 100% { transform: scaleX(1); } 33% { transform: scaleX(.85); } 66% { transform: scaleX(1.15); } }
 @keyframes shot-crawl { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.75); } }
 @keyframes shot-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-@keyframes shot-pulse { 0%, 12%, 100% { transform: scale(1); } 6% { transform: scale(1.06); } }
+@keyframes shot-step { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(0, -42px); } }
 @media (prefers-reduced-motion: reduce) {
-  .shot--book .breath, .shot--grid .crawl, .shot--chat .caret, .shot--tab .pulse { animation: none; }
+  .shot--book .breath, .shot--grid .crawl, .shot--chat .caret, .shot--board .step { animation: none; }
 }
 
 /* ---- Spawn beat and completion flourish (spec 14) ---- */
 .cursor__in { position: absolute; left: 0; top: 0; width: 18px; height: 18px; transform-origin: 2px 1.5px; }
-.cursor--spawn .cursor__in { animation: cursor-spawn 260ms cubic-bezier(.34, 1.56, .64, 1) backwards; }
+.cursor--spawn .cursor__in { animation: cursor-spawn 180ms cubic-bezier(.34, 1.56, .64, 1) backwards; }
 .cursor--spawn-fast .cursor__in { animation: cursor-spawn 200ms cubic-bezier(.34, 1.56, .64, 1) backwards; }
 @keyframes cursor-spawn { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .selbox--done { animation: box-flash 260ms steps(1, end); }

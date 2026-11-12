@@ -6,7 +6,7 @@ import { facts } from './facts';
 export const copy = {
   meta: {
     title: 'ethan wang',
-    description: `i build things, then watch them run: a trading algorithm, a video factory, a hedge for bar promos. computer science and math at case western, class of ${facts.school.classOf}.`,
+    description: `i build things, then watch them run: a trading algorithm, a video factory, a board game solver. computer science and math at case western, class of ${facts.school.classOf}.`,
   },
   bar: {
     mark: 'ew',
@@ -24,7 +24,7 @@ export const copy = {
     name: ['ethan', 'wang'],
     headline: {
       plain: 'i build things, then watch them run.',
-      bold: 'a\u00a0trading algorithm, a\u00a0video factory, a\u00a0hedge for bar promos.',
+      bold: 'a\u00a0trading algorithm, a\u00a0video factory, a\u00a0board game solver.',
     },
     cta: 'see the work',
     ctaHref: '#work',
@@ -46,11 +46,11 @@ export const copy = {
   toolbox: {
     h2: 'what i build with',
     rows: [
-      { label: 'languages', chips: ['python', 'typescript', 'java', 'c', 'sql'] },
+      { label: 'languages', chips: ['python', 'typescript', 'rust', 'java', 'c', 'sql'] },
       { label: 'backend', chips: ['fastapi', 'node', 'websockets', 'rest apis', 'ffmpeg'] },
       { label: 'data', chips: ['postgresql', 'mongodb', 'pandas', 'numpy', 'pytorch'] },
       { label: 'infra', chips: ['linux', 'docker', 'git'] },
-      { label: 'markets', chips: ['kalshi', 'order books', 'hedging', 'prediction markets'] },
+      { label: 'markets', chips: ['kalshi', 'order books', 'replay testing'] },
     ],
   },
   experience: {
@@ -58,14 +58,9 @@ export const copy = {
     // sub is the subject of the job, for the index; the card title carries name and role, the when line the dates.
     jobs: [
       {
-        id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: 'my own trading system', when: `${facts.kalshi.since} to now`, place: 'cleveland',
-        lede: "i trade my own money on kalshi's crypto markets with a system i wrote.",
-        body: "it reads kalshi's order book and prices from a few crypto exchanges, places its own orders, and keeps track of risk and fills. i test every idea on a replay of old market data before it trades real money.",
-      },
-      {
-        id: 'heron', name: 'heron', role: 'co-founder', sub: 'pricing and hedges for bar promos', when: `${facts.heron.since} to now`, place: 'four cities',
-        lede: 'heron takes the risk off bars that run game-day promos. i built the models behind it.',
-        body: 'i wrote the pricing, the cap on what heron can owe, and the code that places the hedges.',
+        id: 'kalshi', name: 'kalshi', role: 'independent trader', sub: 'my own trading system', when: facts.kalshi.year, place: 'cleveland',
+        lede: "i traded my own money on kalshi's crypto markets for most of 2026 with a system i wrote.",
+        body: "it read kalshi's order book and prices from a few crypto exchanges, placed its own orders, and kept track of risk and fills. every idea ran on a replay of old market data before it touched real money.",
       },
       {
         id: 'wvu', name: 'wvu medicine', role: 'ml intern', sub: 'a pharmacy claims model', when: 'summer 2026', place: 'morgantown',
@@ -86,17 +81,17 @@ export const copy = {
   },
   work: {
     h2: 'four things that ran',
-    intro: 'trading, bars, video and government docs, newest first.',
+    intro: 'trading, a board game, video and government docs, newest first.',
     cases: [
       {
-        id: 'kalshi', year: '2026', kind: 'trading', title: 'kalshi algo', tag: 'it trades while i sleep.',
-        lede: `it quotes both sides and trades the price gaps between related crypto markets on kalshi. about ${facts.kalshi.trades.toLocaleString('en-US')} trades so far.`,
+        id: 'kalshi', year: facts.kalshi.year, kind: 'trading', title: 'kalshi algo', tag: 'it traded while i slept.',
+        lede: `it quoted both sides and traded the price gaps between related crypto markets on kalshi. about ${facts.kalshi.trades.toLocaleString('en-US')} trades, and top ${facts.kalshi.leaderboardTop} all-time on the crypto profit leaderboard.`,
         chips: ['python', 'websockets', 'postgresql'], shot: 'book',
       },
       {
-        id: 'heron', year: '2026', kind: 'product', title: 'heron', tag: 'free drinks if the home team wins.',
-        lede: "the bar doesn't eat that. heron prices the promo, covers the payout and hedges it on prediction markets.",
-        chips: ['python', 'fastapi'], shot: 'tab',
+        id: 'barricades', year: facts.barricades.year, kind: 'research', title: 'barricades', tag: 'a board nobody had solved.',
+        lede: `a rust solver that works out who wins ${facts.barricades.cols}×${facts.barricades.rows} quoridor with perfect play, for every wall count. ai wrote much of the code under my direction. i didn't trust it until it matched two separate rules engines and a brute-force search.`,
+        chips: ['rust', 'python', 'search'], shot: 'board', link: { label: 'the code ↗', href: facts.barricades.repo },
       },
       {
         id: 'darch', year: '2025', kind: 'system', title: 'darch', tag: 'three thousand videos a month.',
@@ -172,15 +167,14 @@ export const copy = {
     'h2 experience': 'a heading for the jobs',
     'index': 'a list of the jobs',
     'card kalshi': 'my kalshi trading',
-    'card heron': 'the heron job',
     'card wvu': 'the wvu job',
     'card darch': 'the darch job',
     'card nist': 'the nist job',
     'h2 work': 'a heading for the work',
     'shot kalshi': 'draw an order book',
     'body kalshi': 'what the algo does',
-    'shot heron': 'draw a bar tab',
-    'body heron': 'what heron does',
+    'shot barricades': 'draw a game board',
+    'body barricades': 'what barricades proved',
     'shot darch': 'draw a grid of videos',
     'body darch': 'what darch did',
     'shot nist': 'draw a chat window',

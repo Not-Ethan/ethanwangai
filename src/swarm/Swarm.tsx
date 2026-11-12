@@ -292,15 +292,15 @@ export function Swarm({ children }: { children: ReactNode }) {
 
     store.set({ on: true, agents: n, total: rt.registry.size, built: 0, log: [], busy: false });
 
-    // start when the fonts are ready or after 600 ms, whichever is first, then wait 150 ms
+    // start as soon as the fonts are ready (text rects need them) or after 300 ms, whichever is first; nothing waits after that (spec §18)
     let startArmed = false;
     const armStart = (): void => {
       if (startArmed || !alive) return;
       startArmed = true;
-      timers.push(setTimeout(() => { started = true; beatStart = performance.now(); wake(); }, 150));
+      started = true; beatStart = performance.now(); wake();
     };
     document.fonts.ready.then(armStart);
-    timers.push(setTimeout(armStart, 600));
+    timers.push(setTimeout(armStart, 300));
 
     // keyboard focus on or inside an unbuilt element builds it instantly, so nothing focused is ever invisible
     const onFocusIn = (ev: FocusEvent): void => {

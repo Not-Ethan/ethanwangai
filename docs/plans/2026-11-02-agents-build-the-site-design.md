@@ -442,3 +442,23 @@ Every sentence that explained the swarm is gone; the effect speaks for itself an
 ### 17.3 The hero grid drifts forever
 
 The 88 px grid moves diagonally down-right at one cell per 4.5 s (about 20 px/s), seamless because the pattern repeats every cell, infinite, linear. Implementation: a masked wrapper `.hero__gridmask` (absolute, inset 0, the existing bottom fade mask) containing `.hero__grid` (inset -100px on all sides, `transform` animation `grid-drift` from 0 to `translate3d(88px, 88px, 0)`, `will-change: transform`). Reduced motion: no animation. DESIGN.md's motion rule becomes: the swarm, the hero grid's drift, the button press and the to-top fade.
+
+## 18. Fast start, heron out, kalshi in the past, barricades in (2026-11-11)
+
+Ethan: "get rid of the delay at the beginning, the page needs to start appearing ASAP. also heron is kinda dead now and it didnt really get anywhere so id probably wanna avoid it. kalshi is also kinda dead and im closing up shop soon."
+
+### 18.1 The start
+
+Nothing waits any more. The swarm starts the moment the fonts are ready (text rects need them) or at 300 ms, whichever is first, with no delay after that (was fonts or 600 ms, then 150 ms). The spawn beat is kept but compressed: cursors pop in 40 ms apart (was 90) over 180 ms (was 260), and there is no milling (`MILL` 0, was 800), so the first jobs dispatch about 200 ms after the start. Dispatch jitter is 0 to 120 ms (was 240). The first box opens within about half a second of load and the name is drawn by about a second; the flourish, the traces and the rebuild replay are unchanged. §14.1 and §14.3's timings are superseded (the gate's opening sampler still reports; expect all agents visible by about 0.3 s and the first box before 0.6 s).
+
+### 18.2 Heron out
+
+Every heron string, card, chip and prompt is gone: the hero's "a hedge for bar promos" becomes "a board game solver", the meta description likewise, the heron job and work case go, the toolbox markets row is `kalshi · order books · replay testing`, and the copy test forbids the word. 
+
+### 18.3 Kalshi in the past tense
+
+He is winding the trading down, so the copy stops saying "now": when `2026`, "i traded my own money on kalshi's crypto markets for most of 2026 with a system i wrote.", body in the past tense, work tag "it traded while i slept.", and the work lede carries the two facts both readers wanted next to each other: "about 30,000 trades, and top 100 all-time on the crypto profit leaderboard." The replay sentence stays in the experience body. `facts.kalshi.since` becomes `facts.kalshi.year`.
+
+### 18.4 Barricades in
+
+The empty work slot goes to the public Rust Quoridor solver (github.com/Not-Ethan/barricades, 2026): "a board nobody had solved." / "a rust solver that works out who wins 6×5 quoridor with perfect play, for every wall count. ai wrote much of the code under my direction. i didn't trust it until it matched two separate rules engines and a brute-force search." Chips rust · python · search, a new drawn schematic `board` (a 6×5 grid with two pawns and a few walls, one small loop), and the first proof link on the page: a `the code ↗` pill under the chips (`copy.work.cases[].link`, optional, rendered as `btn btn-sm`). The toolbox languages row gains rust. Work order: kalshi, barricades, darch, nist (newest first). `BUILT_TOTAL` is 40. The repo's README states the AI assistance and the verification discipline, so the card says the same.

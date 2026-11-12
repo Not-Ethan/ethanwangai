@@ -34,25 +34,24 @@ function Book() {
   );
 }
 
-function Tab() {
+function Board() {
+  const C = 36, G = 6, P = C + G, X0 = 30, Y0 = 33;
+  const cx = (c: number) => X0 + c * P;
+  const cy = (r: number) => Y0 + r * P;
+  const cells = Array.from({ length: 30 }, (_, i) => ({ x: cx(i % 6), y: cy(Math.floor(i / 6)) }));
+  // walls sit in the gaps: horizontal bars span two cells in a row gap, vertical bars span two cells in a column gap.
+  const hw = [{ c: 1, r: 1 }, { c: 3, r: 3 }];
+  const vw = [{ c: 3, r: 0 }, { c: 1, r: 3 }];
   return (
     <>
-      <rect x="60" y="16" width="360" height="238" rx="12" fill="var(--surface)" stroke="var(--ink)" strokeWidth="2" />
-      <path d="M61 52 L61 28 Q61 17 72 17 L408 17 Q419 17 419 28 L419 52 Z" fill={INK} />
-      <rect x="80" y="30" width="96" height="8" rx="3" fill={YEL} />
-      {[0, 1, 2, 3].map((i) => (
-        <g key={i}>
-          <rect x="80" y={70 + i * 24} width={[160, 130, 148, 118][i]} height="8" rx="3" fill={HAIR2} />
-          <rect x="350" y={70 + i * 24} width="36" height="8" rx="3" fill={HAIR2} />
-        </g>
-      ))}
-      <g className="pulse">
-        <rect x="80" y="166" width="140" height="28" rx="14" fill="var(--ink)" />
-        <text x="96" y="185" fontFamily={FONT} fontSize="13" fill={YEL}>drinks · free</text>
-      </g>
-      <line x1="80" y1="204" x2="400" y2="204" stroke={HAIR2} strokeWidth="1" strokeDasharray="4 4" />
-      <rect x="80" y="214" width="64" height="20" rx="10" fill={HAIR} stroke={HAIR2} />
-      <text x="112" y="228" textAnchor="middle" fontFamily={FONT} fontSize="11" fill="var(--ink)">hedged</text>
+      {cells.map((t, i) => <rect key={i} x={t.x} y={t.y} width={C} height={C} rx="3" fill={HAIR} />)}
+      <circle cx={cx(2) + C / 2} cy={cy(0) + C / 2} r="12" fill={INK} />
+      <circle cx={cx(2) + C / 2} cy={cy(4) + C / 2} r="12" fill={YEL} stroke="var(--ink)" strokeWidth="1.5" className="step" />
+      {hw.map((w, i) => <rect key={`h${i}`} x={cx(w.c)} y={cy(w.r) + C + G / 2 - 3} width={2 * C + G} height="6" rx="3" fill={INK} />)}
+      {vw.map((w, i) => <rect key={`v${i}`} x={cx(w.c) - G / 2 - 3} y={cy(w.r)} width="6" height={2 * C + G} rx="3" fill={INK} />)}
+      <text x="312" y="76" fontFamily={FONT} fontSize="11" fill={INK}>walls</text>
+      {Array.from({ length: 11 }, (_, i) => <rect key={i} x={312 + i * 13} y={86} width="10" height="10" rx="2" fill={i < 4 ? HAIR2 : YEL} />)}
+      <text x="312" y="116" fontFamily={FONT} fontSize="11" fill={INK}>6×5 · solved</text>
     </>
   );
 }
@@ -96,12 +95,12 @@ function Chat() {
   );
 }
 
-export function Shot({ kind }: { kind: 'book' | 'tab' | 'grid' | 'chat' }) {
+export function Shot({ kind }: { kind: 'book' | 'board' | 'grid' | 'chat' }) {
   return (
     <svg viewBox="0 0 480 270" className={`shot shot--${kind}`} aria-hidden="true">
       <rect x="0.5" y="0.5" width="479" height="269" rx="10" fill="var(--canvas)" stroke="color-mix(in srgb, var(--ink) 12%, transparent)" />
       {kind === 'book' && <Book />}
-      {kind === 'tab' && <Tab />}
+      {kind === 'board' && <Board />}
       {kind === 'grid' && <Grid />}
       {kind === 'chat' && <Chat />}
     </svg>

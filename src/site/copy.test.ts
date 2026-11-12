@@ -20,7 +20,7 @@ describe('voice', () => {
     for (const s of ALL) expect(s, s).not.toMatch(/\$20|#75|notional|contracts|240-810|r[eé]sum[eé]/i);
   });
   it('never narrates the effect: no string says agents or cursors (the hud formats are functions and are skipped)', () => {
-    for (const s of ALL) expect(s, s).not.toMatch(/\bagents?\b|\bcursors?\b|aahil/i);
+    for (const s of ALL) expect(s, s).not.toMatch(/\bagents?\b|\bcursors?\b|aahil|heron/i);
   });
   it('is not empty and has no leading or trailing space', () => { for (const s of ALL) { expect(s.length).toBeGreaterThan(0); expect(s).toBe(s.trim()); } expect(ALL.length).toBeGreaterThan(80); });
 });
@@ -28,14 +28,15 @@ describe('voice', () => {
 describe('facts in the copy', () => {
   it('prints kalshi facts from facts.ts', () => {
     const k = copy.experience.jobs.find((j) => j.id === 'kalshi')!;
-    expect(k.when).toBe(`${facts.kalshi.since} to now`);
-    expect(copy.work.cases[0].lede).not.toContain('top ');
+    expect(k.when).toBe(facts.kalshi.year);
+    expect(copy.work.cases[0].lede).toContain(`top ${facts.kalshi.leaderboardTop}`);
+    expect(copy.work.cases[0].lede).not.toMatch(/#\d|notional|\$/);
     expect(copy.work.cases[0].lede).toContain(`${facts.kalshi.trades.toLocaleString('en-US')} trades`);
   });
   it('spells the word numbers to match facts', () => {
     expect(facts.darch.videosPerMonth).toBe(3_000); expect(copy.work.cases[2].tag).toContain('three thousand videos a month');
     expect(facts.darch.viewsPerMonth).toBe(20_000_000); expect(copy.work.cases[2].lede).toContain('twenty million times a month');
-    expect(facts.heron.cities).toBe(4); expect(copy.experience.jobs.find((j) => j.id === 'heron')!.place).toBe('four cities');
+    expect(copy.work.cases[1].lede).toContain(`${facts.barricades.cols}×${facts.barricades.rows}`);
     expect(facts.wvu.claimsPerYearUsd).toBe(100_000_000); expect(copy.experience.jobs.find((j) => j.id === 'wvu')!.body).toContain('a hundred million dollars');
     expect(copy.rest.cards[0].entries[0].line).toContain(`class of ${facts.school.classOf}`);
   });
@@ -51,8 +52,8 @@ describe('facts in the copy', () => {
   });
   it('has the sections, jobs and cases the spec lists', () => {
     expect(copy.bar.links.map((l) => l.label)).toEqual(['about', 'work', 'experience', 'contact']);
-    expect(copy.experience.jobs.map((j) => j.id)).toEqual(['kalshi', 'heron', 'wvu', 'darch', 'nist']);
-    expect(copy.work.cases.map((c) => c.shot)).toEqual(['book', 'tab', 'grid', 'chat']);
+    expect(copy.experience.jobs.map((j) => j.id)).toEqual(['kalshi', 'wvu', 'darch', 'nist']);
+    expect(copy.work.cases.map((c) => c.shot)).toEqual(['book', 'board', 'grid', 'chat']);
     expect(copy.toolbox.rows.map((r) => r.label)).toEqual(['languages', 'backend', 'data', 'infra', 'markets']);
     expect(copy.closer.links.map((l) => l.label)).toEqual(['github ↗', 'linkedin ↗']);
     expect(copy.closer.mail).toBe('ethan.wanq@gmail.com');

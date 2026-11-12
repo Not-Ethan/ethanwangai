@@ -39,7 +39,7 @@ export function idleDrift(t: number, phase: number, out: Point): Point {
   return out;
 }
 
-export const JITTER_MAX = 240;
+export const JITTER_MAX = 120;
 export const jitter = (rand: () => number): number => rand() * JITTER_MAX;
 
 export const IDLE_INSET = 12;
@@ -53,10 +53,10 @@ export function idlePose(a: { x: number; y: number; phase: number }, vp: Rect, t
 }
 
 /** The spawn beat (spec 14.1): agents appear 90 ms apart over the empty canvas and mill for 800 ms after the last one. */
-export const SPAWN_STAGGER = 90;
-export const SPAWN_IN = 260;
+export const SPAWN_STAGGER = 40;
+export const SPAWN_IN = 180;
 export const RESPAWN_IN = 200;
-export const MILL = 800;
+export const MILL = 0;
 const SPAWN_GAP = 110;
 const SPAWN_TRIES = 30;
 

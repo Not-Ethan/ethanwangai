@@ -40,12 +40,12 @@ describe('agents', () => {
       expect(Math.abs(out.y)).toBeLessThanOrEqual(4);
     }
   });
-  it('jitter is in [0, 240)', () => {
+  it('jitter is in [0, JITTER_MAX)', () => {
     const r = mulberry32(5);
     for (let i = 0; i < 500; i++) {
       const j = jitter(r);
       expect(j).toBeGreaterThanOrEqual(0);
-      expect(j).toBeLessThan(240);
+      expect(j).toBeLessThan(JITTER_MAX);
     }
   });
 });
@@ -101,7 +101,7 @@ describe('agents, pinned', () => {
     }
   });
   it('jitter reaches near its max', () => {
-    expect(JITTER_MAX).toBe(240);
+    expect(JITTER_MAX).toBe(120);
     const r = mulberry32(8);
     let max = 0;
     for (let i = 0; i < 500; i++) max = Math.max(max, jitter(r));
@@ -161,6 +161,6 @@ describe('spawn beat', () => {
     }
   });
   it('has the spec constants', () => {
-    expect([SPAWN_STAGGER, SPAWN_IN, MILL]).toEqual([90, 260, 800]);
+    expect([SPAWN_STAGGER, SPAWN_IN, MILL]).toEqual([40, 180, 0]);
   });
 });
